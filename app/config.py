@@ -1,12 +1,11 @@
-
-# config.py
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 root_dir = os.path.dirname(basedir)
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or "sqlite:///"+os.path.join(root_dir, "instance", "maxcinema.db")
+    # Updated DB path to match the root location
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     # Bytescale
