@@ -22,4 +22,4 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           # No fetch needed — already on clean-main
-          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema clean-main
+          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema HEAD:main
