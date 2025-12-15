@@ -1,0 +1,87 @@
+{%extends "admin/base.html"%}
+
+{%block content%}
+    {% if prev == "dashboard" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+            Go back
+        </button>
+    {% elif prev == "series" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev='series', name=season.series.all_video.slug, id=season.series.all_video.id) }}'">
+            Go back
+        </button>
+    {% elif prev == "serie" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_episodes', prev='series', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id) }}'">
+            Go back
+        </button>
+    {% elif prev == "movie" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+            Go back
+        </button>
+    {% endif %}
+
+    <form method="POST" class="space-y-8 text-black">
+        {{ form.hidden_tag() }}
+        <h1 class="text-2xl text-white font-bold">{{ action }} New Episode for Season <b class="text-blue-800">{{season.season_number}}</b> for "{{ season.series.all_video.name }}"</h1>
+        <!-- SECTION: Basic Info -->
+        <div class="border border-gray-200 rounded-xl p-6 bg-white shadow-sm">
+            <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.episode_number.label }}</label>
+                    {{ form.episode_number(class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200") }}
+                    {% for error in form.episode_number.errors %}
+                        <span style="color:red;">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.name.label }}</label>
+                    {{ form.name(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.length.label }}</label>
+                    {{ form.length(class="px-3 py-2 border rounded-lg") }}
+                </div>
+
+
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.description.label }}</label>
+                    {{ form.description(class="w-full px-3 py-2 border rounded-lg h-32", rows=4, cols=50) }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.released_date.label }}</label>
+                    {{ form.released_date(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.cast.label }}</label>
+                    {{ form.cast(class="w-full px-3 py-2 border rounded-lg h-24") }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.source.label }}</label>
+                    {{ form.source(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.download_link.label }}</label>
+                    {{ form.download_link(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.storage_server_id.label }}</label>
+                    {{ form.storage_server_id(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- SUBMIT -->
+        <div class="text-right">
+            {{ form.submit(class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 cursor-pointer") }}
+        </div>
+
+    </form>
+{%endblock%}

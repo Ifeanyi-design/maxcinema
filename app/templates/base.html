@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="md:scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://kit.fontawesome.com/a3231bc2d5.js" crossorigin="anonymous"></script>
+    {% block style %}
+    
+    {% endblock %}
+</head>
+<body id="BodyTop" class="relative bg-white scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %}">
+    {% if not dark %}
+        {%include "header.html"%}
+    {% else %}
+        {% include "darkheader.html" %}
+    {% endif %}
+    <!-- 🪧 Bottom Banner Ad -->
+    <section class="mt-16 px-6 md:px-12 lg:px-24">
+        <div class="bg-gray-800 p-6 rounded-xl text-center text-gray-300">
+        AD SPACE — Banner Placeholder
+        </div>
+    </section>
+    
+    {% block content %}
+    
+    {% endblock %}
+    
+    {%include "footer.html"%}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/trending.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/comment.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/trailer_comment.js') }}"></script>
+    <script>
+        function setHeaderPadding() {
+            const header = document.getElementById("header");
+            if (header) {
+                const h = header.offsetHeight;
+                document.documentElement.style.setProperty("--header-height", h + "px");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setHeaderPadding();
+            setTimeout(setHeaderPadding, 100); // one more refresh after images/fonts load
+        });
+
+        window.addEventListener("resize", setHeaderPadding);
+    </script>
+
+
+    
+    <!-- <script src="{{ url_for('static', filename='js/loadmovies.js') }}"></script> -->
+    {% block script %}
+    {% endblock %}
+</body>
+</html>

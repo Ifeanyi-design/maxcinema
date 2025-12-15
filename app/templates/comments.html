@@ -1,0 +1,26 @@
+<div class="flex flex-col bg-gray-100 gap-2 border-l-2 border-gray-300">
+    <div class="flex items-center gap-3 p-2">
+        <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User Profile"
+        class="w-14 h-14 rounded-full object-cover">
+        <div>
+            <p class="font-semibold text-lg">{{ comment.name }}</p>
+            <p class="text-[12px] text-gray-700">{{ comment.date_added.strftime('%b %d, %Y') }} At {{ comment.date_added.strftime('%H:%M') }}</p>
+        </div>
+    </div>
+    <p class="px-6 py-2 font-medium">{{ comment.text }}</p>
+    <button data-id="{{ comment.id }}" data-video="{{ video.id }}" class="reply-btn px-6 py-3 font-bold flex w-[8vw] items-center gap-1 text-sm text-red-600 hover:text-black cursor-pointer">
+        <i class="fa-solid fa-reply"></i>
+            Reply
+    </button>
+    <hr class="my-4 border-gray-300">
+
+    <!-- Replies -->
+    <div class="replies" style="margin-left: 20px;">
+        {% for reply in comment.replies %}
+            {% set comment = reply %}
+            {% include 'comments.html' %}
+        {% endfor %}
+        
+    </div>
+    
+</div>

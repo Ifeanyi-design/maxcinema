@@ -1,0 +1,545 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "./gradient";
+
+$red: #E50914;
+$dark-bg: #0b0b0b;
+$light-bg: #ffffff;
+$light-text: #111111;
+$dark-text: #ffffff;
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .slide-fade-enter {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+  .slide-fade-enter-active {
+    max-height: 1000px; /* big enough to fit content */
+    opacity: 1;
+  }
+  .slide-fade-exit {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+  .slide-fade-exit-active {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+body {
+  @apply bg-black text-white;
+  font-family: "Poppins", sans-serif;
+  padding-bottom: 0;
+  margin: 0;
+  box-sizing: border-box;
+  padding-top: var(--header-height);
+}
+
+html{
+  padding: 0;
+  margin: 0;
+}
+a{
+  color: $red;
+  text-decoration: none;
+
+  &:hover{
+    color: lighten($color: $red, $amount: 10%);
+  }
+}
+
+.si{
+  font-size: 70%;
+}
+
+#Navbar {
+  font-size: 20px;
+
+  #mainNav a {
+    position: relative;
+    color: #830506;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    display: inline-block;
+    overflow: hidden;
+    transition: color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+
+
+    &:hover {
+      color: #ffffff;
+      transform: scale(1.05);
+      box-shadow: 0 0 12px rgba(139, 0, 255, 0.4);
+      background-color: #830506;
+
+      // ✨ Fade-in gradient
+      &::before {
+        opacity: 1;
+      }
+    }
+  }
+  ul button {
+    position: relative;
+    color: #830506;
+    font-weight: 600;
+    margin-top: 5px;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    display: inline-block;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+
+    
+
+    &:hover {
+      color: #ffffff;
+      transform: scale(1.05);
+      background-color: #830506;
+      box-shadow: 0 0 12px rgba(139, 0, 255, 0.4);
+
+      // ✨ Fade-in gradient
+      &::before {
+        opacity: 1;
+      }
+    }
+    
+  }
+
+  .hiddennav {
+    display: block;
+  }
+}
+
+.no-break {
+  white-space: nowrap;
+}
+
+
+#genreMenu #genreNav li{
+  padding: 13px;
+  
+  a{
+    color: #830506;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+  }
+  a:hover{
+    background: #830506;
+    color: white;
+    transform: scale(1.05);
+  }
+}
+#MobilegenreMenu #MobilegenreNav li{
+  
+  a{
+    color: #830506;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+  }
+  a:hover{
+    background: #830506;
+    color: white;
+    transform: scale(1.05);
+  }
+}
+
+#NavMenu #Navs li{
+  a{
+    color: #830506;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+    padding: 8px;
+  }
+  a:hover{
+    background: #830506;
+    color: white;
+    transform: scale(1.05);
+  }
+}
+.myanimate{
+  transition: all 0.5s ease-in-out;
+}
+#featurecontain .featureBox {
+  flex: none;
+  min-width: 180px;
+}
+@media (min-width: 768px) {
+  #featurecontain .featureBox {
+    min-width: 220px;
+  }
+}
+#trendingcontain .trendingBoxes {
+  flex: none;
+  min-width: 180px;
+}
+@media (min-width: 768px) {
+  #trendingcontain .trendingBoxes {
+    min-width: 220px;
+  }
+}
+
+.recentBox {
+  @apply transition-transform duration-300 hover:scale-105;
+  #recentBoxtype{
+    border: 2px solid $red;
+    margin-left: 7px;
+    margin-top: 4px;
+    margin-bottom: 7px;
+    color: $red;
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+}
+.trailerBox {
+  @apply transition-transform duration-300 hover:scale-105;
+  #trailerBoxtype{
+    border: 2px solid $red;
+    margin-top: 4px;
+    margin-bottom: 7px;
+    color: $red;
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+}
+.trendingBox {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+.boxescard{
+  border: 1px solid black;
+}
+.viewAll{
+  background: #830506;
+  color: white;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  transition: all 0.3s ease-in-out;
+
+
+  &:hover{
+    background: white;
+    color: #830506;
+    border: 2px solid #830506;
+    transform: scale(1.05);
+    
+  }
+}
+.hoverscollerbtn{
+  transition: all 0.3s ease-in-out;
+  &:hover{
+    padding: 0.6rem;
+  }
+}
+
+.search{
+  font-size: larger;
+  
+}
+
+
+#SearchInput{
+  border-radius: 0.375rem 0 0 0.375rem;
+  border: 2px solid #830506;
+}
+
+#footerLinks ul li a{
+  color: #ffffff;
+}
+
+
+.menu-btn{
+  position: absolute;
+  z-index: 10;
+  top: 1rem;
+  height: 20px;
+  right: 20px;
+  width: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+
+  &-burger{
+    position: absolute;
+    right: 0;
+    top: 0.5rem;
+    width: 28px;
+    height: 3px;
+    background: #830506;
+    transition: all 0.3s ease-in-out;
+
+    &::before{
+      content: "";
+      position: absolute;
+      top: -8px;
+      width: 28px;
+      height: 3px;
+      background: #830506;
+      transition: all 0.3s ease-in-out;
+    }
+
+    &::after{
+      content: "";
+      position: absolute;
+      top: 8px;
+      width: 20px;
+      height: 3px;
+      background: #830506;
+      transition: all 0.3s ease-in-out;
+    }
+
+    &.open::after{
+      width: 28px;
+    }
+    &.open::before{
+      width: 20px;
+    }
+  }
+}
+
+.nav{
+  opacity: 0.98;
+  visibility: hidden;
+  transform: translateY(-100%);
+  transition: all 0.3s ease-in-out;
+
+  &.open{
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .menu-nav{
+    transform: translateY(-100%);
+    transition: all 0.3s ease-in-out;
+
+    &.open{
+      transform: translateY(0);
+    }
+  }
+}
+.required::after{
+  content: " *";
+  color: #E50914;
+  font-weight: bold;
+}
+
+.decorate{
+  list-style-type: disc;
+  padding-left: 40px;
+}
+// .stars-container {
+//     display: flex;
+//     gap: 1px;
+// }
+
+// .moviestar {
+//     position: relative;
+//     width: 12px;
+//     height: 12px;
+//     display: inline-flex;
+//     align-items: center;
+//     justify-content: center;
+// }
+
+// .moviestar i {
+//     font-size: 12px;
+//     line-height: 12px;
+//     color: #ccc;      /* empty star color */
+// }
+
+// /* full star */
+// .moviestar.full i {
+//     color: #facc15;
+// }
+
+// /* partial star base (gray) */
+// .moviestar.partial .base {
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     color: #ccc;
+// }
+
+// /* partial star fill (yellow) */
+// .moviestar.partial .fill {
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     overflow: hidden;
+//     height: 100%;
+//     color: #facc15;
+//     clip-path: inset(0);
+//     white-space: nowrap;
+//     pointer-events: none;
+// }
+
+// .star.partial i {
+//     color: #ccc; /* background gray */
+// }
+
+// .star.partial .star-fill {
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     overflow: hidden;
+//     color: #facc15; /* yellow fill */
+//     white-space: nowrap;
+//     width: 0; /* overridden by inline style */
+// }
+// .moviestar.full i {
+//     color: #facc15; /* yellow full star */
+// }
+
+// .moviestar.partial i {
+//     color: #ccc; /* background gray */
+// }
+
+// .moviestar.partial .moviestar-fill {
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     overflow: hidden;
+//     color: #facc15; /* yellow fill */
+//     white-space: nowrap;
+//     width: 0; /* overridden by inline style */
+// }
+
+/* For smooth slide-down/up animation */
+
+
+.stars-container { display:flex; gap:4px; align-items:center; }
+
+.moviestar {
+  position: relative;
+  width: 0.7rem;           /* control size here */
+  height: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* base icon (gray) default for empty/partial */
+.moviestar i { 
+  font-size: 0.7rem; 
+  color: #ccc; 
+  display:block;        /* important so width:100% works on i */
+  width:100%;
+  height:100%;
+  text-align:center;
+}
+
+/* full star */
+.moviestar.full i { color:#facc15; }
+
+/* partial: base gray star positioned */
+.moviestar.partial .base { 
+  position:absolute; 
+  top:0; left:0; 
+  color:#ccc; 
+  z-index:1;
+}
+
+/* wrapper that clips the fill */
+.moviestar.partial .fill-wrap {
+  position:absolute;
+  top:0; left:0;
+  height:100%;
+  overflow:hidden;
+  z-index:2;
+  pointer-events:none;
+}
+
+/* the fill icon matches the base but colored */
+.moviestar.partial .fill {
+  color:#facc15;
+  position:relative; /* inside fill-wrap */
+  display:block;
+  width:100%;
+  height:100%;
+  text-align:center;
+}
+
+
+// /* Slide-fade notification */
+// .comment-notification {
+//     transition: all 0.5s ease;
+// }
+
+// /* Slide-fade for comments (already in your code) */
+// .slide-fade-enter {
+//     opacity: 0;
+//     transform: translateY(-10px);
+// }
+// .slide-fade-enter-active {
+//     opacity: 1;
+//     transform: translateY(0);
+//     transition: all 0.5s ease;
+// }
+
+/* Slide + fade in effect */
+.slide-fade-enter {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s ease;
+}
+
+.slide-fade-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Slide + fade out effect */
+.slide-fade-exit {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.5s ease;
+}
+
+.slide-fade-exit-active {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+
+/* Notification */
+#comment-notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background-color: #16a34a; /* green-600 */
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.5s ease;
+    z-index: 50;
+}
+
+#comment-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+:root {
+    --header-height: 0px;
+}
+.episode-list-img{
+  background-position: center;
+  background-size: cover;
+}

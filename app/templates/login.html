@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-form">
+    <form method="POST" class="w-full">
+        <input type="email" name="email" placeholder="Email" required class="w-[60%] mx-20 h-16">
+        <br>
+        <br>
+        <input type="password" name="password" placeholder="Password" required class="w-[60%] mx-20 h-16 text-black">
+        <br><br>
+        <button type="submit" class="mb-5 ml-20 w-[10%] h-[50px] bg-red-700 text-white font-bold rounded-md">Login</button>
+    </form>
+</div>
+{% endblock %}

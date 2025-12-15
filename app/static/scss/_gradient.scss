@@ -1,0 +1,184 @@
+// ===============================
+// 🎬 MaxCinema Gradient Utilities
+// ===============================
+
+// base gradient stops (you can change these in one place)
+$gradient-start: #FF3DCC;
+$gradient-mid:   #C73BFF;
+$gradient-end:   #8B00FF;
+
+// light/dark backgrounds & text
+$light-bg: #ffffff;
+$light-text: #0f0f0f;
+$dark-bg:  #0f0f0f;
+$dark-text:#ffffff;
+
+// -------------------------------
+// Reusable mixins
+// -------------------------------
+@mixin gradient($start, $mid, $end, $deg: 135deg) {
+  background: linear-gradient($deg, $start, $mid, $end);
+}
+
+@mixin text-gradient($start, $end, $deg: 90deg) {
+  background: linear-gradient($deg, $start, $end);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@mixin border-image-gradient($start, $mid, $end, $deg: 135deg, $width: 2px) {
+  border: $width solid transparent;
+  border-image: linear-gradient($deg, $start, $mid, $end) 1;
+}
+
+// -------------------------------
+// Background (full) gradient utilities
+// -------------------------------
+
+.bg-gradient {
+  @include gradient($gradient-start, $gradient-mid, $gradient-end);
+}
+
+/* directional background helpers (optional) */
+.bg-gradient-vertical {
+  background: linear-gradient(180deg, $gradient-start, $gradient-mid, $gradient-end);
+}
+.bg-gradient-horizontal {
+  background: linear-gradient(90deg, $gradient-start, $gradient-mid, $gradient-end);
+}
+
+// -------------------------------
+// Text gradient
+// -------------------------------
+.text-gradient {
+  @include text-gradient($gradient-start, $gradient-end);
+}
+
+// -------------------------------
+// Full border (all sides) gradient
+// -------------------------------
+.border-gradient {
+  @include border-image-gradient($gradient-start, $gradient-mid, $gradient-end, 135deg, 3px);
+  border-radius: 8px;
+  /* keep inner background from being painted by the border image */
+  background-clip: padding-box;
+}
+
+// -------------------------------
+// "True" single-side gradient border (best for boxed elements)
+// This uses background layering so inner area stays solid
+// -------------------------------
+.border-top-gradient-true {
+  border-top: 3px solid transparent;
+  background:
+    linear-gradient(#000,#000) padding-box,
+    linear-gradient(135deg, $gradient-start, $gradient-mid, $gradient-end) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.border-right-gradient-true {
+  border-right: 3px solid transparent;
+  background:
+    linear-gradient(#000,#000) padding-box,
+    linear-gradient(135deg, $gradient-start, $gradient-mid, $gradient-end) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.border-bottom-gradient-true {
+  border-bottom: 3px solid transparent;
+  background:
+    linear-gradient(#000,#000) padding-box,
+    linear-gradient(135deg, $gradient-start, $gradient-mid, $gradient-end) border-box;
+  background-clip: padding-box, border-box;
+}
+.text-gradient-horizontal {
+  @include text-gradient($gradient-start, $gradient-end, 90deg);
+}
+.text-gradient-diagonal {
+  @include text-gradient($gradient-start, $gradient-end, 135deg);
+}
+.text-gradient-vertical {
+  @include text-gradient($gradient-start, $gradient-end, 180deg);
+}
+@mixin gradient-bg {
+  background: linear-gradient(135deg, $gradient-start, $gradient-mid, $gradient-end);
+}
+
+
+.border-left-gradient-true {
+  border-left: 3px solid transparent;
+  background:
+    linear-gradient(#000,#000) padding-box,
+    linear-gradient(135deg, $gradient-start, $gradient-mid, $gradient-end) border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Note: For true single-side gradient border to look correct,
+   the element should have a solid background (e.g., background-color: #0f0f0f). */
+
+// -------------------------------
+// Thin decorative line using pseudo-element (great for headers)
+// -------------------------------
+.decor-line {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;            // change to top:0 for top line
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, $gradient-start, $gradient-mid, $gradient-end);
+    transform-origin: left center;
+  }
+}
+
+/* variants for lines on specific sides */
+.decor-line-top { &::after { bottom: auto; top: 0; } }
+.decor-line-right { &::after { left: auto; right: 0; width: 3px; height: 100%; top: 0; bottom: 0; } }
+.decor-line-left  { &::after { right: auto; left: 0; width: 3px; height: 100%; top: 0; bottom: 0; } }
+
+// -------------------------------
+// Button helper combining background + glow
+// -------------------------------
+.btn-gradient {
+  @include gradient($gradient-start, $gradient-mid, $gradient-end);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(199,59,255,0.12); }
+}
+
+// -------------------------------
+// small utility to set a solid fallback color variable if needed
+// -------------------------------
+.primary-color {
+  color: $gradient-start;
+}
+
+// -------------------------------
+// Auto dark-mode switching: adjust backgrounds/text if the system is dark
+// -------------------------------
+body {
+  background: $light-bg;
+  color: $light-text;
+  font-family: "Poppins", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: $dark-bg;
+    color: $dark-text;
+  }
+
+  // if you want slightly different gradient stops in dark mode you can override here:
+  // e.g. use deeper end for dark
+  // $gradient-start: #FF3DCC; ... but variables are compiled at build time,
+  // so instead repeat usage with explicit dark-color values if desired.
+}

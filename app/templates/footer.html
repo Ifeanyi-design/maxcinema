@@ -1,0 +1,31 @@
+<footer class="absolute w-full left-0 bg-[#830506] flex flex-col mb-0 pb-5">
+        <a href="#BodyTop" class="text-white font-bold w-full text-center py-3 bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90 hover:text-white transition">Back To Top
+            <i class="fa-solid fa-arrow-up text-white text-xl"></i>
+        </a>
+        <div class="w-full text-4xl py-4 font-bold text-center">
+            <h2>MaxCinema</h2>
+        </div>
+
+        <div id="footerLinks" class="flex text-center flex-row justify-evenly text-[1rem] md:gap-64">
+            <ul class="space-y-2">
+                <li class="text-[20px] md:text-2xl font-semibold md:font-bold underline underline-offset-2">Quick Links</li><u></u>
+                <li><a href="{{ url_for('main.contact_us') }}">Contact</a></li>
+                <li><a href="{{ url_for('main.privacy') }}">Privacy</a></li>
+                <li><a>Advertise</a></li>
+                <li><a href="{{ url_for('main.dcma') }}">DMCA</a></li>
+                <li><a href="{{ url_for('main.sitemap_page') }}">Sitemap</a></li>
+            </ul>
+            <ul class="space-y-2">
+                <li class="text-[20px] md:text-2xl font-semibold md:font-bold underline underline-offset-2">Resources</li>
+                <li><a>NPDL</a></li>
+                <li><a href="{{ url_for('main.trailer') }}">Movie Teasers</a></li>
+                <li><a>NGM Movies</a></li>
+                <li><a>Subtitle search</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='request') }}">Movie Request</a></li>
+            </ul>
+        </div>
+
+        <div class="w-full text-center mt-5 mb-2">
+            &copy; 2025 | MAXCINEMA
+        </div>
+    </footer>

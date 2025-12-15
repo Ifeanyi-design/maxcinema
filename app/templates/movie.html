@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
+        <section id="MovieDetails" class="my-2 md:my-5 flex flex-col md:w-5/6">
+            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
+                <h2 class="font-bold text-white text-[100%] md:text-[130%]">{{ video.name }} ({{ video.year_produced }})</h2>
+            </div>
+            <div class="text-sm flex-shrink-0 w-full border border-[#830506] flex items-center justify-center gap-1 px-4 py-1 text-center">
+                <span class="text-[#830506] flex text-center justify-center items-center p-1"><i class="fa-solid fas fa-clock pe-4"></i>{{ video.date_added.strftime('%b %d, %Y') }} <i class="fa-solid fa-folder-open pe-5 ps-2"></i>{{ video.type | title }} <i class="fas fa-comment ps-3"></i><p class="ps-3">0</p></span>
+                <span class="bg-[#830506] w-[3px] h-[18px]"></span>
+                <div class="flex text-[8px] lg:text-[12px] p-1 justify-center items-center">
+                    {% set rating = video.rating | float %}
+                        <div class="stars-container">
+                            {% for i in range(1, 6) %}
+                                {% set fraction = rating - (i - 1) %}
+                                {% if fraction >= 1 %}
+                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                {% elif fraction > 0 %}
+                                    <span class="moviestar partial">
+                                        <i class="fas fa-star base" aria-hidden="true"></i>
+                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
+                                        <i class="fas fa-star fill" aria-hidden="true"></i>
+                                        </span>
+                                    </span>
+                                {% else %}
+                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    <p class="text-[#830506] ml-1">{{rating | round(1)}}/5</p>
+                </div>
+            </div>
+            
+            <div class="overflow-hidden">
+                <div class="w-full relative mx-auto">
+                    <img 
+                    src="{{ video.image }}"
+                    alt="{{ video.name }} ({{ video.year_produced }})"
+                    class="w-full aspect-[2/2.6] object-cover shadow-lg"
+                    >
+                </div>
+                <p class="text-black pt-7">
+                    {{ video.description }}
+                </p>
+                <h3 class="text-black font-bold my-5">{{ video.name }} ({{ video.year_produced }})</h3>
+
+                <div class="flex flex-col text-black gap-7">
+                    <div>
+                        <span class="font-bold">
+                            Genre:</span> 
+                            {% for genre in video.genres %}
+                                {{ genre.name }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Stars:</span> {{ video.star_cast }}
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Release Date:</span> 1 July 2025
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Country:</span> United States
+                    </div>
+                    <div class="flex text-center items-center">
+                        <span class="font-bold">
+                            Ratings:</span> 
+                            <div class="flex text-[8px] lg:text-[12px] p-1 items-center">
+                                {% set rating = video.rating | float %}
+                                <div class="stars-container">
+                                    {% for i in range(1, 6) %}
+                                        {% set fraction = rating - (i - 1) %}
+                                        {% if fraction >= 1 %}
+                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% elif fraction > 0 %}
+                                        <span class="moviestar partial">
+                                            <i class="fas fa-star base" aria-hidden="true"></i>
+                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
+                                            <i class="fas fa-star fill" aria-hidden="true"></i>
+                                            </span>
+                                        </span>
+                                        {% else %}
+                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="text-[#830506] ml-1 text-xl">{{ rating | round(1) }}/5</p>
+                            </div> <span>({{ video.num_votes }} votes)</span>
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Language:</span> English
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Subtitles:</span> English, Spanish, French, German, Portuguese
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Source:</span> Netflix
+                    </div>
+                    <div>
+                        <span class="font-bold">
+                            Runtime:</span> {{ video.length }}
+                    </div>
+                    {% if video.type == 'series' %}
+                        <div>
+                            <span class="font-bold">
+                                Episodes:</span> - (ongoing)
+                        </div>
+                    {% endif %}
+
+                    
+                    <div class="w-full mt-4">
+                        {% if video.trailer_url %}
+                            <div class="aspect-video w-full rounded-lg overflow-hidden shadow-lg">
+                                <iframe src="{{ video.trailer_url | safe }}?rel=0&modestbranding=1&controls=1&showinfo=0" class="w-full h-full" title="{{ video.name }} Trailer" frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+
+                                </iframe>
+                            </div>
+                        {% else %}
+                            <div class="aspect-video w-full rounded-lg overflow-hidden shadow-lg flex justify-center items-center bg-gray-600 h-full">
+                                <h2 class="font-bold text-white text-7xl">NO TRAILER</h2>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if det == "movie" %}
+                        <div class="flex gap-4 mt-4 font-semibold items-center justify-center">
+                            <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">
+                                <i class="fas fa-download"></i>
+                                Download Now</a>
+                        </div>
+                    {% elif det== "series" %}                        
+                        <div class="flex gap-4 mt-4 font-semibold items-center justify-center">
+                            <a href="{{ url_for('main.download_dispatcher', type=video.type, id=current_episode.id, season=season, episode=episode) }}" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">
+                                <i class="fas fa-download"></i> 
+                                Download</a>
+                        </div>
+                    {% endif %}
+
+                    {% if det == "series" %}
+                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
+                            {% for season in seasons %}
+                                <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season.season_number, episode=episode) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center rounded-lg transition {% if season == current_season %}bg-red-600 hover:text-white hover:bg-red-700 text-white {% else %} border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700  {%endif%}">
+                                    <span>Season {{ season.season_number }}</span>
+                                    <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
+                                </a>  
+                            {% endfor %}                          
+                        </div>
+                        
+                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
+                            {% for episodes in current_season.episodes %}
+                                <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=episodes.episode_number) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center transition rounded-lg {% if episode == episodes.episode_number %}border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700 {% else %}  bg-red-600 hover:text-white hover:bg-red-700 text-white {%endif%}">
+                                    <span>Episode {{ episodes.episode_number }}</span>
+                                    <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
+                                </a>
+                            {% endfor %}
+                                                    
+                        </div>
+                    {% endif %}
+
+                    <!-- Rating UI -->
+                    <div id="ratingContainer" class="mt-4 flex flex-col w-full justify-center items-center border border-[#830506] gap-2">
+                        <p class="font-semibold">What would you rate this?</p>
+                        <div id="starRating" data-video-id="{{ video.id }}" class="flex items-center gap-2 text-4xl" role="radiogroup" aria-label="Rate this movie">
+                            {% for i in range(1,6) %}
+                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="{{ i }}" aria-label="{{ i }} star" role="radio" aria-checked="false"><i class="fas fa-star"></i></button>
+                            {% endfor %}
+                            <span id="ratingValue" class="ml-3 text-sm text-black text-center">Not rated</span>
+                        </div>
+
+                        <!-- Show average rating and breakdown -->
+                        <p>Average Rating: <span id="averageRating">{{ video.rating }}</span> ({{ video.num_votes }} votes)</p>
+                    </div>
+
+                    <!-- Telegram CTA box -->
+                    <div id="telegramCta" class="mt-4">
+                        <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-brands fa-telegram-plane text-white text-2xl" aria-hidden="true"></i>
+                                <div>
+                                    <p class="text-white font-semibold">Join our Telegram group</p>
+                                    <p class="text-white text-sm opacity-90">Get updates, trailers and new releases</p>
+                                </div>
+                            </div>
+                            <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
+                        </div>
+                    </div>
+
+                    <!-- Related Movies / You may like -->
+                    <section id="relatedMovies" class="mt-6 w-full">
+                        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                            <h2 class="font-bold text-white text-[100%] md:text-[110%]">You may Also like</h2>
+                        </div>
+                        <!-- responsive grid: 2 cols xs, up to 6 cols on large screens -->
+                        <div id="relatedList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-3">
+                            <!-- Six static placeholder cards. JS will update .card-img and .card-title. -->
+                            {% if det == "movie" %}
+                                {% for suggest in suggested %}
+                                    <a href="{{url_for('main.detail', det=suggest.type, name=suggest.name, id=suggest.id)}}" class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1 related-card">
+                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
+                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
+                                        </div>
+                                    
+                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
+                                    </a>
+                                {% endfor %}
+                            {% else %}                            
+                                {% for suggest in suggested %}
+                                    <a href='{{ url_for("main.detail", det=suggest.type, name=suggest.name, id=suggest.id, season="1", episode="1") }}' class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1">
+                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
+                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
+                                        </div>
+                                    
+                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
+                                    </a>
+                                {% endfor %}
+                            {% endif %}
+                            
+                        </div>
+                    </section>
+
+                    <section class="w-full">
+                        <div class="w-full bg-[#830506] text-white font-medium p-3 text-center">{{ num_comment }} COMMENT{{ 'S' if num_comment != 1 else '' }}</div>
+                        <div id="comments-container" class="bg-gray-100 px-2">
+                            {% if comments %}
+                                {% for comment in comments %}
+                                    {% include 'comments.html' %}
+                                {% endfor %}
+                            {% else %}
+                                <h2 class="text-black font-bold">No Comments here</h2>
+                            {% endif %}
+                        </div>
+                        <span class="font-bold"><p class="pt-3 text-2xl">Leave a Reply</p></span>
+                        <div id="comment-notification">Comment posted!</div>
+
+                        <form id="main-comment-form" class="mt-4 flex flex-col gap-5", data-video-id="{{ video.id }}">
+                            <div>
+                                <legend>Comment</legend>
+                                <textarea name="text" id="" class="w-full bg-gray-200 rounded-md h-[20vh] p-2"></textarea>
+                            </div>
+                            <div>
+                                <legend class="required">Name</legend>
+                                <input type="text" name="name" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
+                            </div>
+                            <div>
+                                <legend class="required">Email</legend>
+                                <input type="email" name="email" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
+                            </div>
+                            <button type="submit" class="py-2 w-40 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">POST COMMENT</button>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
+            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for movie in trending_movie %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ movie.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Movies
+                    </a>
+                </div>
+
+
+            </section>
+
+
+            <section id="TrendingSeries" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for series in trending_series %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ series.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Series
+                    </a>
+                </div>
+
+
+            </section>
+
+            <section id="Trailers" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for trailer in trending_trailers %}
+                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{trailer.name}}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Trailers
+                    </a>
+                </div>
+
+
+            </section>
+        </section>
+    </section>
+
+{% endblock %}

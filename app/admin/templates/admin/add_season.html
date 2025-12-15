@@ -1,0 +1,75 @@
+{%extends "admin/base.html"%}
+
+{%block content%}
+    {% if prev == "dashboard" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+            Go back
+        </button>
+    {% elif prev == "series" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev=prev, name=series.slug, id=series.id) }}'">
+            Go back
+        </button>
+    {% elif prev == "movie" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+            Go back
+        </button>
+    {% endif %}
+
+    <form method="POST" class="space-y-8 text-black">
+        {{ form.hidden_tag() }}
+        <h1 class="text-2xl text-white font-bold">{{ action }} Season for "{{ series.name }}"</h1>
+        <!-- SECTION: Basic Info -->
+        <div class="border border-gray-200 rounded-xl p-6 bg-white shadow-sm">
+            <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.season_number.label }}</label>
+                    {{ form.season_number(class="w-full px-3 py-2 border rounded-lg focus:ring focus:ring-blue-200") }}
+                    {% for error in form.season_number.errors %}
+                        <span style="color:red;">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.image.label }}</label>
+                    {{ form.image(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+                <div class="flex gap-4">
+                    <label class="block mb-1 font-medium">{{ form.completed.label }}</label>
+                    {{ form.completed(class="px-3 py-2 border rounded-lg") }}
+                </div>
+
+
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.description.label }}</label>
+                    {{ form.description(class="w-full px-3 py-2 border rounded-lg h-32", rows=4, cols=50) }}
+                </div>
+
+                <div>
+                    <label class="block mb-1 font-medium">{{ form.release_date.label }}</label>
+                    {{ form.release_date(class="w-full px-3 py-2 border rounded-lg") }}
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.cast.label }}</label>
+                    {{ form.cast(class="w-full px-3 py-2 border rounded-lg h-24") }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block mb-1 font-medium">{{ form.trailer_url.label }}</label>
+                    {{ form.trailer_url(class="w-full px-3 py-2 border rounded-lg h-24") }}
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- SUBMIT -->
+        <div class="text-right">
+            {{ form.submit(class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 cursor-pointer") }}
+        </div>
+
+    </form>
+{%endblock%}

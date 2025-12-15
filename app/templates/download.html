@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Uploads - MaxCinema{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Admin Uploads Dashboard</h1>
+
+<h2 class="text-xl font-semibold mt-6 mb-2 text-black">Movies</h2>
+<table class="w-full border-collapse border text-black">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="border px-2 py-1">ID</th>
+            <th class="border px-2 py-1">Title</th>
+            <th class="border px-2 py-1">Qualities</th>
+            <th class="border px-2 py-1">Upload</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for movie in movies %}
+        <tr>
+            <td class="border px-2 py-1">{{ movie.id }}</td>
+            <td class="border px-2 py-1">{{ movie.title }}</td>
+            <td class="border px-2 py-1">
+                {% if movie.video_qualities %}
+                    {% for q, url in movie.video_qualities.items() %}
+                        <a href="{{ url }}" target="_blank">{{ q }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    None
+                {% endif %}
+            </td>
+            <td class="border px-2 py-1">
+                <form class="upload-form" data-video-id="{{ movie.id }}" data-type="movie" enctype="multipart/form-data">
+                    <label class="block mb-2">Upload source file (Bytescale will transcode):</label>
+                    <input type="file" name="file" accept="video/*" required>
+                    <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded mt-1">Upload</button>
+                    <div class="progress-bar mt-1 w-full bg-gray-200 rounded h-2 hidden">
+                        <div class="progress-fill bg-green-500 h-2 rounded w-0"></div>
+                    </div>
+                    <div class="status mt-1 text-sm"></div>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2 class="text-xl font-semibold mt-6 mb-2 text-black">Episodes</h2>
+<table class="w-full border-collapse border text-black">
+    <thead>
+        <tr class="bg-gray-200">
+            <th class="border px-2 py-1">ID</th>
+            <th class="border px-2 py-1">Title</th>
+            <th class="border px-2 py-1">Qualities</th>
+            <th class="border px-2 py-1">Upload</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ep in episodes %}
+        <tr>
+            <td class="border px-2 py-1">{{ ep.id }}</td>
+            <td class="border px-2 py-1">{{ ep.title }}</td>
+            <td class="border px-2 py-1">
+                {% if ep.video_qualities %}
+                    {% for q, url in ep.video_qualities.items() %}
+                        <a href="{{ url }}" target="_blank">{{ q }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    None
+                {% endif %}
+            </td>
+            <td class="border px-2 py-1">
+                <form class="upload-form" data-video-id="{{ ep.id }}" data-type="episode" enctype="multipart/form-data">
+                    <label class="block mb-2">Upload source file (Bytescale will transcode):</label>
+                    <input type="file" name="file" accept="video/*" required>
+                    <button type="submit" class="px-2 py-1 bg-green-600 text-white rounded mt-1">Upload</button>
+                    <div class="progress-bar mt-1 w-full bg-gray-200 rounded h-2 hidden">
+                        <div class="progress-fill bg-green-500 h-2 rounded w-0"></div>
+                    </div>
+                    <div class="status mt-1 text-sm"></div>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block script %}
+    
+
+<script>
+document.querySelectorAll(".upload-form").forEach(form => {
+    form.addEventListener("submit", function(e){
+        e.preventDefault();
+        const videoId = this.dataset.videoId;
+        const type = this.dataset.type;
+        const fileInput = this.querySelector('input[name="file"]');
+        const file = fileInput.files[0];
+        if(!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("video_id", videoId);
+        formData.append("type", type);
+
+        const progressBar = this.querySelector(".progress-bar");
+        const progressFill = this.querySelector(".progress-fill");
+        const status = this.querySelector(".status");
+
+        progressBar.classList.remove("hidden");
+        progressFill.style.width = "0%";
+        status.textContent = "Uploading...";
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "{{ url_for('upload_bytescale') }}", true);
+
+        xhr.upload.addEventListener("progress", function(e){
+            if(e.lengthComputable){
+                const percent = (e.loaded / e.total) * 100;
+                progressFill.style.width = percent + "%";
+            }
+        });
+
+        xhr.onload = function(){
+            if(xhr.status === 200){
+                const resp = JSON.parse(xhr.responseText);
+                status.textContent = "Upload complete! Waiting for transcoding...";
+                progressFill.style.width = "100%";
+                if(resp.file_id) pollTranscoding(resp.file_id, status);
+            } else {
+                status.textContent = "Error: " + xhr.responseText;
+                progressFill.style.backgroundColor = "red";
+            }
+        };
+
+        xhr.onerror = function(){
+            status.textContent = "Upload failed.";
+            progressFill.style.backgroundColor = "red";
+        };
+
+        xhr.send(formData);
+    });
+});
+
+// Polling function
+function pollTranscoding(fileId, statusEl){
+    const interval = setInterval(() => {
+        fetch(`/upload/status/${fileId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.qualities && Object.keys(data.qualities).length > 0){
+                    let q = Object.keys(data.qualities).join(", ");
+                    statusEl.textContent = "Transcoding complete! Available qualities: " + q;
+                    clearInterval(interval);
+                } else {
+                    statusEl.textContent = "Transcoding in progress...";
+                }
+            })
+            .catch(() => {
+                statusEl.textContent = "Error checking transcoding status";
+                clearInterval(interval);
+            });
+    }, 3000); // poll every 3 seconds
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,568 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.bg-gradient {
+  background: linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF);
+}
+
+/* directional background helpers (optional) */
+.bg-gradient-vertical {
+  background: linear-gradient(180deg, #FF3DCC, #C73BFF, #8B00FF);
+}
+
+.bg-gradient-horizontal {
+  background: linear-gradient(90deg, #FF3DCC, #C73BFF, #8B00FF);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #FF3DCC, #8B00FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-gradient {
+  border: 3px solid transparent;
+  -o-border-image: linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) 1;
+     border-image: linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) 1;
+  border-radius: 8px;
+  /* keep inner background from being painted by the border image */
+  background-clip: padding-box;
+}
+
+.border-top-gradient-true {
+  border-top: 3px solid transparent;
+  background: linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.border-right-gradient-true {
+  border-right: 3px solid transparent;
+  background: linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.border-bottom-gradient-true {
+  border-bottom: 3px solid transparent;
+  background: linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) border-box;
+  background-clip: padding-box, border-box;
+}
+
+.text-gradient-horizontal {
+  background: linear-gradient(90deg, #FF3DCC, #8B00FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-diagonal {
+  background: linear-gradient(135deg, #FF3DCC, #8B00FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-vertical {
+  background: linear-gradient(180deg, #FF3DCC, #8B00FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-left-gradient-true {
+  border-left: 3px solid transparent;
+  background: linear-gradient(#000, #000) padding-box, linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF) border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Note: For true single-side gradient border to look correct,
+   the element should have a solid background (e.g., background-color: #0f0f0f). */
+.decor-line {
+  position: relative;
+}
+.decor-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #FF3DCC, #C73BFF, #8B00FF);
+  transform-origin: left center;
+}
+
+/* variants for lines on specific sides */
+.decor-line-top::after {
+  bottom: auto;
+  top: 0;
+}
+
+.decor-line-right::after {
+  left: auto;
+  right: 0;
+  width: 3px;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+}
+
+.decor-line-left::after {
+  right: auto;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, #FF3DCC, #C73BFF, #8B00FF);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(199, 59, 255, 0.12);
+}
+
+.primary-color {
+  color: #FF3DCC;
+}
+
+body {
+  background: #ffffff;
+  color: #0f0f0f;
+  font-family: "Poppins", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0f0f0f;
+    color: #ffffff;
+  }
+}
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .slide-fade-enter {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+  .slide-fade-enter-active {
+    max-height: 1000px; /* big enough to fit content */
+    opacity: 1;
+  }
+  .slide-fade-exit {
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+  }
+  .slide-fade-exit-active {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+body {
+  @apply bg-black text-white;
+  font-family: "Poppins", sans-serif;
+  padding-bottom: 0;
+  margin: 0;
+  box-sizing: border-box;
+  padding-top: var(--header-height);
+}
+
+html {
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: #E50914;
+  text-decoration: none;
+}
+a:hover {
+  color: rgb(246.6428571429, 42.3571428571, 52.5714285714);
+}
+
+.si {
+  font-size: 70%;
+}
+
+#Navbar {
+  font-size: 20px;
+}
+#Navbar #mainNav a {
+  position: relative;
+  color: #830506;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  display: inline-block;
+  overflow: hidden;
+  transition: color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+}
+#Navbar #mainNav a:hover {
+  color: #ffffff;
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(139, 0, 255, 0.4);
+  background-color: #830506;
+}
+#Navbar #mainNav a:hover::before {
+  opacity: 1;
+}
+#Navbar ul button {
+  position: relative;
+  color: #830506;
+  font-weight: 600;
+  margin-top: 5px;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  display: inline-block;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+#Navbar ul button:hover {
+  color: #ffffff;
+  transform: scale(1.05);
+  background-color: #830506;
+  box-shadow: 0 0 12px rgba(139, 0, 255, 0.4);
+}
+#Navbar ul button:hover::before {
+  opacity: 1;
+}
+#Navbar .hiddennav {
+  display: block;
+}
+
+.no-break {
+  white-space: nowrap;
+}
+
+#genreMenu #genreNav li {
+  padding: 13px;
+}
+#genreMenu #genreNav li a {
+  color: #830506;
+  border-radius: 5px;
+  transition: all 0.3s ease-in-out;
+}
+#genreMenu #genreNav li a:hover {
+  background: #830506;
+  color: white;
+  transform: scale(1.05);
+}
+
+#MobilegenreMenu #MobilegenreNav li a {
+  color: #830506;
+  border-radius: 5px;
+  transition: all 0.3s ease-in-out;
+}
+#MobilegenreMenu #MobilegenreNav li a:hover {
+  background: #830506;
+  color: white;
+  transform: scale(1.05);
+}
+
+#NavMenu #Navs li a {
+  color: #830506;
+  border-radius: 5px;
+  transition: all 0.3s ease-in-out;
+  padding: 8px;
+}
+#NavMenu #Navs li a:hover {
+  background: #830506;
+  color: white;
+  transform: scale(1.05);
+}
+
+.myanimate {
+  transition: all 0.5s ease-in-out;
+}
+
+#featurecontain .featureBox {
+  flex: none;
+  min-width: 180px;
+}
+
+@media (min-width: 768px) {
+  #featurecontain .featureBox {
+    min-width: 220px;
+  }
+}
+#trendingcontain .trendingBoxes {
+  flex: none;
+  min-width: 180px;
+}
+
+@media (min-width: 768px) {
+  #trendingcontain .trendingBoxes {
+    min-width: 220px;
+  }
+}
+.recentBox {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+.recentBox #recentBoxtype {
+  border: 2px solid #E50914;
+  margin-left: 7px;
+  margin-top: 4px;
+  margin-bottom: 7px;
+  color: #E50914;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.trailerBox {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+.trailerBox #trailerBoxtype {
+  border: 2px solid #E50914;
+  margin-top: 4px;
+  margin-bottom: 7px;
+  color: #E50914;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.trendingBox {
+  @apply transition-transform duration-300 hover:scale-105;
+}
+
+.boxescard {
+  border: 1px solid black;
+}
+
+.viewAll {
+  background: #830506;
+  color: white;
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  transition: all 0.3s ease-in-out;
+}
+.viewAll:hover {
+  background: white;
+  color: #830506;
+  border: 2px solid #830506;
+  transform: scale(1.05);
+}
+
+.hoverscollerbtn {
+  transition: all 0.3s ease-in-out;
+}
+.hoverscollerbtn:hover {
+  padding: 0.6rem;
+}
+
+.search {
+  font-size: larger;
+}
+
+#SearchInput {
+  border-radius: 0.375rem 0 0 0.375rem;
+  border: 2px solid #830506;
+}
+
+#footerLinks ul li a {
+  color: #ffffff;
+}
+
+.menu-btn {
+  position: absolute;
+  z-index: 10;
+  top: 1rem;
+  height: 20px;
+  right: 20px;
+  width: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.menu-btn-burger {
+  position: absolute;
+  right: 0;
+  top: 0.5rem;
+  width: 28px;
+  height: 3px;
+  background: #830506;
+  transition: all 0.3s ease-in-out;
+}
+.menu-btn-burger::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  width: 28px;
+  height: 3px;
+  background: #830506;
+  transition: all 0.3s ease-in-out;
+}
+.menu-btn-burger::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  width: 20px;
+  height: 3px;
+  background: #830506;
+  transition: all 0.3s ease-in-out;
+}
+.menu-btn-burger.open::after {
+  width: 28px;
+}
+.menu-btn-burger.open::before {
+  width: 20px;
+}
+
+.nav {
+  opacity: 0.98;
+  visibility: hidden;
+  transform: translateY(-100%);
+  transition: all 0.3s ease-in-out;
+}
+.nav.open {
+  visibility: visible;
+  transform: translateY(0);
+}
+.nav .menu-nav {
+  transform: translateY(-100%);
+  transition: all 0.3s ease-in-out;
+}
+.nav .menu-nav.open {
+  transform: translateY(0);
+}
+
+.required::after {
+  content: " *";
+  color: #E50914;
+  font-weight: bold;
+}
+
+.decorate {
+  list-style-type: disc;
+  padding-left: 40px;
+}
+
+/* For smooth slide-down/up animation */
+.stars-container {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.moviestar {
+  position: relative;
+  width: 0.7rem; /* control size here */
+  height: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* base icon (gray) default for empty/partial */
+.moviestar i {
+  font-size: 0.7rem;
+  color: #ccc;
+  display: block; /* important so width:100% works on i */
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+/* full star */
+.moviestar.full i {
+  color: #facc15;
+}
+
+/* partial: base gray star positioned */
+.moviestar.partial .base {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #ccc;
+  z-index: 1;
+}
+
+/* wrapper that clips the fill */
+.moviestar.partial .fill-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* the fill icon matches the base but colored */
+.moviestar.partial .fill {
+  color: #facc15;
+  position: relative; /* inside fill-wrap */
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+/* Slide + fade in effect */
+.slide-fade-enter {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.5s ease;
+}
+
+.slide-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Slide + fade out effect */
+.slide-fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.5s ease;
+}
+
+.slide-fade-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Notification */
+#comment-notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background-color: #16a34a; /* green-600 */
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.5s ease;
+  z-index: 50;
+}
+
+#comment-notification.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+:root {
+  --header-height: 0px;
+}
+
+.episode-list-img {
+  background-position: center;
+  background-size: cover;
+}/*# sourceMappingURL=input.css.map */

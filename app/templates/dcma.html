@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
+        <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6 mb-10">
+            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
+                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
+                <h2 class="font-bold text-white text-[100%] md:text-[130%]">DCMA Takedown</h2>
+            </div>
+            <div class="w-full border border-red-800 text-center items-center pt-2">
+                <div class="w-full relative mx-auto">
+                    <img 
+                    src="/static/images/DMCA-acronym.webp"
+                    alt="Stranger Things Season 5 (2025)"
+                    class="w-full aspect-[2/1] object-cover shadow-lg"
+                    >
+                </div>
+            </div>
+            <div class="w-full text-black text-xl py-3">
+                <p class="text-xl">
+                    While we comply with the DMCA, the <b>movies, trailers, videos, songs and posters/images</b> posted on <b>NaijaPrey</b> are mainly for promotional purpose only. <br><br>
+
+                    NaijaPrey is in compliance with the <b>Digital Millennium Copyright Act (“DMCA”)</b>. It is our policy to respond to any infringement notices and take appropriate actions under the Digital Millennium Copyright Act (“DMCA”) and other applicable intellectual property laws. <br><br>
+
+                    If your copyrighted material has been uploaded on NaijaPrey or if hyperlinks to your copyrighted material are returned through our search engine and you want this material removed, you must provide a written communication that details the information listed in the following section. <br><br>
+
+                    Please be aware that <b class="text-red-800">you will be liable for damages (including costs and attorneys’ fees) if you misrepresent information</b> listed on our site that is infringing on your copyrights. We suggest that you first contact an attorney for legal assistance on this matter. <br><br>
+
+                    The following elements must be included in your copyright infringement claim: <br><br>
+
+                    <ul class="decorate text-lg">
+                        <li>Provide evidence of the authorized person to act on behalf of the owner of an exclusive right that is allegedly infringed.</li>
+                        <li>Provide sufficient contact information so that we may contact you.</li>
+                        <li>You must also include a valid email address.</li>
+                        <li>You must identify in sufficient detail the copyrighted work claimed to have been infringed and including at least one search term under which the material appears in NaijaPrey search results.</li>
+                        <li>A statement that the complaining party has a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.</li>
+                        <li> A statement that the information in the notification is accurate, and under penalty of perjury, that the complaining party is authorized to act on behalf of the owner of an exclusive right that is allegedly infringed.</li>
+                        <li>Must be signed by the authorized person to act on behalf of the owner of an exclusive right that is allegedly being infringed.</li>
+                        <li>Send the infringement notice to us by mailing us via; contact@naijaprey.com
+                    </li>
+                    </ul>  <br>                        
+                   
+                    <b>Please allow us 48 hours to get back to you.</b> <br><br>
+
+                    Note that emailing your complaint to other parties such as our Internet Service Provider will not expedite your request and may result in a delayed response due to the complaint not being filed properly. <br><br>
+
+                    By using our website, you hereby consent to our disclaimer and agree to its terms and conditions. <br><br>
+
+                    <i>Last Updated: 28 August, 2024</i>
+                </p>
+            </div>
+            
+            
+        </section>
+
+
+        <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
+            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for movie in trending_movie %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ movie.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Movies
+                    </a>
+                </div>
+
+
+            </section>
+
+
+            <section id="TrendingSeries" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for series in trending_series %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ series.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Series
+                    </a>
+                </div>
+
+
+            </section>
+
+            <section id="Trailers" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for trailer in trending_trailers %}
+                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{trailer.name}}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Trailers
+                    </a>
+                </div>
+
+
+            </section>
+        </section>
+    </section>
+
+{% endblock %}

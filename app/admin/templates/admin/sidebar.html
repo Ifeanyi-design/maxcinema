@@ -1,0 +1,85 @@
+<div class="w-64 bg-gray-800 p-6 flex flex-col h-full">
+    <h1 class="text-2xl font-bold mb-8">Admin Panel</h1>
+
+    <nav class="flex flex-col gap-2 text-gray-300 flex-1 overflow-y-auto">
+
+        <!-- Dashboard -->
+        <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition {% if request.endpoint == 'admin.dashboard' %}text-yellow-400 font-semibold{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
+            </svg>
+            Dashboard
+        </a>
+
+        <!-- Movies Collapsible -->
+        <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_movies','admin.add_movie'] else 'false' }} }" class="flex flex-col mt-1">
+            <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
+                    </svg>
+                    Movies <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_movies }}</span>
+                </span>
+                <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1">
+                <a href="{% if movie %} {{ url_for('admin.add_movie', prev='movie') }} {% elif series%} {{ url_for('admin.add_movie', prev='series') }} {%else%} {{url_for('admin.add_movie', prev='dashboard')}} {% endif %}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.add_movie' %}text-yellow-400 font-semibold{% endif %}">Add Movie</a>
+                <a href="{{ url_for('admin.view_movies') }}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.view_movies' %}text-yellow-400 font-semibold{% endif %}">View Movies</a>
+            </div>
+        </div>
+
+        <!-- Series Collapsible -->
+        <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_series','admin.add_series'] else 'false' }} }" class="flex flex-col mt-1">
+            <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
+                <span class="flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Series <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_series }}</span>
+                </span>
+                <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+            <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1">
+                <a href="{% if movie %} {{ url_for('admin.add_series', prev='movie') }} {% elif series%} {{ url_for('admin.add_series', prev='series') }} {%else%} {{url_for('admin.add_series', prev='dashboard')}} {% endif %}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.add_series' %}text-yellow-400 font-semibold{% endif %}">Add Series</a>
+                <a href="{{ url_for('admin.view_series') }}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.view_series' %}text-yellow-400 font-semibold{% endif %}">View Series</a>
+            </div>
+        </div>
+
+        <!-- Trailers -->
+        <a href="{{ url_for('admin.view_trailers') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_trailers','admin.add_trailer'] %}text-yellow-400 font-semibold{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276a2 2 0 0 1 2.447 1.788v6.976a2 2 0 0 1-2.447 1.788L15 14M4 6h6v12H4z"/>
+            </svg>
+            Trailers <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_trailers }}</span>
+        </a>
+
+        <!-- Users -->
+        <a href="{{ url_for('admin.view_users') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_users','admin.add_user'] %}text-yellow-400 font-semibold{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8 8 0 1 1 17.804 5.121 8 8 0 0 1 5.121 17.804z"/>
+            </svg>
+            Users <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_users }}</span>
+        </a>
+
+        <!-- Storage -->
+        <a href="{{ url_for('admin.view_storage') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_storage','admin.add_storage'] %}text-yellow-400 font-semibold{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
+            </svg>
+            Storage
+        </a>
+    </nav>
+
+    <!-- User Info / Logout -->
+    <div class="mt-auto pt-6 border-t border-gray-700">
+        <p class="text-sm">Logged in as: {{ current_user.username }}</p>
+        <a href="{{ url_for('admin.logout') }}" class="text-red-500 hover:text-red-400 text-sm mt-2 block">Logout</a>
+    </div>
+</div>
+
+<!-- AlpineJS CDN for collapsibles -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

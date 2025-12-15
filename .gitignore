@@ -1,0 +1,15 @@
+# Ignore Virtual Env
+.venv/
+venv/
+
+# Ignore Node Modules (HUGE folders, do not upload!)
+node_modules/
+
+# Ignore pycache
+__pycache__/
+*.pyc
+instance/
+.env
+
+# EXCEPTIONS: We WANT to upload the DB for now
+!instance/maxcinema.db

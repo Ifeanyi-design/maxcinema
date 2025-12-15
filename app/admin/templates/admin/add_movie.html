@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10">
+    {% if prev == "dashboard" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+            Go back
+        </button>
+    {% elif prev == "series" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series') }}'">
+            Go back
+        </button>
+    {% elif prev == "movie" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+            Go back
+        </button>
+    {% endif %}
+
+    <h1 class="text-3xl font-bold text-white mb-6 mt-6">Add New Movie / Series</h1>
+
+    <form method="POST" class="bg-gray-800 p-6 rounded-lg text-black shadow-lg space-y-6">
+        {{ form.hidden_tag() }}
+
+        <!-- Name & Slug -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                {{ form.name.label(class="block text-gray-300 mb-1") }}
+                {{ form.name(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.slug.label(class="block text-gray-300 mb-1") }}
+                {{ form.slug(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+            {{ form.description.label(class="block text-gray-300 mb-1") }}
+            {{ form.description(class="w-full p-2 rounded bg-gray-700 text-white", rows="4") }}
+        </div>
+
+        <!-- Type -->
+        <div>
+            {{ form.type.label(class="block text-gray-300 mb-1") }}
+            {{ form.type(class="w-full p-2 rounded bg-gray-700 text-white") }}
+        </div>
+
+        <!-- Year, Length, Rating -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                {{ form.year_produced.label(class="block text-gray-300 mb-1") }}
+                {{ form.year_produced(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.length.label(class="block text-gray-300 mb-1") }}
+                {{ form.length(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.rating.label(class="block text-gray-300 mb-1") }}
+                {{ form.rating(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+        </div>
+
+        <!-- Country & Language -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                {{ form.country.label(class="block text-gray-300 mb-1") }}
+                {{ form.country(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.language.label(class="block text-gray-300 mb-1") }}
+                {{ form.language(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+        </div>
+
+        <!-- Star Cast & Subtitles -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                {{ form.star_cast.label(class="block text-gray-300 mb-1") }}
+                {{ form.star_cast(class="w-full p-2 rounded bg-gray-700 text-white", rows="2") }}
+            </div>
+            <div>
+                {{ form.subtitles.label(class="block text-gray-300 mb-1") }}
+                {{ form.subtitles(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+        </div>
+
+        <!-- Source & Download / Image -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                {{ form.source.label(class="block text-gray-300 mb-1") }}
+                {{ form.source(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.download_link.label(class="block text-gray-300 mb-1") }}
+                {{ form.download_link(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.image.label(class="block text-gray-300 mb-1") }}
+                {{ form.image(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+            <div>
+                {{ form.trailer_link.label(class="block text-gray-300 mb-1") }}
+                {{ form.trailer_link(class="w-full p-2 rounded bg-gray-700 text-white") }}
+            </div>
+        </div>
+
+        
+
+        <!-- Booleans -->
+        <div class="flex gap-6">
+            <label class="inline-flex items-center">
+                {{ form.featured(class="mr-2") }}
+                <span class="text-gray-300">Featured</span>
+            </label>
+            <label class="inline-flex items-center">
+                {{ form.trending(class="mr-2") }}
+                <span class="text-gray-300">Trending</span>
+            </label>
+            <label class="inline-flex items-center">
+                {{ form.active(class="mr-2") }}
+                <span class="text-gray-300">Active</span>
+            </label>
+        </div>
+
+        <!-- Genres Multi-checkbox -->
+        <div>
+            <span class="block text-gray-300 mb-2 font-semibold">Genres</span>
+            <div class="flex flex-wrap gap-4">
+                {% for value, label in form.genres.choices %}
+                    <label class="flex items-center gap-2 bg-gray-50 border rounded-lg p-2 cursor-pointer">
+                        <input type="checkbox"
+                            name="{{ form.genres.name }}"
+                            value="{{ value }}"
+                            class="h-4 w-4 text-blue-600"
+                            {% if form.genres.data and value in form.genres.data %} checked {% endif %}>
+                        <span>{{ label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Storage Server Dropdown -->
+        <div>
+            {{ form.storage_server_id.label(class="block text-gray-300 mb-1") }}
+            {{ form.storage_server_id(class="w-full p-2 rounded bg-gray-700 text-white") }}
+        </div>
+
+        <!-- Submit -->
+        <div>
+            {{ form.submit(class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-2 rounded") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

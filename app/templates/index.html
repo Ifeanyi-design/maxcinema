@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <section id="Featured" class="relative mx-5 my-5 flex flex-col">
+        <div class="w-full bg-[#830506] flex justify-between px-4 py-2 md:py-3">
+            <h2 class="font-bold text-white text-[100%] md:text-[130%]">
+                
+                <i class="fa-solid fa-clapperboard"></i>
+                Featured</h2>
+            <a href="{{ url_for('main.featured') }}" class="cursor-pointer text-white font-bold text-[50%] md:text-[100%] myanimate border-solid border-2 border-white rounded-md px-2 py-1 hover:bg-white hover:text-[#830506]">View All
+                <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+            </a>
+        </div>
+
+        <button id="ScrollLeft" class="absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button id="ScrollRight" class="absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <div id="featurecontain" class="mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
+
+            
+            {% for featured in features %}
+                <a href="{{url_for('main.detail', det=featured.type, name=featured.name, id=featured.id)}}" class="relative featureBox flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
+                    <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
+                        {% set rating = featured.rating | float %}
+                        <div class="stars-container">
+                                {% for i in range(1, 6) %}
+                                    {% set fraction = rating - (i - 1) %}
+                                    {% if fraction >= 1 %}
+                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                    {% elif fraction > 0 %}
+                                    <span class="moviestar partial">
+                                        <i class="fas fa-star base" aria-hidden="true"></i>
+                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
+                                        <i class="fas fa-star fill" aria-hidden="true"></i>
+                                        </span>
+                                    </span>
+                                    {% else %}
+                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        <p class="text-white ml-1">{{ featured.rating | round(1) }}</p>
+                    </div>
+                    <!-- Image -->
+                    <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
+                        style="background-image: url('{{ featured.image }}');"
+                        role="img" aria-label="{{ featured.name }}">
+                    </div>
+                    <!-- Info -->
+                    <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
+                        <div class="flex items-center space-x-1">
+                            <i class="fas fa-calendar-alt"></i>
+                            <p class="truncate">{{ featured.date_added.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <i class="fas fa-comment"></i>
+                                <p>{{ featured.total_comment }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
+                        <h3 class="line-clamp-2 text-left">{{ featured.name }}</h3>
+                    </div>
+                </a>
+            {% endfor %}
+            
+
+        </div>
+
+
+    </section>
+
+
+    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
+        <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6">
+            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
+                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
+                <h2 class="font-bold text-white text-[100%] md:text-[130%]">Recently Added</h2>
+            </div>
+            <div class="text-sm flex-shrink-0 md:hidden w-full border border-[#830506] flex items-center justify-center gap-3 px-4 py-1 text-center">
+                <a href="{{ url_for('main.navbar', nav='all_movie') }}" class="border border-[#830506] p-1 font-semibold hover:bg-[#830506] hover:text-white active:bg-[#830506] active:text-white">MOVIES</a>
+                <a href="{{ url_for('main.navbar', nav='all_series') }}" class="border border-[#830506] p-1 font-semibold hover:bg-[#830506] hover:text-white active:bg-[#830506] active:text-white">SERIES</a>
+                <a href="{{ url_for('main.navbar', nav='trailers') }}" class="border border-[#830506] p-1 font-semibold hover:bg-[#830506] hover:text-white active:bg-[#830506] active:text-white">TRAILERS</a>
+                <a href="{{ url_for('main.navbar', nav='trending') }}" class="p-1 border border-[#830506] font-semibold hover:bg-[#830506] hover:text-white active:bg-[#830506] active:text-white">TRENDING</a>
+            </div>
+            <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2 md:py-4">
+                {% for videos in items %}
+                    {% if videos.__class__.__name__ == 'Movie' %}
+                        <div class="relative flex flex-col boxescard recentBox rounded-md overflow-hidden"
+                    onclick="window.location.href='{{url_for("main.detail", det=videos.all_video.type, name=videos.all_video.name, id=videos.all_video.id)}}'">
+                            <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
+                                {% set rating = videos.all_video.rating | float %}
+                                <div class="stars-container">
+                                    {% for i in range(1, 6) %}
+                                        {% set fraction = rating - (i - 1) %}
+                                        {% if fraction >= 1 %}
+                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% elif fraction > 0 %}
+                                        <span class="moviestar partial">
+                                            <i class="fas fa-star base" aria-hidden="true"></i>
+                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
+                                            <i class="fas fa-star fill" aria-hidden="true"></i>
+                                            </span>
+                                        </span>
+                                        {% else %}
+                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="text-white ml-1">{{ videos.all_video.rating | round(1) }}</p>
+                            </div>
+                            <!-- Image wrapper -->
+                            <div class="w-full aspect-[2/3] relative">
+                                <img 
+                                src="{{ videos.all_video.image }}"
+                                alt="{{ videos.all_video.name }}"
+                                class="absolute inset-0 w-full h-full object-cover"
+                                >
+                            </div>
+
+                            <div class="flex flex-col justify-between flex-grow">
+                                <!-- Info -->
+                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <p class="truncate">{{ videos.all_video.date_added.strftime('%b %d, %Y') }}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-comment"></i>
+                                        <p>{{ videos.all_video.total_comment }}</p>
+                                    </div>
+                                    
+                                </div>
+
+                                <!-- Title -->
+                                <div id="recentBoxtitle" class="text-black text-left p-2.5 font-semibold text-sm md:text-base">
+                                <h3 class="line-clamp-2 leading-snug">{{ videos.all_video.name }}</h3>
+                                </div>
+
+                                <div id="recentBoxtype" class="w-fit rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
+                                <h3>{{ videos.all_video.type | title }}</h3>
+                                </div>
+                            </div>
+
+                        </div>
+                    {% elif videos.__class__.__name__ == 'Episode' %}
+                        <div class="relative flex flex-col boxescard recentBox rounded-md overflow-hidden"
+                    onclick="window.location.href='{{url_for("main.detail", det=videos.season.series.all_video.type, name=videos.season.series.all_video.name, id=videos.season.series.all_video.id, season=videos.season.season_number, episode=videos.episode_number)}}'">
+                            <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
+                                {% set rating = videos.season.series.all_video.rating | float %}
+                                <div class="stars-container">
+                                    {% for i in range(1, 6) %}
+                                        {% set fraction = rating - (i - 1) %}
+                                        {% if fraction >= 1 %}
+                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% elif fraction > 0 %}
+                                        <span class="moviestar partial">
+                                            <i class="fas fa-star base" aria-hidden="true"></i>
+                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
+                                            <i class="fas fa-star fill" aria-hidden="true"></i>
+                                            </span>
+                                        </span>
+                                        {% else %}
+                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="text-white ml-1">{{ videos.season.series.all_video.rating | round(1) }}</p>
+                            </div>
+                        <!-- Image wrapper -->
+                        <div class="w-full aspect-[2/3] relative">
+                            <img 
+                            src="{{ videos.season.series.all_video.image }}"
+                            alt="{{ videos.season.series.all_video.name }}"
+                            class="absolute inset-0 w-full h-full object-cover"
+                            >
+                        </div>
+
+                        <div class="flex flex-col justify-between flex-grow">
+                            <!-- Info -->
+                            <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <p class="truncate">{{ videos.season.series.all_video.date_added.strftime('%b %d, %Y') }}</p>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-comment"></i>
+                                    <p>{{ videos.season.series.all_video.total_comment }}</p>
+                                </div>
+                                
+                            </div>
+
+                            <!-- Title -->
+                            <div id="recentBoxtitle" class="text-black text-left p-2.5 font-semibold text-sm md:text-base">
+                            <h3 class="line-clamp-2 leading-snug">{{ videos.season.series.all_video.name }}</h3>
+                            </div>
+
+                            <div class="flex relative">
+                                <div id="recentBoxtype" class="w-fit rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
+                                    <h3>{{ videos.season.series.all_video.type | title }}</h3>
+                                </div>
+                                {% if not videos.season.completed %}
+                                    <div id="recentBoxtype" class="absolute w-fit right-2 rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
+                                        <h3>S{{ videos.season.season_number }} E{{ videos.episode_number }} </h3>
+                                    </div> 
+                                {% else %}
+                                    <div id="recentBoxtype" class="absolute w-fit right-2 rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
+                                        <h3>S{{ videos.season.season_number }} Completed </h3>
+                                    </div> 
+                                {%endif%}  
+                            </div>
+                        </div>
+
+                    </div>
+                    {% endif %}
+                    
+                {% endfor %}
+                
+                
+            </div>
+            <div class="flex justify-center gap-2 pt-3">
+                {% include 'pagnation.html'%}
+            </div>
+        </section>
+
+
+        <section id="TrendingCol" class="flex flex-col md:w-1/3 gap-6">
+            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for movie in trending_movie %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ movie.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Movies
+                    </a>
+                </div>
+
+
+            </section>
+
+
+            <section id="TrendingSeries" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for series in trending_series %}
+                        <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{ series.name }}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Series
+                    </a>
+                </div>
+
+
+            </section>
+
+            <section id="Trailers" class="flex flex-col w-full">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
+                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
+                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
+                </div>
+                <div class="flex flex-col mt-2 gap-1 md:py-2">
+                    {% for trailer in trending_trailers %}
+                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                            <!-- Image -->
+                            <div class="flex-shrink-0 w-1/3 h-full">
+                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
+                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                                </div>
+                            </div>
+
+                            <!-- Title / Text -->
+                            <div class="flex items-center p-2.5 w-2/3">
+                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                                    {{trailer.name}}
+                                </h3>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+                <div class="flex justify-end font-semibold text-sm md:text-base">
+                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
+                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
+                        View All Trailers
+                    </a>
+                </div>
+
+
+            </section>
+        </section>
+    </section>
+
+{% endblock %}

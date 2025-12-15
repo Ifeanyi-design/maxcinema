@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gradient Theme Toggle Demo</title>
+  <link rel="stylesheet" href="gradient.css">
+</head>
+<body>
+  <div style="text-align:center; margin-top: 4rem;">
+    <h1>MaxCinema Theme Demo</h1>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+  </div>
+
+  <script>
+    const toggleTheme = () => {
+      const html = document.documentElement;
+      const current = html.getAttribute("data-theme");
+      html.setAttribute("data-theme", current === "alt" ? "default" : "alt");
+    };
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section id="Merger" class="flex flex-col md:flex-row gap-6 mx-5 my-2">
+
+    <!-- Left Column: Recently Added -->
+    <section id="RecentlyAdded" class="flex flex-col md:w-5/6">
+        <div class="w-full bg-gradient flex justify-center px-4 py-2 md:py-3">
+            <h2 class="font-bold text-white text-[100%] md:text-[130%]">Recently Added</h2>
+        </div>
+
+        <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+            <!-- Recently Added Card Example -->
+            <div class="flex flex-col boxescard recentBox rounded-md overflow-hidden">
+                <div class="w-full aspect-[2/2.5] relative">
+                    <img src="../static/images/ChatGPT Image Oct 14, 2025, 12_30_57 PM.png" 
+                        alt="All Her Fault (2025) Season 1"
+                        class="absolute inset-0 w-full h-full object-cover">
+                </div>
+                <div class="flex justify-between px-2 py-1 text-[#8B00FF] text-sm md:text-base">
+                    <p>Nov 4, 2025</p>
+                    <p>1</p>
+                </div>
+                <div class="text-black line-clamp-2 text-left p-2.5 font-semibold text-sm md:text-base">
+                    <h3>All Her Fault (2025) Season 1 — Long titles truncate</h3>
+                </div>
+                <div class="w-fit rounded-md mx-auto text-black text-center p-1 font-semibold text-sm md:text-base">
+                    <h3>Movie</h3>
+                </div>
+            </div>
+            <!-- Repeat other recently added cards -->
+        </div>
+    </section>
+
+    <!-- Right Column: Trending -->
+    <section id="TrendingCol" class="flex flex-col md:w-1/3 gap-6">
+
+        <!-- Trending Movies -->
+        <section id="TrendingMovies" class="flex flex-col w-full">
+            <div class="w-full bg-gradient flex justify-center px-4 py-2 md:py-3">
+                <h2 class="font-bold text-white text-[100%] md:text-[130%]">Trending Movies</h2>
+            </div>
+
+            <div class="flex flex-col gap-2 mt-2">
+                <!-- Trending Movie Card Example -->
+                <div class="flex flex-row boxescard trendingBox rounded-sm overflow-hidden h-24 md:h-28">
+                    <div class="flex-shrink-0 w-1/3 h-full">
+                        <div style="background: url('../static/images/T-shirt Social Media Graphic - Mojahidul Islam.jpeg'); background-position: center; background-size: cover;"
+                             class="w-full h-full bg-center bg-cover rounded-l-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center p-2.5 w-2/3">
+                        <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                            Black Phone 2 (2025) — Long titles truncate without shrinking the image
+                        </h3>
+                    </div>
+                </div>
+                <!-- Repeat other movie cards -->
+            </div>
+
+            <div class="flex justify-end font-semibold text-sm md:text-base mt-2">
+                <a href="" class="viewAll">View All Movies</a>
+            </div>
+        </section>
+
+        <!-- Trending Series -->
+        <section id="TrendingSeries" class="flex flex-col w-full">
+            <div class="w-full bg-gradient flex justify-center px-4 py-2 md:py-3">
+                <h2 class="font-bold text-white text-[100%] md:text-[130%]">Trending Series</h2>
+            </div>
+
+            <div class="flex flex-col gap-2 mt-2">
+                <!-- Trending Series Card Example -->
+                <div class="flex flex-row boxescard trendingBox rounded-sm overflow-hidden h-24 md:h-28">
+                    <div class="flex-shrink-0 w-1/3 h-full">
+                        <div style="background: url('../static/images/T-shirt Social Media Graphic - Mojahidul Islam.jpeg'); background-position: center; background-size: cover;"
+                             class="w-full h-full bg-center bg-cover rounded-l-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center p-2.5 w-2/3">
+                        <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
+                            Black Phone 2 (2025) — Long titles truncate without shrinking the image
+                        </h3>
+                    </div>
+                </div>
+                <!-- Repeat other series cards -->
+            </div>
+
+            <div class="flex justify-end font-semibold text-sm md:text-base mt-2">
+                <a href="" class="viewAll">View All Series</a>
+            </div>
+        </section>
+
+    </section>
+
+</section>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Homepage, categories, trending -->
+  {% for url in urls %}
+  <url>
+    <loc>{{ url.loc }}</loc>
+    <lastmod>{{ url.lastmod }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  {% endfor %}
+
+  <!-- Movies -->
+  {% for movie in movies %}
+  <url>
+    <loc>{{ url_for('main.movie_details', det=movie.type, name=movie.slug, id=movie.id) }}</loc>
+    <lastmod>{{ movie.date_added.strftime('%Y-%m-%d') if movie.date_added else movie.created_at.strftime('%Y-%m-%d') }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  {% endfor %}
+
+  <!-- Series (latest season & episode) -->
+  {% for item in series_info %}
+    {% set series = item.series %}
+    {% set latest_season = item.latest_season %}
+    {% set latest_episode = item.latest_episode %}
+  <url>
+    {% if latest_season and latest_episode %}
+    <loc>{{ url_for(
+      'main.series_details',
+      det=series.type,
+      name=series.slug,
+      season=latest_season.season_number,
+      episode=latest_episode.episode_number,
+      id=series.id,
+      _external=True
+    ) }}</loc>
+    {% else %}
+    <!-- fallback to series page -->
+    <loc>{{ url_for(
+      'main.series_details',
+      det=series.type,
+      name=series.slug,
+      id=series.id,
+      season=1,
+      episode=1,
+      _external=True
+    ) }}</loc>
+    {% endif %}
+    <lastmod>{{ series.date_added.strftime('%Y-%m-%d') if series.date_added else series.created_at.strftime('%Y-%m-%d') }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  {% endfor %}
+
+  <!-- Trailers -->
+  {% for trailer in trailers %}
+  <url>
+    <loc>{{ url_for('main.watch_trailer', det='trailer_watch', name=trailer.slug) }}</loc>
+    <lastmod>{{ trailer.date_added.strftime('%Y-%m-%d') if trailer.date_added else trailer.created_at.strftime('%Y-%m-%d') }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  {% endfor %}
+
+</urlset>

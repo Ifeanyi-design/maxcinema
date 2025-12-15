@@ -1,0 +1,1112 @@
+from flask import Blueprint, render_template, abort, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context, session
+from flask_login import current_user, login_user, logout_user, login_required
+from sqlalchemy.sql import func
+from sqlalchemy.orm import joinedload
+from sqlalchemy import or_
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+
+import os
+import time
+import requests
+from datetime import datetime
+from functools import wraps
+from slugify import slugify
+from . import listeners
+from .extensions import db, login_manager
+from .models import (
+    AllVideo, Movie, Series, StorageServer, User, Season, Episode,
+    Genre, RecentItem, Rating, Comment, Trailer
+)
+
+main_bp = Blueprint("main", __name__)
+
+
+
+# # ---------------- Admin Required ----------------
+# def admin_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         if not current_user.is_authenticated or not current_user.is_admin:
+#             abort(403)
+#         return f(*args, **kwargs)
+#     return decorated_function
+
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
+
+def ping_search_engines():
+    sitemap_url = "https://yourdomain.com/static/sitemap.xml"
+    try:
+        requests.get(f"http://www.google.com/ping?sitemap={sitemap_url}")
+        requests.get(f"http://www.bing.com/ping?sitemap={sitemap_url}")
+        print("Search engines notified!")
+    except Exception as e:
+        print("Ping failed:", e)
+
+def get_up_next(trailer):
+    # Same release year
+    if trailer.release_year:
+        up_next = Trailer.query.filter(
+            Trailer.release_year == trailer.release_year,
+            Trailer.id != trailer.id
+        ).limit(6).all()
+
+        if up_next:
+            return up_next
+
+    # Fallback: recent trailers
+    up_next = Trailer.query.filter(
+        Trailer.id != trailer.id
+    ).order_by(Trailer.date_added.desc()).limit(6).all()
+
+    if up_next:
+        return up_next
+
+    # Final fallback: random
+    return Trailer.query.filter(
+        Trailer.id != trailer.id
+    ).order_by(func.random()).limit(6).all()
+
+def populate_recent_items_bulk():
+    """
+    Efficiently populate RecentItem table with latest movies and latest episodes per series.
+    """
+    try:
+        # Clear existing RecentItem table in one go
+        db.session.query(RecentItem).delete(synchronize_session=False)
+
+        # --- Latest movies ---
+        movies = Movie.query.order_by(Movie.date_added.desc()).all()
+        recent_movie_items = [
+            RecentItem(
+                video_id=m.id,
+                episode_id=None,
+                date_added=m.date_added,
+                type="movie"
+            )
+            for m in movies
+        ]
+        if recent_movie_items:
+            db.session.bulk_save_objects(recent_movie_items)
+
+        # --- Latest episode per series ---
+        latest_episodes = Episode.query.order_by(Episode.date_added.desc()).all()
+        seen_series = set()
+        recent_series_items = []
+
+        for e in latest_episodes:
+            if not e.season or not e.season.series:
+                continue
+
+            series_id = e.season.series.id
+            if series_id in seen_series:
+                continue
+
+            recent_series_items.append(
+                RecentItem(
+                    video_id=None,
+                    episode_id=e.id,
+                    date_added=e.date_added,
+                    type="series",
+                    series_id=series_id
+                )
+            )
+            seen_series.add(series_id)
+
+        if recent_series_items:
+            db.session.bulk_save_objects(recent_series_items)
+
+        # Commit everything at once
+        db.session.commit()
+        print("RecentItem table populated successfully (bulk)!")
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+from sqlalchemy.exc import OperationalError, PendingRollbackError
+
+def safe_populate_bulk(retries=5, delay=0.2):
+    for attempt in range(1, retries + 1):
+        try:
+            populate_recent_items_bulk()
+            break
+        except (OperationalError, PendingRollbackError) as e:
+            if 'database is locked' in str(e):
+                print(f"Database locked, retrying {attempt}/{retries} after {delay}s...")
+                db.session.rollback()
+                time.sleep(delay)
+            else:
+                raise
+    else:
+        print("Failed to populate RecentItem after multiple retries (bulk).")
+safe_populate = safe_populate_bulk
+
+@main_bp.route('/')
+@main_bp.route('/<int:page>')
+def index(page=1):
+    per_page = 24
+    features = AllVideo.query.filter_by(featured=True).order_by(AllVideo.updated_at.desc()).limit(8).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+
+
+    data = AllVideo.query.order_by(func.random()).limit(24).all()
+    videos = AllVideo.query.order_by(AllVideo.date_added.desc()).all()
+    # Paginate RecentItem directly
+    recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
+                                       .paginate(page=page, per_page=per_page, error_out=False)
+    
+    print(len(recent_paginated.items))
+    # Collect IDs for this page
+    video_ids = [r.video_id for r in recent_paginated.items if r.video_id]
+    episode_ids = [r.episode_id for r in recent_paginated.items if r.episode_id]
+    print(len(video_ids)) 
+
+
+    # Load all Video/Episode objects in one query each
+    videos = {v.id: v for v in Movie.query.filter(Movie.id.in_(video_ids)).all()} if video_ids else {}
+    episodes = {e.id: e for e in Episode.query.filter(Episode.id.in_(episode_ids)).all()} if episode_ids else {}
+    print(len(videos))
+    # Prepare items for display
+    items = []
+    series_name = []
+    index=True
+
+    for r in recent_paginated.items:
+        if r.video_id:
+            v = videos.get(r.video_id)
+            if v:
+                items.append(v)
+        elif r.episode_id:
+            e = episodes.get(r.episode_id)
+            if e.season.series.all_video.name not in series_name:
+                series_name.append(e.season.series.all_video.name)
+                items.append(e)
+    return render_template('index.html', features=features, data=data,
+                            trending_series=series_trend,
+                              trending_movie=movie_trend,
+                                items=items, per_page=per_page,
+                                  page=page, total_pages=recent_paginated.pages,
+                                  videos=recent_paginated, index=index, trending_trailers=trending_trailers)
+
+@main_bp.route("/featured/<int:page>")
+@main_bp.route("/featured")
+def featured(page=1):
+    per_page = 24
+    feature = True
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    featured_videos = AllVideo.query.filter_by(featured=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    return render_template("featured.html", trending_series=series_trend, trending_movie=movie_trend, videos=featured_videos, feature=feature, trending_trailers=trending_trailers)
+
+@main_bp.route("/search_result")
+@main_bp.route("/search_result/<int:page>")
+def search_result(page=1):
+    per_page=24
+    query = request.args.get("search", "").strip()
+
+    if not query:
+        flash("Please enter a search term", "warning")
+        return redirect(url_for("main.index"))
+    
+    search_filter = or_(
+        AllVideo.name.ilike(f"%{query}%"),
+        AllVideo.country.ilike(f"%{query}%"),
+        AllVideo.description.ilike(f"%{query}%"),
+        AllVideo.genres.any(Genre.name.ilike(f"%{query}%")),
+        AllVideo.star_cast.ilike(f"%{query}%")
+
+    )
+    videos = (
+        AllVideo.query.options(joinedload(AllVideo.genres)).filter(search_filter, AllVideo.active.is_(True)).order_by(
+            AllVideo.date_added.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+    )
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    searches = True
+    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend)
+
+@main_bp.route("/contact_us")
+def contact_us():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("contact_us.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/privacy_policy")
+def privacy():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("privacy_policy.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/dcma")
+def dcma():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/genre/<string:genre_type>")
+@main_bp.route("/genre/<string:genre_type>/page/<int:page>")
+def genre(genre_type, page):
+    per_page = 24
+    genre = ""
+    if genre_type == "Sci-Fi":
+        genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
+        videos = (
+            AllVideo.query.join(AllVideo.genres).filter(Genre.name == "Science Fiction").paginate(page=page, per_page=per_page)
+        )
+    else:
+        genre = Genre.query.filter_by(name=genre_type).first_or_404()
+        videos = (
+            AllVideo.query.join(AllVideo.genres).filter(Genre.name == genre_type).paginate(page=page, per_page=per_page)
+        )
+
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    
+    return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/<det>/<name>/<int:id>")
+@main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
+def detail(det, name, id, season=1, episode=1):
+    
+    if det == "movie":
+        return redirect(url_for("main.movie_details", det=det, name=name, id=id))
+        print("hello")
+    elif det == "series":
+        return redirect(url_for("main.series_details", det=det, name=name, season=season, episode=episode, id=id))
+    elif det == "trailer_watch":
+        return redirect(url_for("main.watch_trailer", det=det, name=name))
+
+@main_bp.route("/download/<det>/<name>/<int:id>")
+def movie_details(det, name, id):
+    movie = AllVideo.query.get_or_404(id)
+    num_comment = Comment.query.filter_by(
+        video_id=movie.id,
+        parent_id=None
+    ).count()
+    comments = Comment.query.filter_by(video_id=movie.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    genre_ids=[g.id for g in movie.genres]
+    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+
+    # Optional: prepare breakdown for template
+    breakdown = {i: db.session.query(func.count(Rating.id))
+                     .filter(Rating.video_id==movie.id, Rating.rating==i)
+                     .scalar() for i in range(1,6)}
+
+    more_needed=0
+    if len(suggested) < 6:
+        more_needed = 6 - len(suggested)
+
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested])).order_by(func.random()).limit(more_needed).all()
+    suggested.extend(extra)
+    return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
+def series_details(det, name, season, episode, id):
+    print(id)
+    series = AllVideo.query.get_or_404(id)
+
+    # 2. Ensure it is a series
+    if not series.series:
+        return "This is not a series", 404
+
+    serie = series.series
+
+    # 3. Get all seasons
+    seasons = serie.seasons
+
+    # 4. Get the requested season
+    current_season = Season.query.filter_by(
+        series_id=serie.id,
+        season_number=season
+    ).first_or_404()
+
+    # 5. Get the requested episode
+    current_episode = Episode.query.filter_by(
+        season_id=current_season.id,
+        episode_number=episode
+    ).first_or_404()
+    num_comment = Comment.query.filter_by(
+        video_id=series.id,
+        parent_id=None
+    ).count()
+    comments = Comment.query.filter_by(video_id=series.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    genre_ids=[g.id for g in series.genres]
+    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series").distinct().limit(6).all()
+
+    # Optional: prepare breakdown for template
+    breakdown = {i: db.session.query(func.count(Rating.id))
+                     .filter(Rating.video_id==series.id, Rating.rating==i)
+                     .scalar() for i in range(1,6)}
+
+    more_needed=0
+    if len(suggested) < 6:
+        more_needed = 6 - len(suggested)
+
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested])).order_by(func.random()).limit(more_needed).all()
+    suggested.extend(extra)
+    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/download/<type>/<int:id>")
+@main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
+def download_dispatcher(type, id, season=None, episode=None):
+    """
+    Dispatcher route to check storage server and redirect to the correct download route.
+    Supports movie and series downloads.
+    """
+
+    # --- 1. Fetch video object ---
+    if type == "movie":
+        video = AllVideo.query.get_or_404(id)
+        storage_server = video.storage_server  # relationship to StorageServer
+        filename = video.name
+    elif type == "series":
+        video = Episode.query.get_or_404(id)
+        storage_server = video.storage_server  # relationship to StorageServer
+        filename = f"{video.season.series.all_video.name}_S{season}E{episode}"
+    else:
+        return "Invalid type", 400
+
+    # --- 2. Check if storage server exists and is active ---
+    if not storage_server or not storage_server.active:
+        return "Storage server not found or inactive", 404
+
+    # --- 3. Redirect based on server type ---
+    if storage_server.server_type == "bytescale":
+        # Redirect to existing Bytescale download route
+        if type == "movie":
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="movie",
+                name=filename,
+                id=id
+            ))
+        else:  # series
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="series",
+                name=filename,
+                id=id,
+                season=season,
+                episode=episode
+            ))
+    
+    # --- 4. Fallback for unsupported servers ---
+    return "Server type not supported yet", 501
+
+
+
+CHUNK_SIZE = 1024 * 1024  # 1 MB per chunk
+
+@main_bp.route("/<type>/<name>/<int:id>/start")
+@main_bp.route("/<type>/<name>/<int:id>/<season>/<episode>/start")
+def movie_start_download(type, name, id, season=None, episode=None):
+    # --- 1. Fetch video object and filename ---
+    if type == "movie":
+        video = AllVideo.query.get_or_404(id)
+        filename = secure_filename(f"{video.name}.mp4")
+    else:
+        video = Episode.query.get_or_404(id)
+        filename = secure_filename(f"{video.season.series.all_video.name}_S{season}E{episode}.mp4")
+
+    if not video.download_link:
+        return "Download not available", 404
+
+    file_url = video.download_link
+    direct_url = file_url
+
+    # --- 2. Try Bytescale direct URL ---
+    try:
+        api_key = current_app.config.get("BYTESCALE_API_KEY")
+        if api_key:
+            headers_api = {"Authorization": f"Bearer {api_key}"}
+            resp = requests.post(
+                "https://api.bytescale.com/v1/files/generate_download_url",
+                json={"url": file_url},
+                headers=headers_api,
+                timeout=10
+            )
+            resp.raise_for_status()
+            direct_url = resp.json().get("download_url", file_url)
+            print("Using Bytescale direct URL")
+    except Exception as e:
+        print(f"Bytescale API failed, using original URL: {e}")
+
+    # --- 3. Get file size ---
+    try:
+        head = requests.head(direct_url, allow_redirects=True, timeout=10)
+        total_size = int(head.headers.get("Content-Length", 0))
+    except Exception:
+        total_size = 0
+
+    # --- 4. Handle Range requests (pause/resume) ---
+    range_header = request.headers.get("Range", None)
+    start = 0
+    end = total_size - 1
+    status_code = 200
+
+    if range_header:
+        try:
+            range_val = range_header.strip().split("=")[1]
+            start = int(range_val.split("-")[0])
+            status_code = 206
+        except:
+            start = 0
+
+    # --- 5. Set headers ---
+    headers = {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(end - start + 1)
+    }
+
+    if status_code == 206:
+        headers["Content-Range"] = f"bytes {start}-{end}/{total_size}"
+
+    # --- 6. Stream generator ---
+    def generate():
+        try:
+            with requests.get(
+                direct_url,
+                stream=True,
+                headers={"Range": f"bytes={start}-{end}"},
+                timeout=10
+            ) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+                    if chunk:
+                        yield chunk
+        except Exception as e:
+            print(f"Streaming error: {e}")
+
+    # --- 7. Return streaming response ---
+    return Response(stream_with_context(generate()), status=status_code, headers=headers)
+
+@main_bp.route("/trailers/<string:det>/<string:name>")
+def watch_trailer(det="trailer_watch", name=None):
+    dark = True
+
+    trailer = Trailer.query.filter_by(slug=name).first_or_404()
+    up_next = get_up_next(trailer)
+
+    # Count only top-level
+    num_comment = Comment.query.filter_by(
+        trailer_id=trailer.id,
+        parent_id=None
+    ).count()
+
+    # Increase views
+    trailer.views += 1
+    db.session.commit()
+
+    # Load only main comments (NO replies)
+    comments = Comment.query.filter_by(
+        trailer_id=trailer.id,
+        parent_id=None
+    ).order_by(Comment.date_added.desc()).all()
+
+    return render_template(
+        f"{det}.html",
+        trailer=trailer,
+        comments=comments,
+        dark=dark,
+        up_next=up_next,
+        num_comment=num_comment
+    )
+
+
+@main_bp.route("/trending/<type>")
+def trending(type):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").limit(10).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").limit(10).all()
+    trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action").order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation").order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction").order_by(AllVideo.date_added.desc()).limit(10).all()
+    old_but_gold = AllVideo.query.filter(
+        AllVideo.type == "movie",
+        AllVideo.year_produced <= 2020,
+        AllVideo.rating >= 4  # or views >= 10000
+    ).order_by(AllVideo.rating.desc()).limit(10).all()
+        
+
+    get_started_items = (
+        AllVideo.query
+            .filter(
+                or_(
+                    # Movies: short length
+                    (AllVideo.type == "movie") & (AllVideo.length <= "1h 59m"),
+
+                    # Series: few seasons (you could store num_seasons on AllVideo if you want)
+                    (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
+                )
+            )
+            .order_by(AllVideo.views.desc())  # popular first
+            .limit(10)
+            .all()
+    )
+    return render_template(f"trending.html", old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi)
+
+@main_bp.route("/trailers")
+@main_bp.route("/trailers/<int:page>")
+def trailer(page=1):
+    dark = True
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    trailers = True
+    per_page = 24
+    videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
+    return render_template("trailers.html", dark=dark, videos=videos, per_page=per_page, page=page, trailers=trailers, trending_trailers=trending_trailers)
+
+
+@main_bp.route("/watch_download/<type>/<name>/<int:id>")
+@main_bp.route("/watch_download/<type>/<name>/<int:id>/<season>/<episode>")
+def movie_stream_download(type, name, id, season=None, episode=None):
+    
+
+    if type == "movie":
+        video = AllVideo.query.get_or_404(id)
+    else:
+        video = Episode.query.get_or_404(id)
+
+    # Choose best default quality (prioritize 720p > 1080p > 480p > 360p)
+    for q in ["720p", "1080p", "480p", "360p"]:
+        if getattr(video, f"video_{q}", None):
+            default_quality = q
+            break
+    else:
+        default_quality = None  # No video available
+
+    if not default_quality:
+        return "No available video for streaming", 404
+    
+    if type == "movie":
+        return redirect(url_for("main.movie_download", type=type, id=id, name=name, quality=default_quality))
+    else:
+        return redirect(url_for("main.series_download", type=type, name=name, id=id, season=season, episode=episode))
+
+@main_bp.route("/watch_movie/<type>/<name>/<int:id>")
+def movie_download(type, name, id):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    movie = AllVideo.query.get_or_404(id)
+
+    # Get the best available quality
+
+    
+    genre_ids=[g.id for g in movie.genres]
+    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+
+    more_needed = max(0, 6 - len(suggested))
+    if more_needed:
+        extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]))\
+            .order_by(func.random()).limit(more_needed).all()
+        suggested.extend(extra)
+    return render_template("stream.html", video=movie, suggested=suggested, id=id, type=type, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+
+@main_bp.route("/watch_series/<type>/<name>/<int:id>/s<season>/e<int:episode>")
+def series_download(type, name, id, season, episode):
+    ep = Episode.query.get_or_404(id)
+    
+
+    # Trending lists
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    qualities = ep.video_qualities or {}
+    return render_template(
+        "stream_download.html",
+        video=ep,
+        qualities=qualities,
+        type=type,
+        season=int(season),
+        episode=int(episode),
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    )
+
+@main_bp.route("/nav/<nav>")
+@main_bp.route("/nav/<nav>/<int:page>")
+def navbar(nav, page=1):
+    dark = False
+    videos = ""
+    per_page = 24
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    trending_action = ""
+    trending_animation = ""
+    trending_sci_fi = ""
+    old_but_gold = ""
+    get_started_items = ""
+    trailers = False
+    if nav=="trailers":
+        dark = True
+        trailers = True
+        videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
+    if nav=="trending":
+        series_trend = AllVideo.query.filter_by(trending=True, type="series").limit(10).all()
+        movie_trend = AllVideo.query.filter_by(trending=True, type="movie").limit(10).all()
+        trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action").order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation").order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction").order_by(AllVideo.date_added.desc()).limit(10).all()
+        old_but_gold = AllVideo.query.filter(
+            AllVideo.type == "movie",
+            AllVideo.year_produced <= 2020,
+            AllVideo.rating >= 4  # or views >= 10000
+        ).order_by(AllVideo.rating.desc()).limit(10).all()
+        
+
+        get_started_items = (
+            AllVideo.query
+                .filter(
+                    or_(
+                        # Movies: short length
+                        (AllVideo.type == "movie") & (AllVideo.length <= "1h 59m"),
+
+                        # Series: few seasons (you could store num_seasons on AllVideo if you want)
+                        (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
+                    )
+                )
+                .order_by(AllVideo.views.desc())  # popular first
+                .limit(10)
+                .all()
+        )
+
+    if nav == "all_movie":
+        videos = AllVideo.query.filter_by(type="movie").order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    if nav == "all_series":
+        videos = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    
+    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers)
+
+
+@main_bp.route('/rate/<int:video_id>', methods=['POST'])
+def rate_video(video_id):
+    video = AllVideo.query.get_or_404(video_id)
+    ip_address = request.remote_addr
+    data = request.get_json()
+    new_rating = int(data.get('rating', 0))
+
+    if new_rating < 1 or new_rating > 5:
+        return jsonify({'error': 'Invalid rating'}), 400
+
+    # Check if this IP already rated
+    existing = Rating.query.filter_by(video_id=video.id, ip_address=ip_address).first()
+    if existing:
+        existing.rating = new_rating  # UPDATE rating if IP exists
+    else:
+        rating = Rating(video_id=video.id, ip_address=ip_address, rating=new_rating)
+        db.session.add(rating)
+
+    db.session.commit()
+
+    # Recalculate average rating
+    avg = db.session.query(func.avg(Rating.rating)).filter(Rating.video_id == video.id).scalar()
+    count = db.session.query(func.count(Rating.id)).filter(Rating.video_id == video.id).scalar()
+
+    video.rating = round(avg, 2)
+    video.num_votes = count
+    db.session.commit()
+
+    # Rating breakdown
+    breakdown = {}
+    for i in range(1, 6):
+        breakdown[i] = db.session.query(func.count(Rating.id)).filter(Rating.video_id == video.id, Rating.rating == i).scalar()
+
+    return jsonify({
+        'average_rating': video.rating,
+        'num_votes': video.num_votes,
+        'breakdown': breakdown
+    })  
+
+@main_bp.route('/comment/add/<int:video_id>', methods=['POST'])
+@main_bp.route('/comment/add/<int:video_id>/<type>', methods=['POST'])
+def add_comment(video_id, type="video"):
+    name = request.form.get('name')
+    email = request.form.get('email')
+    text = request.form.get('text')
+    video = None
+    if type == "trailer":
+        comment = Comment(
+            trailer_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=None
+        )
+        db.session.add(comment)
+        db.session.commit()
+        
+        video = Trailer.query.get_or_404(video_id)
+        s = Comment.query.filter_by(trailer_id=video_id, parent_id=None).count()
+        
+    else:
+        comment = Comment(
+            video_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=None
+        )
+
+        db.session.add(comment)
+        db.session.commit()
+
+        video = AllVideo.query.get_or_404(video_id)
+        s = Comment.query.filter_by(video_id=video_id, parent_id=None).count()
+        
+
+    db.session.add(comment)
+    db.session.commit()
+       
+    video.total_comment = int(s)
+    db.session.commit()
+    
+
+    # Render the comment HTML
+    html = render_template('comments.html', comment=comment, video=video)
+    return jsonify({'success': True, 'html': html})
+
+
+@main_bp.route('/comment/reply/<int:video_id>', methods=['POST'])
+@main_bp.route('/comment/reply/<int:video_id>/<type>', methods=['POST'])
+def reply_comment(video_id, type="video"):
+    name = request.form.get('name')
+    email = request.form.get('email')
+    text = request.form.get('text')
+    parent_id = request.form.get('parent_id')
+
+    if not all([name, email, text]):
+        return jsonify({'success': False, 'error': 'All fields are required'})
+
+    if type == "trailer":
+        reply = Comment(
+            trailer_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=parent_id if parent_id else None
+        )
+    else:
+        reply = Comment(
+            video_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=parent_id if parent_id else None
+        )
+    
+    video = None
+    if type == "trailer":
+        video = Trailer.query.get_or_404(video_id)
+    else:
+        video = AllVideo.query.get_or_404(video_id)
+
+    db.session.add(reply)
+    db.session.commit()
+
+    # Render the new comment as HTML
+    html = render_template('comments.html', comment=reply, video=video)
+    
+    return jsonify({'success': True, 'html': html})
+
+@main_bp.route("/admin/uploads")
+def admin_uploads():
+    # # Only allow admins
+    # if not current_user.is_admin:
+    #     return redirect(url_for('index'))
+
+    # Get all videos and episodes
+    movies = AllVideo.query.order_by(AllVideo.id.desc()).all()
+    episodes = Episode.query.order_by(Episode.id.desc()).all()
+
+    return render_template("download.html", movies=movies, episodes=episodes)
+
+import math
+
+
+@main_bp.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    """Generate sitemap.xml with homepage, categories, trending, movies, series (latest episodes), and trailers."""
+
+    base_url = "http://127.0.0.1:5000"
+    per_page = 24
+    urls = []
+
+    def format_date(dt):
+        return dt.strftime('%Y-%m-%d') if dt else datetime.utcnow().strftime('%Y-%m-%d')
+
+    # Homepage
+    urls.append({
+        "loc": f"{base_url}/",
+        "lastmod": format_date(datetime.utcnow())
+    })
+
+    # Categories
+    for cat in ["nav/all_movie", "nav/all_series", "nav/trailers"]:
+        urls.append({
+            "loc": f"{base_url}/{cat}",
+            "lastmod": format_date(datetime.utcnow())
+        })
+
+    # Trending
+    urls.append({
+        "loc": f"{base_url}/nav/trending",
+        "lastmod": format_date(datetime.utcnow())
+    })
+
+    # Pagination helper
+    def add_paginated(items, base_path):
+        total_items = len(items)
+        total_pages = math.ceil(total_items / per_page)
+        for page in range(1, total_pages + 1):
+            lastmod = format_date(items[-1].date_added if hasattr(items[-1], 'date_added') else items[-1].created_at)
+            urls.append({
+                "loc": f"{base_url}/{base_path}/{page}",
+                "lastmod": lastmod
+            })
+
+    # Movies
+    movies = AllVideo.query.filter_by(type='movie').all()
+    for movie in movies:
+        urls.append({
+            "loc": f"{base_url}/movie/{movie.slug}/{movie.id}",
+            "lastmod": format_date(movie.date_added or movie.created_at)
+        })
+    add_paginated(movies, "nav/all_movie")
+
+    # Series
+    series_list = AllVideo.query.filter_by(type='series').all()
+    series_info = []
+    for series in series_list:
+        # Get latest season
+        latest_season = Season.query.filter_by(series_id=series.id).order_by(Season.season_number.desc()).first()
+        # Get latest episode of that season
+        latest_episode = None
+        if latest_season:
+            latest_episode = Episode.query.filter_by(season_id=latest_season.id).order_by(Episode.episode_number.desc()).first()
+
+        series_info.append({
+            "series": series,
+            "latest_season": latest_season,
+            "latest_episode": latest_episode
+        })
+
+    add_paginated(series_list, "nav/all_series")
+
+    # Trailers
+    trailers = Trailer.query.all()
+    for trailer in trailers:
+        urls.append({
+            "loc": f"{base_url}/trailers/trailer_watch/{trailer.slug}",
+            "lastmod": format_date(trailer.date_added or trailer.created_at)
+        })
+    add_paginated(trailers, "trailers")
+
+    return render_template("sitemap_with_series.xml.jinja",
+                           urls=urls,
+                           movies=movies,
+                           series_info=series_info,
+                           trailers=trailers), 200, {'Content-Type': 'application/xml'}
+
+
+@main_bp.route("/sitemap")
+def sitemap_page():
+    # Movies
+    movies = AllVideo.query.filter_by(type="movie").all()
+
+    # Series: we’ll also fetch the latest season and episode for the sitemap
+    series_list = AllVideo.query.filter_by(type="series").all()
+    series_info = []
+    for series in series_list:
+        latest_season = None
+        latest_episode = None
+        if series.series and series.series.seasons:
+            latest_season = max(series.series.seasons, key=lambda s: s.season_number)
+            if latest_season.episodes:
+                latest_episode = max(latest_season.episodes, key=lambda e: e.episode_number)
+        series_info.append({
+            "series": series,
+            "latest_season": latest_season,
+            "latest_episode": latest_episode
+        })
+
+    # Trailers
+    trailers = Trailer.query.all()
+
+    return render_template("sitemap.html",
+                           movies=movies,
+                           series_info=series_info,
+                           trailers=trailers)
+
+def generate_sitemap():
+    movies = AllVideo.query.all()
+    series_list = AllVideo.query.filter_by(type='series').all()
+    trailers = Trailer.query.all()
+
+    def get_priority(updated_at):
+        if not updated_at:
+            return 0.5
+        days_old = (datetime.utcnow() - updated_at).days
+        if days_old <= 30:
+            return 1.0
+        elif days_old <= 90:
+            return 0.8
+        else:
+            return 0.6
+
+    sitemap_xml = render_template(
+        "sitemap_with_series.xml.jinja",
+        movies=movies,
+        series_list=series_list,
+        trailers=trailers,
+        get_priority=get_priority
+    )
+
+    # Save XML to static folder
+    sitemap_path = os.path.join(current_app.root_path, 'static', 'sitemap.xml')
+    with open(sitemap_path, 'w', encoding='utf-8') as f:
+        f.write(sitemap_xml)
+    print("Sitemap updated.")
+    ping_search_engines()
+
+
+
+
+
+
+
+
+# # ---------------- Dashboard ----------------
+# @main_bp.route("/admin")
+# @login_required
+# @admin_required
+# def admin_dashboard():
+#     movies_count = AllVideo.query.filter_by(type="movie").count()
+#     series_count = Series.query.count()
+#     episodes_count = Episode.query.count()
+#     genres_count = Genre.query.count()
+#     servers_count = StorageServer.query.count()
+#     return render_template("admin/dashboard.html",
+#                            movies_count=movies_count,
+#                            series_count=series_count,
+#                            episodes_count=episodes_count,
+#                            genres_count=genres_count,
+#                            servers_count=servers_count)
+
+
+
+# if __name__ == '__main__':
+#     with app.app_context():
+#         db.create_all()
+        # video = Episode.query.all()
+        # d = AllVideo.query.get_or_404(1).date_added
+        # for v in video:
+        #     v.date_added = d
+        #     db.session.commit()
+        
+        # edit = Series.query.get(9)
+        # edit.seasons[-1].completed = True
+        # db.session.commit()
+        # safe_populate()
+        
+        
+        # for movie in AllVideo.query.limit(60).all():
+        #     movie.download_link = "https://upcdn.io/W23MTTR/raw/Mr%20Beast%E2%80%99s%20insane%20%241%20million%20challenge.mp4"
+        # db.session.commit()
+
+        # # For Episode
+        # for ep in Episode.query.all():
+        #     ep.update_video_qualities()
+        # db.session.commit()
+        # videos = AllVideo.query.all()
+        # for video in videos:
+        #     if not video.slug:
+        #         video.slug = slugify(video.name)
+        # db.session.commit()
+        # generate_sitemap()
+        # existing = StorageServer.query.filter_by(name="Bytescale").first()
+        # if not existing:
+        #     bytescale_server = StorageServer(
+        #         name="Bytescale",
+        #         server_type="bytescale",
+        #         active=True
+        #     )
+        #     db.session.add(bytescale_server)
+        #     db.session.commit()
+        #     print("Bytescale storage server added successfully.")
+        # else:
+        #     print("Bytescale storage server already exists.")
+
+        # Get Bytescale server
+        # bytescale_server = StorageServer.query.filter_by(name="Bytescale").first()
+        # if not bytescale_server:
+        #     raise ValueError("Bytescale server not found. Add it first.")
+
+        # # Update all movies
+        # AllVideo.query.update({AllVideo.storage_server_id: bytescale_server.id})
+
+        # # Update all episodes
+        # Episode.query.update({Episode.storage_server_id: bytescale_server.id})
+
+        # # Commit changes
+        # db.session.commit()
+
+        # print("All videos and episodes assigned to Bytescale server.")
+
+        # video = AllVideo.query.get(60)
+
+        # if video:
+        #     # Delete related Ratings
+        #     Rating.query.filter_by(video_id=video.id).delete()
+
+        #     # Delete related Comments
+        #     Comment.query.filter_by(video_id=video.id).delete()
+
+        #     # Remove from VideoGenre association table
+        #     video.genres = []
+
+        #     # Delete associated Movie or Series objects
+        #     if video.movie:
+        #         db.session.delete(video.movie)
+        #     if video.series:
+        #         # Delete all seasons and episodes via cascade
+        #         db.session.delete(video.series)
+
+        #     # Delete from RecentItem if it exists
+        #     RecentItem.query.filter_by(video_id=video.id).delete()
+
+        #     # Finally, delete the video
+        #     db.session.delete(video)
+
+        #     try:
+        #         db.session.commit()
+        #         print("AllVideo with id 60 deleted successfully!")
+        #     except Exception as e:
+        #         db.session.rollback()
+        #         print("Error deleting video:", e)
+        # else:
+        #     print("Video not found.")
+        
+
+    # app.run(debug=True, host="0.0.0.0", port=5000)

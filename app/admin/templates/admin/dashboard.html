@@ -1,0 +1,156 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="w-64 bg-gray-800 p-6 flex flex-col h-full">
+        <h1 class="text-2xl font-bold mb-8">Admin Panel</h1>
+        <nav class="flex flex-col gap-2 text-gray-300 flex-1 overflow-y-auto">
+
+            <!-- Dashboard -->
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition {% if request.endpoint == 'admin.dashboard' %}text-yellow-400 font-semibold{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <!-- Movies Collapsible -->
+            <div x-data="{ open: false }" class="flex flex-col">
+                <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
+                        </svg>
+                        Movies <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_movies }}</span>
+                    </span>
+                    <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1">
+                    <a href="{{ url_for('admin.add_movie', prev='dashboard') }}" class="hover:text-yellow-400 transition text-sm">Add Movie</a>
+                    <a href="{{ url_for('admin.view_movies') }}" class="hover:text-yellow-400 transition text-sm">View Movies</a>
+                </div>
+            </div>
+
+            <!-- Series Collapsible -->
+            <div x-data="{ open: false }" class="flex flex-col mt-1">
+                <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Series <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_series }}</span>
+                    </span>
+                    <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1">
+                    <a href="{{ url_for('admin.add_series', prev='dashboard') }}" class="hover:text-yellow-400 transition text-sm">Add Series</a>
+                    <a href="{{ url_for('admin.view_series') }}" class="hover:text-yellow-400 transition text-sm">View Series</a>
+                </div>
+            </div>
+
+            <!-- Trailers -->
+            <a href="{{ url_for('admin.view_trailers') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276a2 2 0 0 1 2.447 1.788v6.976a2 2 0 0 1-2.447 1.788L15 14M4 6h6v12H4z"/>
+                </svg>
+                Trailers <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_trailers }}</span>
+            </a>
+
+            <!-- Users -->
+            <a href="{{ url_for('admin.view_users') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8 8 0 1 1 17.804 5.121 8 8 0 0 1 5.121 17.804z"/>
+                </svg>
+                Users <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_users }}</span>
+            </a>
+
+            <!-- Storage -->
+            <a href="{{ url_for('admin.view_storage') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
+                </svg>
+                Storage
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-gray-700">
+            <p class="text-sm">Logged in as: {{ current_user.username }}</p>
+            <a href="{{ url_for('admin.logout') }}" class="text-red-500 hover:text-red-400 text-sm mt-2 block">Logout</a>
+        </div>
+    </div>
+
+    <!-- Add AlpineJS CDN at the bottom for collapsibles -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-y-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Admin Dashboard</h1>
+        </div>
+
+        <!-- Manage Videos Section -->
+        <h2 class="text-2xl font-bold mb-4 mt-10">Manage Content</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for video in all_videos %}
+                {% if video.type == "series" %}
+                    <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
+                        <img src="{{ video.poster_url|default('') }}" alt="{{ video.name|default('') }}" class="w-full h-48 object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 transition-opacity">
+                            <h3 class="text-lg font-semibold text-white">{{ video.name|default('') }}</h3>
+                            <p class="text-sm text-gray-300">{{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views</p>
+                            <div class="mt-2 flex gap-2">
+                                <button type="button" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm edit-button"
+                                    onclick="window.location.href='{{ url_for('admin.edit_video', video_id=video.id, prev='dashboard') }}'">
+                                Edit
+                                </button>
+
+                                <form method="POST" action="{{ url_for('admin.delete_video', prev='dashboard', video_id=video.id) }}" onsubmit="return confirm('Are you sure you want to delete this video?');">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                        Delete
+                                    </button>
+                                </form>
+                                <a href="{{ url_for('admin.view_series_specific', prev='series', name=video.slug, id=video.id) }}" class="px-3 py-1 text-white bg-green-700 rounded hover:text-white hover:bg-green-900 text-sm">View</a>
+                            </div>
+                        </div>
+                    </div>
+                {%else%}
+                    <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
+                        <img src="{{ video.poster_url|default('') }}" alt="{{ video.name|default('') }}" class="w-full h-48 object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 transition-opacity">
+                            <h3 class="text-lg font-semibold text-white">{{ video.name|default('') }}</h3>
+                            <p class="text-sm text-gray-300">{{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views</p>
+                            <div class="mt-2 flex gap-2">
+                                <button type="button" 
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm edit-button"
+                                    onclick="window.location.href='{{ url_for('admin.edit_video', video_id=video.id, prev='dashboard') }}'">
+                                Edit
+                                </button>
+
+                                <form method="POST" action="{{ url_for('admin.delete_video', prev='dashboard', video_id=video.id) }}" onsubmit="return confirm('Are you sure you want to delete this video?');">
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+            <p class="text-gray-400">No videos available yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}
