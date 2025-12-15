@@ -1,4 +1,5 @@
 name: Sync to Hugging Face Hub
+
 on:
   push:
     branches: [clean-main]
@@ -8,12 +9,19 @@ jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
-      - name: Push to hub
+
+      - name: Set up branch and push to HF
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        # REPLACE WITH YOUR DETAILS
-        run: git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema clean-main
+        run: |
+          # Make sure branch exists locally
+          git fetch origin clean-main
+          git checkout -B clean-main
+
+          # Push to Hugging Face Space
+          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema clean-main
