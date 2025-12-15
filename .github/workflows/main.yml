@@ -16,4 +16,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         # REPLACE WITH YOUR DETAILS
-        run: git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema main
+        run: git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema clean-main
