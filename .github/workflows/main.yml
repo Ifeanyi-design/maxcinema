@@ -2,26 +2,24 @@ name: Sync to Hugging Face Hub
 
 on:
   push:
-    branches: [clean-main]
-  workflow_dispatch:
+    branches: [clean-main]   # triggers automatically on clean-main
+  workflow_dispatch:         # allows manual run from GitHub UI
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout the branch that triggered the workflow
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
 
-      - name: Set up branch and push to HF
+      # Step 2: Push to Hugging Face
+      - name: Push to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Make sure branch exists locally
-          git fetch origin clean-main
-          git checkout -B clean-main
-
-          # Push to Hugging Face Space
+          # No fetch needed — already on clean-main
           git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema clean-main
