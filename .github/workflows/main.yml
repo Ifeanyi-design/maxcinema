@@ -1,25 +1,41 @@
 name: Sync to Hugging Face Hub
-
 on:
   push:
-    branches: [clean-main]   # triggers automatically on clean-main
-  workflow_dispatch:         # allows manual run from GitHub UI
+    branches: [clean-main]
+  workflow_dispatch:
 
 jobs:
   sync-to-hub:
     runs-on: ubuntu-latest
     steps:
-      # Step 1: Checkout the branch that triggered the workflow
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
           lfs: true
-
-      # Step 2: Push to Hugging Face
-      - name: Push to Hugging Face Space
+      
+      - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # No fetch needed — already on clean-main
-          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema HEAD:main
+          # 1. Configure Git Identity (Required for commits)
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 2. Delete the problem files from the runner BEFORE committing
+          # This ensures they are 100% gone from this deploy
+          rm -f instance/maxcinema.db
+          rm -rf app/static/images/*.png
+          rm -rf app/static/images/*.jpg
+          rm -rf app/static/images/*.webp
+          
+          # 3. Create a fresh "Orphan" branch with no history
+          git checkout --orphan temp-deploy
+          
+          # 4. Add all remaining safe files
+          git add .
+          
+          # 5. Create a clean commit
+          git commit -m "Fresh deploy without binaries"
+          
+          # 6. Push this clean state to Hugging Face
+          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema temp-deploy:main
