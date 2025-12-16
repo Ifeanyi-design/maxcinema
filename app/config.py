@@ -7,53 +7,49 @@ root_dir = os.path.dirname(basedir)
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
+
     # =========================================================
-    # 🌐 CANDIDATE DATABASES
+    # 🧠 INTELLIGENT DATABASE SWITCHER
     # =========================================================
     
-    # 1. Cloud Database (Neon Postgres)
-    # ⚠️ PASTE YOUR REAL NEON URL HERE (Make sure it starts with postgresql://)
+    # 1. Get the Cloud URL (from .env or Hugging Face Secrets)
     CLOUD_DB_URL = os.environ.get("DATABASE_URL")
     
-    # 2. Local Database Options
+    # 2. Define Local Options
     ROOT_SQLITE = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
     INSTANCE_SQLITE = "sqlite:///" + os.path.join(root_dir, "instance", "maxcinema.db")
-    
-    # =========================================================
-    # 🧪 THE CONNECTION TEST
-    # =========================================================
-    
-    # Default choice: Assume Cloud works
-    final_db_url = CLOUD_DB_URL
-    
-    # First, check if there is a system override (e.g. on Render/Heroku)
-    env_url = os.environ.get("DATABASE_URL")
-    if env_url:
-        final_db_url = env_url
-    else:
-        # If no system var, TRY to connect to Neon
+
+    # 3. Decision Logic
+    final_db_url = None
+
+    # STEP A: If a Cloud URL exists, TEST IT.
+    if CLOUD_DB_URL:
         try:
-            print("☁️  Attempting to connect to Neon Postgres...")
-            # We set a short timeout (3 seconds) so your app doesn't freeze if offline
+            print("☁️  Testing connection to Neon Postgres...")
+            # Set a 3-second timeout so it doesn't freeze if you are offline
             test_engine = create_engine(CLOUD_DB_URL, connect_args={'connect_timeout': 3})
             
-            # Try to run a simple "Hello" query
             with test_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
+            
             print("✅ Connection Successful! Using Cloud Database.")
+            final_db_url = CLOUD_DB_URL
             
         except Exception as e:
             print(f"⚠️  Cloud Connection Failed (Offline?): {e}")
-            print("🏠 Switching to Local SQLite Backup...")
-            
-            # Check which local file actually exists
-            if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
-                final_db_url = ROOT_SQLITE
-                print(f"   -> Found database in ROOT folder.")
-            else:
-                final_db_url = INSTANCE_SQLITE
-                print(f"   -> Found database in INSTANCE folder.")
+            print("   -> Dropping to backup mode.")
+            final_db_url = None  # Force fallback to SQLite
+
+    # STEP B: If Cloud is missing OR failed the test, use Local SQLite
+    if not final_db_url:
+        print("🏠 Switching to Local SQLite Backup...")
+        # Check which file actually exists on your disk
+        if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
+            final_db_url = ROOT_SQLITE
+            print("   -> Found database in ROOT folder.")
+        else:
+            final_db_url = INSTANCE_SQLITE
+            print("   -> Found database in INSTANCE folder.")
 
     # =========================================================
     # 🏁 FINAL ASSIGNMENT
