@@ -24,9 +24,14 @@ from sqlalchemy.engine import Engine
 
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    # Get the class name of the connection
+    conn_type = str(type(dbapi_connection))
+    
+    # Only run PRAGMA if the connection object explicitly mentions 'sqlite'
+    if "sqlite" in conn_type.lower():
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 
