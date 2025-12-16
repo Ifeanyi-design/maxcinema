@@ -31,8 +31,9 @@ class Config:
     if CLOUD_DB_URL:
         try:
             print("☁️  Testing connection to Neon Postgres...")
-            # Set a 3-second timeout so it doesn't freeze if you are offline
-            test_engine = create_engine(CLOUD_DB_URL, connect_args={'connect_timeout': 3})
+            
+            # FIXED: Increased to 10 seconds so it waits for Neon to wake up
+            test_engine = create_engine(CLOUD_DB_URL, connect_args={'connect_timeout': 10})
             
             with test_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
