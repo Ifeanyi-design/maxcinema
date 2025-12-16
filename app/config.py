@@ -18,7 +18,7 @@ class Config:
     # =========================================================
     
     # 1. Get the Cloud URL (from .env or Hugging Face Secrets)
-    CLOUD_DB_URL = "postgresql://neondb_owner:npg_GjPbLC7T9rtZ@ep-withered-shadow-a4a0d1w6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+    CLOUD_DB_URL = os.environ.get("DATABASE_URL")
     
     # 2. Define Local Options
     ROOT_SQLITE = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
