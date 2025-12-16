@@ -7,6 +7,10 @@ root_dir = os.path.dirname(basedir)
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,  # Checks if connection is alive before using it
+        "pool_recycle": 300,    # Refreshes connections every 5 minutes
+    }
 
     # =========================================================
     # 🧠 INTELLIGENT DATABASE SWITCHER
