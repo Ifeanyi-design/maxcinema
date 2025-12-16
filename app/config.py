@@ -1,6 +1,7 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-
+load_dotenv()
 basedir = os.path.abspath(os.path.dirname(__file__))
 root_dir = os.path.dirname(basedir)
 
