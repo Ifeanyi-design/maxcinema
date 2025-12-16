@@ -38,4 +38,4 @@ jobs:
           git commit -m "Fresh deploy without binaries"
           
           # 6. Push this clean state to Hugging Face
-          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema temp-deploy:main
+          git push --force https://Max-Des:$HF_TOKEN@huggingface.co/spaces/Max-Des/maxcinema-live temp-deploy:main
