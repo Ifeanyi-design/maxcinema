@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, abort, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context, session
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy.sql import func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, defer
 from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -300,7 +300,7 @@ def movie_details(det, name, id):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in movie.genres]
-    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
 
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
@@ -349,7 +349,7 @@ def series_details(det, name, season, episode, id):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in series.genres]
-    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series").distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series").distinct().limit(6).all()
 
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
@@ -612,7 +612,7 @@ def movie_download(type, name, id):
 
     
     genre_ids=[g.id for g in movie.genres]
-    suggested = AllVideo.query.join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
 
     more_needed = max(0, 6 - len(suggested))
     if more_needed:
