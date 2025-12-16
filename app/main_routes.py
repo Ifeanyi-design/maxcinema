@@ -168,7 +168,10 @@ def index(page=1):
 
 
     # Load all Video/Episode objects in one query each
-    videos = {v.id: v for v in Movie.query.filter(Movie.id.in_(video_ids)).all()} if video_ids else {}
+    if video_ids:
+        videos = {v.all_video_id: v for v in Movie.query.filter(Movie.all_video_id.in_(video_ids)).all()}
+    else:
+        videos = {}
     episodes = {e.id: e for e in Episode.query.filter(Episode.id.in_(episode_ids)).all()} if episode_ids else {}
     print(len(videos))
     # Prepare items for display
