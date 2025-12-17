@@ -1,19 +1,21 @@
-# 1. Use Python 3.10
+# Use Python 3.10
 FROM python:3.10
 
-# 2. Set working folder
+# Set working directory
 WORKDIR /code
 
-# 3. Copy requirements and install
-COPY requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
-# 4. Copy ALL files
+# Copy the rest of the app
 COPY . .
 
-# 5. CRITICAL FIX: Give permission to the WHOLE folder
-# This allows Flask to read/write the DB in the root folder
+# Grant permissions (Important for SQLite backup file)
 RUN chmod -R 777 /code
 
-# 6. Run the app
+# Tell Hugging Face we are listening on 7860
+EXPOSE 7860
+
+# Start Gunicorn on Port 7860 (The HF Standard)
 CMD ["gunicorn", "-b", "0.0.0.0:7860", "run:app"]
