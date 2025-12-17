@@ -8,24 +8,24 @@
     <!-- Main Content -->
     <div class="flex-1 p-8 overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold">Movies</h1>
-            <a href="{{ url_for('admin.add_movie', prev='movie') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Add Movie</a>
+            <h1 class="text-4xl lg:text-3xl font-bold">Movies</h1>
+            <a href="{{ url_for('admin.add_movie', prev='movie') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Movie</a>
         </div>
 
         {% if movies %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for movie in movies %}
             <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
-                <img src="{{ movie.image or '' }}" alt="{{ movie.name }}" class="w-full h-48 object-cover">
-                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 transition-opacity">
-                    <h3 class="text-lg font-semibold text-white">{{ movie.name }}</h3>
-                    <p class="text-sm text-gray-300">Rating: {{ movie.rating }} | Views: {{ movie.views }}</p>
-                    <p class="text-sm text-gray-400 mt-1">{{ movie.genres | map(attribute='name') | join(', ') }}</p>
-                    <div class="mt-2 flex gap-2">
-                        <a href="{{ url_for('admin.edit_video', video_id=movie.id, prev='movie') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Edit</a>
+                <img src="{{ movie.image or '' }}" alt="{{ movie.name }}" class="w-full aspect-[3/5] object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 lg:p-3 pb-4 transition-opacity">
+                    <h3 class="text-2xl lg:text-lg font-semibold text-white">{{ movie.name }}</h3>
+                    <p class="text-xl lg:text-sm text-gray-300">Rating: {{ movie.rating }} | Views: {{ movie.views }}</p>
+                    <p class="text-xl lg:text-sm text-gray-400 mt-1">{{ movie.genres | map(attribute='name') | join(', ') }}</p>
+                    <div class="mt-2 flex gap-4">
+                        <a href="{{ url_for('admin.edit_video', video_id=movie.id, prev='movie') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-lg lg:text-sm">Edit</a>
 
                         <form method="POST" action="{{ url_for('admin.delete_video', prev='movie', video_id=movie.id) }}" onsubmit="return confirm('Are you sure you want to delete this movie?');">
-                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm">
+                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-lg lg:text-sm">
                                 Delete
                             </button>
                         </form>
