@@ -34,7 +34,7 @@ class Config:
     if CLOUD_DB_URL:
         # Always prefer Cloud. The 'pool_pre_ping' above handles the sleep/wake cycle.
         SQLALCHEMY_DATABASE_URI = CLOUD_DB_URL
-        print("☁️  Config: Targeted Cloud Database (Connection checked on first visit)")
+        print("☁️  VERSION 2: INSTANT BOOT LOADING...")
         
     else:
         # Fallback only if no Secret is found
