@@ -1,13 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="login-form">
-    <form method="POST" class="w-full">
-        <input type="email" name="email" placeholder="Email" required class="w-[60%] mx-20 h-16">
-        <br>
-        <br>
-        <input type="password" name="password" placeholder="Password" required class="w-[60%] mx-20 h-16 text-black">
-        <br><br>
-        <button type="submit" class="mb-5 ml-20 w-[10%] h-[50px] bg-red-700 text-white font-bold rounded-md">Login</button>
+<div class="login-form w-full border">
+    <form method="POST" class="w-full border-2 border-red-600 flex flex-col justify-center items-center p-5 gap-2">
+        <input type="email" name="email" placeholder="Email" required class="w-[90%] md:w-[60%] md:text-xl rounded-md px-5 py-3 text-black border-2 border-red-700">
+        <input type="password" name="password" placeholder="Password" required class="w-[90%] md:w-[60%] md:text-xl px-5 py-3 text-black border-2 rounded-md border-red-700">
+        <button type="submit" class="px-5 py-2 bg-red-700 text-white font-bold rounded-md">Login</button>
     </form>
 </div>
 {% endblock %}
