@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+
 load_dotenv()
 basedir = os.path.abspath(os.path.dirname(__file__))
 root_dir = os.path.dirname(basedir)
@@ -8,59 +9,57 @@ root_dir = os.path.dirname(basedir)
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,  # Checks if connection is alive before using it
-        "pool_recycle": 300,    # Refreshes connections every 5 minutes
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
     }
 
     # =========================================================
-    # 🧠 INTELLIGENT DATABASE SWITCHER
+    # 🧠 INTELLIGENT DATABASE SWITCHER (WITH BACKUP)
     # =========================================================
     
-    # 1. Get the Cloud URL (from .env or Hugging Face Secrets)
+    # 1. Get the Cloud URL
     CLOUD_DB_URL = os.environ.get("DATABASE_URL")
     
-    # 2. Define Local Options
-    ROOT_SQLITE = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
-    INSTANCE_SQLITE = "sqlite:///" + os.path.join(root_dir, "instance", "maxcinema.db")
+    # 2. Clean URL (Fix channel_binding crash)
+    if CLOUD_DB_URL and "channel_binding=require" in CLOUD_DB_URL:
+        CLOUD_DB_URL = CLOUD_DB_URL.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
 
-    # 3. Decision Logic
-    final_db_url = None
+    # 3. Define Local Backup Path
+    if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
+        LOCAL_BACKUP = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
+    else:
+        LOCAL_BACKUP = "sqlite:///" + os.path.join(root_dir, "instance", "maxcinema.db")
 
-    # STEP A: If a Cloud URL exists, TEST IT.
+    # 4. DECISION LOGIC
+    # We default to the Backup, then try to upgrade to Cloud.
+    active_db_url = LOCAL_BACKUP
+    
     if CLOUD_DB_URL:
         try:
-            print("☁️  Testing connection to Neon Postgres...")
+            print("☁️  Attempting to connect to Neon (Waiting up to 10s)...")
             
-            # FIXED: Increased to 10 seconds so it waits for Neon to wake up
+            # Create a temporary engine just to test the connection
+            # We wait 10 seconds to allow Neon to wake up from sleep.
             test_engine = create_engine(CLOUD_DB_URL, connect_args={'connect_timeout': 10})
             
             with test_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             
-            print("✅ Connection Successful! Using Cloud Database.")
-            final_db_url = CLOUD_DB_URL
+            print("✅ Neon is Awake & Working! Switching to Cloud.")
+            active_db_url = CLOUD_DB_URL
             
         except Exception as e:
-            print(f"⚠️  Cloud Connection Failed (Offline?): {e}")
-            print("   -> Dropping to backup mode.")
-            final_db_url = None  # Force fallback to SQLite
-
-    # STEP B: If Cloud is missing OR failed the test, use Local SQLite
-    if not final_db_url:
-        print("🏠 Switching to Local SQLite Backup...")
-        # Check which file actually exists on your disk
-        if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
-            final_db_url = ROOT_SQLITE
-            print("   -> Found database in ROOT folder.")
-        else:
-            final_db_url = INSTANCE_SQLITE
-            print("   -> Found database in INSTANCE folder.")
+            print(f"⚠️  Neon Connection Failed: {e}")
+            print("🛑 CLOUD IS DOWN. REMAINING ON LOCAL BACKUP.")
+            # active_db_url stays as LOCAL_BACKUP
 
     # =========================================================
     # 🏁 FINAL ASSIGNMENT
     # =========================================================
-    SQLALCHEMY_DATABASE_URI = final_db_url
+    SQLALCHEMY_DATABASE_URI = active_db_url
+    print(f"🚀 Database Configured: {'NEON CLOUD' if active_db_url == CLOUD_DB_URL else 'LOCAL SQLITE BACKUP'}")
 
     # Bytescale / Other Configs...
     BYTESCALE_API_KEY = "secret_W23MTTR8MonEUU4EF5zqMexEmbTJ"
