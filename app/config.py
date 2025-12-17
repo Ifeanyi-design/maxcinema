@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
 
 load_dotenv()
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -10,56 +9,40 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
+    # ✅ THIS IS THE MAGIC PART
+    # "pool_pre_ping" checks the connection when a USER visits, not when the app starts.
+    # This prevents the 10-second freeze during startup.
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,
+        "pool_pre_ping": True,  # Auto-reconnects if Neon is sleeping
         "pool_recycle": 300,
+        "pool_size": 10,
+        "max_overflow": 20,
     }
 
     # =========================================================
-    # 🧠 INTELLIGENT DATABASE SWITCHER (WITH BACKUP)
+    # 🚀 INSTANT-BOOT CONFIG
     # =========================================================
     
-    # 1. Get the Cloud URL
+    # 1. Get Cloud URL
     CLOUD_DB_URL = os.environ.get("DATABASE_URL")
     
     # 2. Clean URL (Fix channel_binding crash)
     if CLOUD_DB_URL and "channel_binding=require" in CLOUD_DB_URL:
         CLOUD_DB_URL = CLOUD_DB_URL.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
 
-    # 3. Define Local Backup Path
-    if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
-        LOCAL_BACKUP = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
-    else:
-        LOCAL_BACKUP = "sqlite:///" + os.path.join(root_dir, "instance", "maxcinema.db")
-
-    # 4. DECISION LOGIC
-    # We default to the Backup, then try to upgrade to Cloud.
-    active_db_url = LOCAL_BACKUP
-    
+    # 3. Decision Logic (No waiting!)
     if CLOUD_DB_URL:
-        try:
-            print("☁️  Attempting to connect to Neon (Waiting up to 10s)...")
-            
-            # Create a temporary engine just to test the connection
-            # We wait 10 seconds to allow Neon to wake up from sleep.
-            test_engine = create_engine(CLOUD_DB_URL, connect_args={'connect_timeout': 10})
-            
-            with test_engine.connect() as conn:
-                conn.execute(text("SELECT 1"))
-            
-            print("✅ Neon is Awake & Working! Switching to Cloud.")
-            active_db_url = CLOUD_DB_URL
-            
-        except Exception as e:
-            print(f"⚠️  Neon Connection Failed: {e}")
-            print("🛑 CLOUD IS DOWN. REMAINING ON LOCAL BACKUP.")
-            # active_db_url stays as LOCAL_BACKUP
-
-    # =========================================================
-    # 🏁 FINAL ASSIGNMENT
-    # =========================================================
-    SQLALCHEMY_DATABASE_URI = active_db_url
-    print(f"🚀 Database Configured: {'NEON CLOUD' if active_db_url == CLOUD_DB_URL else 'LOCAL SQLITE BACKUP'}")
+        # Always prefer Cloud. The 'pool_pre_ping' above handles the sleep/wake cycle.
+        SQLALCHEMY_DATABASE_URI = CLOUD_DB_URL
+        print("☁️  Config: Targeted Cloud Database (Connection checked on first visit)")
+        
+    else:
+        # Fallback only if no Secret is found
+        print("🏠 Config: No Cloud URL found. Using Local SQLite.")
+        if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
+            SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(root_dir, "maxcinema.db")
+        else:
+            SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(root_dir, "instance", "maxcinema.db")
 
     # Bytescale / Other Configs...
     BYTESCALE_API_KEY = "secret_W23MTTR8MonEUU4EF5zqMexEmbTJ"
