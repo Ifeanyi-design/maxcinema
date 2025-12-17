@@ -49,3 +49,4 @@ class Config:
     BYTESCALE_ACCOUNT_ID = "W23MTTR"
     DEFAULT_IMAGE_UPLOAD_URL = "https://image.tmdb.org/t/p/w500"
     BYTESCALE_UPLOAD_URL = f"https://api.bytescale.com/v2/accounts/{BYTESCALE_ACCOUNT_ID}/uploads" if BYTESCALE_ACCOUNT_ID else None
+    # FORCE UPDATE 1
