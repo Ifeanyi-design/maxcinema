@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-10">
+<div class="max-w-5xl mx-auto py-2">
     {% if prev == "dashboard" %}
         <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
             Go back
