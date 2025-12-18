@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 {% block content %}
-    <div class="flex items-center w-full">
-        <div class="w-[20%] flex flex-col gap-2">
+    <div class="flex flex-col lg:flex-row items-center w-full">
+        <div class="w-[100%] px-10 flex flex-row lg:flex-col gap-2">
             {% if prev == "dashboard" %}
                 <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
                     Go back
@@ -22,17 +22,17 @@
                 Dashboard
             </button>
         </div>
-        <h1 class="text-center font-bold w-full px-5 py-3 text-5xl">{{ season.series.all_video.name }}</h1>
+        <h1 class="text-center font-bold w-full px-5 py-3 text-2xl lg:text-5xl">{{ season.series.all_video.name }}</h1>
     </div>
     <div class="bg-white w-full border mt-5">
         <h2 class="text-blue-900 text-center font-bold text-4xl">Season {{ season.season_number }}</h2>
     </div>
     <div class="border-2 border-gray-700 mt-5 grid grid-cols-1 gap-5">
         {% for episode in season.episodes if season and season.episodes %}
-            <div class="flex">
+            <div class="flex w-full">
                 <img class="episode-list-img w-[20%] aspect-square" src="{% if season.image %} {{ season.image }} {% else %} {{season.series.all_video.image}}{% endif %} " alt="{{ season.series.all_video.slug }}">
-                <div class="flex flex-col w-full border-2 border-gray-700 relative">
-                    <div class="p-3 flex justify-evenly border-b-2 border-gray-700 w-full flex-shrink-0">
+                <div class="flex flex-col w-[80%] border-2 border-gray-700 relative">
+                    <div class="p-3 flex justify-evenly border-b-2 border-gray-700 w-[100%] flex-shrink-0">
                         <p class="text-lg"><b class="mr-2 text-2xl">Title:</b>{{episode.name}}</p>
                         <p class="text-lg"><b class="mr-2 text-2xl">Episode:</b>{{ episode.episode_number }}</p>
                         <p class="text-lg"><b class="mr-2 text-2xl">Length:</b>{{ episode.length }}</p>

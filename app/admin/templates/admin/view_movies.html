@@ -6,8 +6,9 @@
     {% include 'admin/sidebar.html' %}
 
     <!-- Main Content -->
-    <div class="flex-1 p-8 overflow-y-auto">
-        <div class="flex justify-between items-center mb-8">
+    <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
+        
+        <div class="hidden justify-between lg:flex w-[69%] items-center z-40 fixed top-0 bg-gray-900 py-4">
             <h1 class="text-4xl lg:text-3xl font-bold">Movies</h1>
             <a href="{{ url_for('admin.add_movie', prev='movie') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Movie</a>
         </div>
