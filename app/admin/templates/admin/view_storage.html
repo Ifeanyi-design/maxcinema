@@ -1,114 +1,118 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    
-    <div class="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-center mb-8">
-        <div>
-            <h2 class="text-3xl font-bold text-white">Storage Infrastructure</h2>
-            <p class="text-gray-400 mt-1">Manage your video storage nodes and quotas.</p>
-        </div>
-        <a href="{{ url_for('admin.add_storage_server') }}" 
-           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 shadow-lg flex items-center">
-            <span>+ Add New Server</span>
-        </a>
-    </div>
+    <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+        <!-- Sidebar -->
+        {% include 'admin/sidebar.html' %}
+        <div class="container mx-auto px-4 py-6 pt-[70px] md:pt-0 flex-1 overflow-y-auto">
+            
+            <div class="flex flex-col md:flex-row gap-4 md:gap-0 justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-white">Storage Infrastructure</h2>
+                    <p class="text-gray-400 mt-1">Manage your video storage nodes and quotas.</p>
+                </div>
+                <a href="{{ url_for('admin.add_storage_server') }}" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 shadow-lg flex items-center">
+                    <span>+ Add New Server</span>
+                </a>
+            </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {% for server in servers %}
-            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden group">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                <div class="absolute top-4 right-4">
-                    {% if server.active %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Active
-                        </span>
-                    {% else %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Inactive
-                        </span>
-                    {% endif %}
-                </div>
+                {% for server in servers %}
+                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl relative overflow-hidden group">
+                        
+                        <div class="absolute top-4 right-4">
+                            {% if server.active %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </div>
 
-                <div class="mb-4">
-                    <h3 class="text-xl font-bold text-white truncate pr-12">{{ server.name }}</h3>
-                    <span class="text-xs font-mono text-blue-400 uppercase tracking-wide border border-blue-900 bg-blue-900/30 px-2 py-0.5 rounded">
-                        {{ server.server_type }}
-                    </span>
-                </div>
-
-                <div class="space-y-3 mb-6">
-                    <div>
-                        <p class="text-gray-500 text-xs uppercase font-semibold">Base URL</p>
-                        <p class="text-gray-300 text-sm truncate" title="{{ server.base_url }}">
-                            {{ server.base_url or 'N/A' }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-400">Storage Usage</span>
-                            <span class="text-white font-mono">
-                                {{ server.used_storage_gb }} / 
-                                {% if server.max_storage_gb > 0 %}
-                                    {{ server.max_storage_gb }} GB
-                                {% else %}
-                                    ∞
-                                {% endif %}
+                        <div class="mb-4">
+                            <h3 class="text-xl font-bold text-white truncate pr-12">{{ server.name }}</h3>
+                            <span class="text-xs font-mono text-blue-400 uppercase tracking-wide border border-blue-900 bg-blue-900/30 px-2 py-0.5 rounded">
+                                {{ server.server_type }}
                             </span>
                         </div>
-                        
-                        {% if server.max_storage_gb > 0 %}
-                            {% set percent = (server.used_storage_gb / server.max_storage_gb * 100) | round %}
-                            
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div class="h-2.5 rounded-full transition-all duration-500
-                                    {% if percent > 90 %} bg-red-500
-                                    {% elif percent > 70 %} bg-yellow-500
-                                    {% else %} bg-blue-500 {% endif %}"
-                                    style="width: {{ percent }}%">
-                                </div>
-                            </div>
-                            <p class="text-right text-xs text-gray-500 mt-1">{{ percent }}% Full</p>
-                        {% else %}
-                            <div class="w-full bg-gray-700 rounded-full h-2.5">
-                                <div class="bg-purple-500 h-2.5 rounded-full w-full"></div>
-                            </div>
-                            <p class="text-right text-xs text-purple-400 mt-1">Unlimited Storage</p>
-                        {% endif %}
-                    </div>
-                </div>
 
-                <div class="flex justify-between pt-4 border-t border-gray-700 mt-auto">
-                    <a href="{{ url_for('admin.edit_storage_server', server_id=server.id) }}" 
-                       class="text-sm bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded transition">
-                        Edit Config
-                    </a>
-                    
-                    <form action="{{ url_for('admin.delete_storage_server', server_id=server.id) }}" method="POST" class="inline">
-                        <button type="submit" 
-                                onclick="return confirm('Are you sure you want to remove this server? This might break videos linked to it!');"
-                                class="text-sm bg-red-900/50 hover:bg-red-900 text-red-200 py-2 px-4 rounded transition border border-red-900">
-                            Delete
-                        </button>
-                    </form>
-                </div>
+                        <div class="space-y-3 mb-6">
+                            <div>
+                                <p class="text-gray-500 text-xs uppercase font-semibold">Base URL</p>
+                                <p class="text-gray-300 text-sm truncate" title="{{ server.base_url }}">
+                                    {{ server.base_url or 'N/A' }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-400">Storage Usage</span>
+                                    <span class="text-white font-mono">
+                                        {{ server.used_storage_gb }} / 
+                                        {% if server.max_storage_gb > 0 %}
+                                            {{ server.max_storage_gb }} GB
+                                        {% else %}
+                                            ∞
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                {% if server.max_storage_gb > 0 %}
+                                    {% set percent = (server.used_storage_gb / server.max_storage_gb * 100) | round %}
+                                    
+                                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                        <div class="h-2.5 rounded-full transition-all duration-500
+                                            {% if percent > 90 %} bg-red-500
+                                            {% elif percent > 70 %} bg-yellow-500
+                                            {% else %} bg-blue-500 {% endif %}"
+                                            style="width: {{ percent }}%">
+                                        </div>
+                                    </div>
+                                    <p class="text-right text-xs text-gray-500 mt-1">{{ percent }}% Full</p>
+                                {% else %}
+                                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                                        <div class="bg-purple-500 h-2.5 rounded-full w-full"></div>
+                                    </div>
+                                    <p class="text-right text-xs text-purple-400 mt-1">Unlimited Storage</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between pt-4 border-t border-gray-700 mt-auto">
+                            <a href="{{ url_for('admin.edit_storage_server', server_id=server.id) }}" 
+                            class="text-sm bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded transition">
+                                Edit Config
+                            </a>
+                            
+                            <form action="{{ url_for('admin.delete_storage_server', server_id=server.id) }}" method="POST" class="inline">
+                                <button type="submit" 
+                                        onclick="return confirm('Are you sure you want to remove this server? This might break videos linked to it!');"
+                                        class="text-sm bg-red-900/50 hover:bg-red-900 text-red-200 py-2 px-4 rounded transition border border-red-900">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                {% endfor %}
 
             </div>
-        {% endfor %}
 
-    </div>
+            {% if not servers %}
+            <div class="text-center py-20 bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-700 mt-8">
+                <h3 class="text-xl text-gray-400 font-semibold">No Storage Servers Configured</h3>
+                <p class="text-gray-500 mt-2">Add a local folder or cloud bucket to start uploading videos.</p>
+                <div class="mt-6">
+                    <a href="{{ url_for('admin.add_storage_server') }}" class="text-blue-400 hover:text-blue-300 underline">Configure First Server</a>
+                </div>
+            </div>
+            {% endif %}
 
-    {% if not servers %}
-    <div class="text-center py-20 bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-700 mt-8">
-        <h3 class="text-xl text-gray-400 font-semibold">No Storage Servers Configured</h3>
-        <p class="text-gray-500 mt-2">Add a local folder or cloud bucket to start uploading videos.</p>
-        <div class="mt-6">
-            <a href="{{ url_for('admin.add_storage_server') }}" class="text-blue-400 hover:text-blue-300 underline">Configure First Server</a>
         </div>
     </div>
-    {% endif %}
-
-</div>
 {% endblock %}

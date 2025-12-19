@@ -730,8 +730,9 @@ def delete_user(user_id):
 
 @admin_bp.route("/storage-servers")
 def view_storage():
+    server = True
     servers = StorageServer.query.order_by(StorageServer.created_at.desc()).all()
-    return render_template("admin/view_storage.html", servers=servers)
+    return render_template("admin/view_storage.html", server=server, servers=servers)
 
 @admin_bp.route("/storage-servers/add", methods=["GET", "POST"])
 @login_required
