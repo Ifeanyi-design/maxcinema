@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block social_tags %}
+    <meta property="og:title" content="Watch {{ video.title }} - MaxCinema">
+    <meta property="og:description" content="{{ video.description[:150] }}..."> 
+
+    {% if video.image_url %}
+        <meta property="og:image" content="{{ video.image }}">
+    {% else %}
+        <meta property="og:image" content="https://www.w3schools.com/howto/img_avatar.png">
+    {% endif %}
+
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:type" content="video.movie">
+    <meta name="twitter:card" content="summary_large_image">
+{% endblock %}
+
 {% block content %}
 
 
