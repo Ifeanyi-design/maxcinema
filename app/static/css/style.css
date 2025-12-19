@@ -925,6 +925,66 @@ video {
   aspect-ratio: 16 / 9;
 }
 
+.aspect-auto {
+  aspect-ratio: auto;
+}
+
+.aspect-\[1\/2\] {
+  aspect-ratio: 1/2;
+}
+
+.aspect-\[\] {
+  aspect-ratio: ;
+}
+
+.aspect-\[1\.5\/\] {
+  aspect-ratio: 1.5/;
+}
+
+.aspect-\[0\.1\/2\] {
+  aspect-ratio: 0.1/2;
+}
+
+.aspect-\[2\/2\] {
+  aspect-ratio: 2/2;
+}
+
+.aspect-\[4\/2\] {
+  aspect-ratio: 4/2;
+}
+
+.aspect-\[4\/1\] {
+  aspect-ratio: 4/1;
+}
+
+.aspect-\[1\/1\] {
+  aspect-ratio: 1/1;
+}
+
+.aspect-\[1\.5\/1\] {
+  aspect-ratio: 1.5/1;
+}
+
+.aspect-\[1\.\/1\] {
+  aspect-ratio: 1./1;
+}
+
+.aspect-\[\/1\] {
+  aspect-ratio: /1;
+}
+
+.aspect-\[3\/1\] {
+  aspect-ratio: 3/1;
+}
+
+.aspect-\[7\/1\] {
+  aspect-ratio: 7/1;
+}
+
+.aspect-\[8\/1\] {
+  aspect-ratio: 8/1;
+}
+
 .h-14 {
   height: 3.5rem;
 }
@@ -1001,8 +1061,68 @@ video {
   height: 100vh;
 }
 
+.h-11 {
+  height: 2.75rem;
+}
+
+.h-\[100\%\] {
+  height: 100%;
+}
+
+.h-\[\] {
+  height: ;
+}
+
 .max-h-\[60vh\] {
   max-height: 60vh;
+}
+
+.max-h-\[\] {
+  max-height: ;
+}
+
+.max-h-\[20vh\] {
+  max-height: 20vh;
+}
+
+.max-h-\[10vh\] {
+  max-height: 10vh;
+}
+
+.max-h-\[100\%\] {
+  max-height: 100%;
+}
+
+.max-h-\[80\%\] {
+  max-height: 80%;
+}
+
+.max-h-\[\%\] {
+  max-height: %;
+}
+
+.max-h-\[50\%\] {
+  max-height: 50%;
+}
+
+.max-h-\[60\%\] {
+  max-height: 60%;
+}
+
+.max-h-\[40\%\] {
+  max-height: 40%;
+}
+
+.max-h-\[0vh\] {
+  max-height: 0vh;
+}
+
+.max-h-\[11vh\] {
+  max-height: 11vh;
+}
+
+.max-h-\[10\.5vh\] {
+  max-height: 10.5vh;
 }
 
 .min-h-screen {
@@ -1104,6 +1224,30 @@ video {
 
 .w-screen {
   width: 100vw;
+}
+
+.w-\[30\%\] {
+  width: 30%;
+}
+
+.w-\[0\%\] {
+  width: 0%;
+}
+
+.w-\[\] {
+  width: ;
+}
+
+.w-\[30vh\] {
+  width: 30vh;
+}
+
+.w-\[30vw\] {
+  width: 30vw;
+}
+
+.w-\[20vw\] {
+  width: 20vw;
 }
 
 .max-w-2xl {
@@ -1276,8 +1420,8 @@ video {
   gap: 1.75rem;
 }
 
-.gap-8 {
-  gap: 2rem;
+.gap-0 {
+  gap: 0px;
 }
 
 .gap-y-10 {
@@ -1326,6 +1470,10 @@ video {
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 
+.overflow-auto {
+  overflow: auto;
+}
+
 .overflow-hidden {
   overflow: hidden;
 }
@@ -1336,6 +1484,10 @@ video {
 
 .overflow-y-auto {
   overflow-y: auto;
+}
+
+.overflow-y-scroll {
+  overflow-y: scroll;
 }
 
 .scroll-smooth {
@@ -1743,11 +1895,6 @@ video {
   padding-bottom: 0.25rem;
 }
 
-.py-10 {
-  padding-top: 2.5rem;
-  padding-bottom: 2.5rem;
-}
-
 .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -1773,44 +1920,9 @@ video {
   padding-bottom: 2rem;
 }
 
-.px-0 {
-  padding-left: 0px;
-  padding-right: 0px;
-}
-
-.py-0 {
-  padding-top: 0px;
-  padding-bottom: 0px;
-}
-
-.py-\[\] {
-  padding-top: ;
-  padding-bottom: ;
-}
-
-.py-\[0\.5\] {
-  padding-top: 0.5;
-  padding-bottom: 0.5;
-}
-
-.px-\[\] {
-  padding-left: ;
-  padding-right: ;
-}
-
-.py-\[0\.8\] {
-  padding-top: 0.8;
-  padding-bottom: 0.8;
-}
-
-.py-\[0\.5px\] {
-  padding-top: 0.5px;
-  padding-bottom: 0.5px;
-}
-
-.py-\[0\.8px\] {
-  padding-top: 0.8px;
-  padding-bottom: 0.8px;
+.px-7 {
+  padding-left: 1.75rem;
+  padding-right: 1.75rem;
 }
 
 .pb-2 {
@@ -1885,6 +1997,10 @@ video {
   padding-top: 70px;
 }
 
+.pt-\[30px\] {
+  padding-top: 30px;
+}
+
 .text-left {
   text-align: left;
 }
@@ -1895,6 +2011,10 @@ video {
 
 .text-right {
   text-align: right;
+}
+
+.text-justify {
+  text-align: justify;
 }
 
 .font-\[Poppins\] {
@@ -1972,19 +2092,6 @@ video {
 .text-xs {
   font-size: 0.75rem;
   line-height: 1rem;
-}
-
-.text-base {
-  font-size: 1rem;
-  line-height: 1.5rem;
-}
-
-.text-\[5px\] {
-  font-size: 5px;
-}
-
-.text-\[10px\] {
-  font-size: 10px;
 }
 
 .font-bold {
@@ -2117,10 +2224,6 @@ video {
 .text-yellow-400 {
   --tw-text-opacity: 1;
   color: rgb(250 204 21 / var(--tw-text-opacity));
-}
-
-.text-\[\] {
-  color: ;
 }
 
 .underline {
@@ -3061,6 +3164,10 @@ a:hover {
 }
 
 @media (min-width: 640px) {
+  .sm\:grid {
+    display: grid;
+  }
+
   .sm\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3077,27 +3184,26 @@ a:hover {
     gap: 0.25rem;
   }
 
-  .sm\:py-\[0\.8px\] {
-    padding-top: 0.8px;
-    padding-bottom: 0.8px;
-  }
-
   .sm\:px-1 {
     padding-left: 0.25rem;
     padding-right: 0.25rem;
+  }
+
+  .sm\:py-\[0\.8px\] {
+    padding-top: 0.8px;
+    padding-bottom: 0.8px;
   }
 
   .sm\:pb-2 {
     padding-bottom: 0.5rem;
   }
 
-  .sm\:text-\[80\%\] {
-    font-size: 80%;
+  .sm\:text-\[10px\] {
+    font-size: 10px;
   }
 
-  .sm\:text-xl {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
+  .sm\:text-\[80\%\] {
+    font-size: 80%;
   }
 
   .sm\:text-\[8px\] {
@@ -3109,8 +3215,9 @@ a:hover {
     line-height: 1.25rem;
   }
 
-  .sm\:text-\[10px\] {
-    font-size: 10px;
+  .sm\:text-xl {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
   }
 }
 
@@ -3130,6 +3237,10 @@ a:hover {
   .md\:my-5 {
     margin-top: 1.25rem;
     margin-bottom: 1.25rem;
+  }
+
+  .md\:ml-7 {
+    margin-left: 1.75rem;
   }
 
   .md\:flex {
@@ -3225,6 +3336,10 @@ a:hover {
     scroll-behavior: smooth;
   }
 
+  .md\:p-3 {
+    padding: 0.75rem;
+  }
+
   .md\:px-12 {
     padding-left: 3rem;
     padding-right: 3rem;
@@ -3258,6 +3373,10 @@ a:hover {
   .md\:py-\[15\%\] {
     padding-top: 15%;
     padding-bottom: 15%;
+  }
+
+  .md\:pt-0 {
+    padding-top: 0px;
   }
 
   .md\:text-2xl {
@@ -3311,6 +3430,14 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
+  .lg\:ml-7 {
+    margin-left: 1.75rem;
+  }
+
+  .lg\:mt-24 {
+    margin-top: 6rem;
+  }
+
   .lg\:flex {
     display: flex;
   }
@@ -3323,6 +3450,30 @@ a:hover {
     aspect-ratio: 1/0.4;
   }
 
+  .lg\:aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+
+  .lg\:max-h-\[\] {
+    max-height: ;
+  }
+
+  .lg\:max-h-\[20vh\] {
+    max-height: 20vh;
+  }
+
+  .lg\:max-h-\[100\%\] {
+    max-height: 100%;
+  }
+
+  .lg\:max-h-\[80\%\] {
+    max-height: 80%;
+  }
+
+  .lg\:max-h-\[75\%\] {
+    max-height: 75%;
+  }
+
   .lg\:w-3\/12 {
     width: 25%;
   }
@@ -3333,6 +3484,10 @@ a:hover {
 
   .lg\:w-\[30vw\] {
     width: 30vw;
+  }
+
+  .lg\:w-\[20vw\] {
+    width: 20vw;
   }
 
   .lg\:grid-cols-3 {
@@ -3359,12 +3514,20 @@ a:hover {
     flex-direction: column;
   }
 
+  .lg\:justify-evenly {
+    justify-content: space-evenly;
+  }
+
   .lg\:gap-2 {
     gap: 0.5rem;
   }
 
   .lg\:gap-4 {
     gap: 1rem;
+  }
+
+  .lg\:gap-0 {
+    gap: 0px;
   }
 
   .lg\:p-3 {
@@ -3386,19 +3549,29 @@ a:hover {
     padding-right: 20%;
   }
 
-  .lg\:py-3 {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
-
-  .lg\:px-1 {
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
-  }
-
   .lg\:py-1 {
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
+  }
+
+  .lg\:py-2 {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .lg\:px-8 {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .lg\:px-5 {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .lg\:py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
   }
 
   .lg\:text-2xl {
@@ -3441,6 +3614,10 @@ a:hover {
   .lg\:text-sm {
     font-size: 0.875rem;
     line-height: 1.25rem;
+  }
+
+  .lg\:font-semibold {
+    font-weight: 600;
   }
 }
 
