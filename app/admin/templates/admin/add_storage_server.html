@@ -1,0 +1,81 @@
+{% extends "admin/base.html" %}
+{% block title %}Add Storage Server{% endblock %}
+
+{% block content %}
+<div class="flex gap-4 w-full justify-evenly items-center mb-6">
+    <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px] mb-4" onclick="window.location.href='{{ url_for('admin.view_storage') }}'">
+        Go back
+    </button>
+    <h2 class="text-2xl font-bold mb-4">{{ title }}</h2>
+</div>
+{% with messages=get_flashed_messages() %}
+    {% if messages %}
+        <div class="bg-red-600 text-white p-4 rounded-md mb-4">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+<form method="POST" class="space-y-6 bg-gray-800 p-8 rounded-xl border border-gray-700 shadow-2xl max-w-2xl mx-auto">
+    {{ form.hidden_tag() }}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.name.label }}</label>
+            {{ form.name(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none") }}
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.server_type.label }}</label>
+            {{ form.server_type(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none") }}
+        </div>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.base_url.label }}</label>
+        {{ form.base_url(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none", placeholder="e.g. https://s3.aws.com/my-bucket") }}
+        <p class="text-gray-500 text-xs mt-1">The root URL or file path where videos will be stored.</p>
+    </div>
+
+    <div class="border-t border-gray-700 pt-6 mt-6">
+        <h3 class="text-lg font-semibold text-gray-200 mb-4">Credentials (Optional)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">{{ form.username.label }}</label>
+                {{ form.username(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-blue-500 outline-none") }}
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">{{ form.password.label }}</label>
+                {{ form.password(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-blue-500 outline-none") }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-400 mb-2">{{ form.api_key.label }}</label>
+                {{ form.api_key(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-blue-500 outline-none") }}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center pt-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.max_storage_gb.label }}</label>
+            {{ form.max_storage_gb(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-blue-500 outline-none") }}
+        </div>
+        {% if edit %}
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">{{ form.used_storage_gb.label }}</label>
+                {{ form.used_storage_gb(class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:ring-blue-500 outline-none") }}
+            </div>
+        {% endif %}
+        <div class="flex items-center h-full pt-6">
+            <div class="flex items-center space-x-3">
+                {{ form.active(class="w-5 h-5 text-blue-600 rounded border-gray-600 bg-gray-900 focus:ring-blue-500 focus:ring-offset-gray-800") }}
+                <label for="active" class="text-sm font-medium text-gray-300">Server is Active</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="pt-6">
+        {{ form.submit(class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 cursor-pointer") }}
+    </div>
+</form>
+{% endblock %}

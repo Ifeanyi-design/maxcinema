@@ -5,7 +5,7 @@ from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentI
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
-from .forms import AllVideoForm, SeasonForm, TrailerForm, EpisodeForm, UserForm
+from .forms import AllVideoForm, StorageServerForm, SeasonForm, TrailerForm, EpisodeForm, UserForm
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_login import login_required, current_user, login_user, logout_user
@@ -675,7 +675,8 @@ def add_trailer(prev):
 def view_users():
     users = User.query.all()
     len_users = len(users)
-    return render_template("admin/users.html", len_users=len_users, users=users)
+    user=True
+    return render_template("admin/users.html", user=user, len_users=len_users, users=users)
 
 @admin_bp.route("/add-user", methods=["GET", "POST"])
 @login_required
@@ -727,6 +728,87 @@ def delete_user(user_id):
     flash("User deleted successfully.", "success")
     return redirect(url_for("admin.view_users"))
 
-@admin_bp.route("/storages")
+@admin_bp.route("/storage-servers")
 def view_storage():
-    return render_template("admin/view_storage.html")
+    servers = StorageServer.query.order_by(StorageServer.created_at.desc()).all()
+    return render_template("admin/view_storage.html", servers=servers)
+
+@admin_bp.route("/storage-servers/add", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_storage_server():
+    # TODO: Add form logic here later
+    form = StorageServerForm()
+    if form.validate_on_submit():
+        new_server = StorageServer()
+        
+        # 2. Magic: Auto-fill the model with form data
+        form.populate_obj(new_server)
+        
+        # 3. Handle any fields NOT in the form (optional defaults)
+        new_server.used_storage_gb = 0.0 
+        
+        try:
+            db.session.add(new_server)
+            db.session.commit()
+            flash(f"Storage Server '{new_server.name}' added successfully!", "success")
+            return redirect(url_for('admin.list_storage_servers'))
+            
+        except Exception as e:
+            db.session.rollback()
+            # Check if it's a duplicate name error
+            if "UNIQUE constraint" in str(e) or "unique constraint" in str(e).lower():
+                flash("Error: A server with that name already exists.", "error")
+            else:
+                flash(f"Database error: {str(e)}", "error")
+        
+    return render_template("admin/add_storage_server.html", form=form, title="Add New Server")
+
+
+# 3. EDIT an existing server (Placeholder)
+@admin_bp.route("/storage-servers/edit/<int:server_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_storage_server(server_id):
+    edit = True
+    server = StorageServer.query.get_or_404(server_id)
+    
+    # 2. Pre-fill the form with the server's current data using 'obj='
+    form = StorageServerForm(obj=server)
+    
+    if form.validate_on_submit():
+        # 3. Magic: Update the EXISTING server object with new form data
+        form.populate_obj(server)
+        
+        try:
+            db.session.commit()
+            flash(f"Server '{server.name}' updated successfully.", "success")
+            return redirect(url_for('admin.list_storage_servers'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating server: {str(e)}", "error")
+
+    # Pass 'server' to template so the title can say "Edit Server: AWS_S3"
+    return render_template("admin/add_storage_server.html", edit=edit, form=form, title=f"Edit {server.name}")
+
+# 4. DELETE a server (Fully Functional)
+@admin_bp.route("/storage-servers/delete/<int:server_id>", methods=["POST"])
+# @login_required
+# @admin_required
+def delete_storage_server(server_id):
+    server = StorageServer.query.get_or_404(server_id)
+    
+    # Optional: Check if videos are using this server before deleting
+    # if server.videos.count() > 0:
+    #     flash("Cannot delete: This server contains videos.", "error")
+    #     return redirect(url_for('admin.list_storage_servers'))
+
+    try:
+        db.session.delete(server)
+        db.session.commit()
+        flash(f"Server '{server.name}' deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Error deleting server.", "error")
+        
+    return redirect(url_for("admin.list_storage_servers"))

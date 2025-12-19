@@ -1,6 +1,9 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
+    <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px] mb-4" onclick="window.location.href='{{ url_for('admin.view_users') }}'">
+        Go back
+    </button>
     <h1 class="text-2xl text-white font-bold mb-6">{{ action }} User</h1>
     {% with messages=get_flashed_messages() %}
         {% if messages %}

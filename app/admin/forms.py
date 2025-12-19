@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, BooleanField, IntegerField, 
-    FloatField, SelectField, SelectMultipleField, DateField, SubmitField, URLField
+    FloatField, SelectField, SelectMultipleField, DateField, SubmitField, URLField, PasswordField
 )
 from wtforms.validators import DataRequired, Optional, NumberRange, Length
 
@@ -158,3 +158,40 @@ class UserForm(FlaskForm):
     is_admin = BooleanField("Admin Privileges")
     password_hash = StringField("Password", validators=[Optional()], render_kw={"placeholder": "Enter new password"})    
     submit = SubmitField("Save User")
+
+class StorageServerForm(FlaskForm):
+    name = StringField('Server Name', validators=[
+        DataRequired(), 
+        Length(min=2, max=100)
+    ])
+    
+    server_type = SelectField('Server Type', choices=[
+        ('local', 'Local Server / Folder'),
+        ('aws_s3', 'AWS S3 Bucket'),
+        ('bytescale', 'Bytescale / Cloud Image'),
+        ('ftp', 'FTP Server')
+    ], validators=[DataRequired()])
+    
+    base_url = StringField('Base URL / Path', validators=[
+        DataRequired(),
+        Length(max=255)
+    ], description="http://myserver.com/files or C:/videos/")
+
+    # Credentials (Optional because local folders might not need them)
+    api_key = StringField('API Key', validators=[Optional(), Length(max=255)])
+    username = StringField('Username', validators=[Optional(), Length(max=100)])
+    password = PasswordField('Password', validators=[Optional(), Length(max=100)])
+    
+    # Storage settings
+    max_storage_gb = FloatField('Max Storage (GB)', validators=[
+        Optional(),
+        NumberRange(min=0, message="Storage cannot be negative.")
+    ], default=100.0, description="Set to 0 for unlimited.")
+    used_storage_gb = FloatField('Used Storage (GB)', validators=[
+        Optional(),
+        NumberRange(min=0, message="Storage cannot be negative.")
+    ], default=100.0, description="Set to 0 for unlimited.")
+    
+    active = BooleanField('Active', default=True, description="Uncheck to disable uploads to this server.")
+    
+    submit = SubmitField('Save Server')
