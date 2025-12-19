@@ -683,6 +683,9 @@ def view_users():
 def add_user():
     form = UserForm()
     if form.validate_on_submit():
+        if User.query.filter_by(email=form.email.data).first():
+            flash("Email already exists.", "danger")
+            return render_template("admin/user_form.html", form=form)
         password = generate_password_hash(form.password_hash.data)
         user = User(
             username=form.username.data,
@@ -703,6 +706,9 @@ def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     form = UserForm(obj=user)
     if form.validate_on_submit():
+        if user.email != form.email.data and User.query.filter_by(email=form.email.data).first():
+            flash("Email already exists.", "danger")
+            return render_template("admin/user_form.html", form=form, user=user)
         form.populate_obj(user)
         if form.password_hash.data:
             user.password_hash = generate_password_hash(form.password_hash.data)
