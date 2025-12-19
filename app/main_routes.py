@@ -509,6 +509,7 @@ def watch_trailer(det="trailer_watch", name=None):
 
     trailer = Trailer.query.filter_by(slug=name).first_or_404()
     up_next = get_up_next(trailer)
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
 
     # Count only top-level
     num_comment = Comment.query.filter_by(
@@ -532,7 +533,8 @@ def watch_trailer(det="trailer_watch", name=None):
         comments=comments,
         dark=dark,
         up_next=up_next,
-        num_comment=num_comment
+        num_comment=num_comment,
+        trending_trailers=trending_trailers
     )
 
 

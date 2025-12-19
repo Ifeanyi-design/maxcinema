@@ -129,7 +129,7 @@
                                 <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
                                     <div class="flex items-center space-x-1">
                                         <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate">{{ videos.all_video.date_added.strftime('%b %d, %Y') }}</p>
+                                        <p class="truncate">{% if videos.all_video.updated_at  %} {{ videos.all_video.updated_at.strftime('%b %d, %Y') }} {% else %} {{ videos.all_video.date_added.strftime('%b %d, %Y') }} {% endif %}</p>
                                     </div>
                                     <div class="flex items-center space-x-1">
                                         <i class="fas fa-comment"></i>
@@ -173,8 +173,14 @@
                                 </div>
                                 <p class="text-white ml-1">{{ videos.season.series.all_video.rating | round(1) }}</p>
                             </div>
+                            
                         <!-- Image wrapper -->
                         <div class="w-full aspect-[2/3] relative">
+                            {% if videos.season.completed %}
+                                <div class="absolute z-40 bg-[#830506] flex bottom-0 font-bold right-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
+                                    <span>Completed</span>
+                                </div>
+                            {% endif %}
                             <img 
                             src="{{ videos.season.series.all_video.image }}"
                             alt="{{ videos.season.series.all_video.name }}"
@@ -187,7 +193,7 @@
                             <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-calendar-alt"></i>
-                                    <p class="truncate">{{ videos.season.series.all_video.date_added.strftime('%b %d, %Y') }}</p>
+                                    <p class="truncate">{% if videos.season.series.all_video.updated_at%} {{ videos.season.series.all_video.updated_at.strftime('%b %d, %Y') }} {% else %} {{ videos.season.series.all_video.date_added.strftime('%b %d, %Y') }} {% endif %}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-comment"></i>

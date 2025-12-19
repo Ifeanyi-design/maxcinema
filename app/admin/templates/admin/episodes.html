@@ -48,7 +48,7 @@
                 </div>
                 <div class="flex bottom-0 w-full justify-evenly py-2 border-t">
                     <a href="{{ url_for('admin.edit_episode', name=season.series.all_video.slug, prev='series', series_id=season.series.all_video.id, season_id=season.id, episode_id = episode.id) }}" class="bg-yellow-500 hover:bg-yellow-600 hover:text-white text-white px-5 py-1 lg:px-5 lg:py-3 rounded-full text-sm text-center">Edit Episode</a>
-                    <form method="POST" action="{{ url_for('admin.delete_episode', prev='series', name=season.series.all_video.slug, id=season.series.all_video.id, season_id=season.id, episode_id=episode.id) }}" onsubmit="return confirm('Are you sure you want to delete this season?');">
+                    <form method="POST" action="{{ url_for('admin.delete_episode', prev='series', name=season.series.all_video.slug, id=season.series.all_video.id, season_id=season.id, episode_id=episode.id) }}" onsubmit="return confirm('Are you sure you want to delete this episode?');">
                             <button type="submit" class="bg-red-500 hover:bg-red-600 hover:text-white text-white px-5 py-1 lg:px-5 lg:py-3 rounded-full text-sm text-center">Delete Episode</button>
                     </form>
                 </div>

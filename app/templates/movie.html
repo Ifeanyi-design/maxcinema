@@ -61,11 +61,11 @@
                     </div>
                     <div>
                         <span class="font-bold">
-                            Release Date:</span> 1 July 2025
+                            Release Date:</span> {% if video.released_date %} {{ video.released_date }} {% else %} None {% endif %}
                     </div>
                     <div>
                         <span class="font-bold">
-                            Country:</span> United States
+                            Country:</span> {% if video.country %} {{ video.country }} {% else %} None {% endif %}
                     </div>
                     <div class="flex text-center items-center">
                         <span class="font-bold">
@@ -94,24 +94,24 @@
                     </div>
                     <div>
                         <span class="font-bold">
-                            Language:</span> English
+                            Language:</span> {% if video.language %} {{ video.language }} {% else %} None {% endif %}
                     </div>
                     <div>
                         <span class="font-bold">
-                            Subtitles:</span> English, Spanish, French, German, Portuguese
+                            Subtitles:</span> {% if video.subtitles %} {{ video.subtitles }} {% else %} None {% endif %}
                     </div>
                     <div>
                         <span class="font-bold">
-                            Source:</span> Netflix
+                            Source:</span> {% if video.source %} {{ video.source }} {% else %} None {% endif %}
                     </div>
                     <div>
                         <span class="font-bold">
-                            Runtime:</span> {{ video.length }}
+                            Runtime:</span> {% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}
                     </div>
                     {% if video.type == 'series' %}
                         <div>
                             <span class="font-bold">
-                                Episodes:</span> - (ongoing)
+                                Episodes:</span> - {% if current_season.completed%} (Completed) {% else %} (ongoing) {% endif %}
                         </div>
                     {% endif %}
 

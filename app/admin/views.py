@@ -5,7 +5,7 @@ from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentI
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
-from .forms import AllVideoForm, SeasonForm, TrailerForm, EpisodeForm
+from .forms import AllVideoForm, SeasonForm, TrailerForm, EpisodeForm, UserForm
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_login import login_required, current_user, login_user, logout_user
@@ -242,6 +242,7 @@ def add_movie(prev):
             subtitles=form.subtitles.data,
             star_cast=form.star_cast.data,
             source=form.source.data,
+            released_date=form.released_date.data,
             download_link=form.download_link.data,
             trailer_url=form.trailer_link.data,
             image=form.image.data,
@@ -308,6 +309,7 @@ def add_series(prev):
             source=form.source.data,
             download_link=form.download_link.data,
             trailer_url=form.trailer_link.data,
+            released_date=form.released_date.data,
             image=form.image.data,
             type=form.type.data,
             featured=form.featured.data,
@@ -624,7 +626,7 @@ def delete_episode(name, id, prev, season_id, episode_id):
     season.num_episodes = episode_count
     db.session.commit()
     flash('Season deleted.', 'success')
-    return redirect(url_for('admin.view_series_specific', prev=prev, name=name, id=id))
+    return redirect(url_for('admin.view_episodes', prev=prev, name=name, season_id=season_id, ns=season.season_number))
 
 
 
@@ -671,7 +673,53 @@ def add_trailer(prev):
 
 @admin_bp.route("/users")
 def view_users():
-    return render_template("admin/users.html")
+    users = User.query.all()
+    len_users = len(users)
+    return render_template("admin/users.html", len_users=len_users, users=users)
+
+@admin_bp.route("/add-user", methods=["GET", "POST"])
+@login_required
+@admin_required
+def add_user():
+    form = UserForm()
+    if form.validate_on_submit():
+        password = generate_password_hash(form.password_hash.data)
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            is_admin=form.is_admin.data,
+            password_hash=password
+        )
+        db.session.add(user)
+        db.session.commit()
+        flash("User added successfully.", "success")
+        return redirect(url_for("admin.view_users"))
+    return render_template("admin/user_form.html", form=form)
+
+@admin_bp.route("/edit-user/<int:user_id>", methods=["GET", "POST"])
+@login_required
+@admin_required
+def edit_user(user_id):
+    user = User.query.get_or_404(user_id)
+    form = UserForm(obj=user)
+    if form.validate_on_submit():
+        form.populate_obj(user)
+        if form.password_hash.data:
+            user.password_hash = generate_password_hash(form.password_hash.data)
+        db.session.commit()
+        flash("User updated successfully.", "success")
+        return redirect(url_for("admin.view_users"))
+    return render_template("admin/user_form.html", form=form, user=user)
+
+@admin_bp.route("/delete-user/<int:user_id>", methods=["POST"])
+@login_required
+@admin_required
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash("User deleted successfully.", "success")
+    return redirect(url_for("admin.view_users"))
 
 @admin_bp.route("/storages")
 def view_storage():

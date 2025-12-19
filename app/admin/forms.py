@@ -151,3 +151,10 @@ class TrailerForm(FlaskForm):
     )
     release_year = IntegerField("Year Produced", validators=[Optional()], render_kw={"placeholder": "e.g. 2025"})
     submit = SubmitField("Save Trailer")
+
+class UserForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired()], render_kw={"placeholder": "Enter username"})
+    email = StringField("Email", validators=[DataRequired()], render_kw={"placeholder": "Enter email address"})
+    is_admin = BooleanField("Admin Privileges")
+    password_hash = StringField("Password", validators=[Optional()], render_kw={"placeholder": "Enter new password"})    
+    submit = SubmitField("Save User")
