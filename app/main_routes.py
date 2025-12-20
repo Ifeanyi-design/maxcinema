@@ -371,136 +371,156 @@ def series_details(det, name, season, episode, id):
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
     """
-    Dispatcher route to check storage server and redirect to the correct download route.
-    Supports movie and series downloads.
+    Dispatcher: Checks Server Type.
+    - If Bytescale: Redirects to the special proxy route.
+    - If Standard: Redirects directly to the file URL.
     """
 
-    # --- 1. Fetch video object ---
+    # --- 1. Fetch Video & Server ---
     if type == "movie":
         video = AllVideo.query.get_or_404(id)
-        storage_server = video.storage_server  # relationship to StorageServer
-        filename = video.name
+        # Use the name from the DB for the user's saved file
+        clean_name = video.name 
     elif type == "series":
         video = Episode.query.get_or_404(id)
-        storage_server = video.storage_server  # relationship to StorageServer
-        filename = f"{video.season.series.all_video.name}_S{season}E{episode}"
+        clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
     else:
         return "Invalid type", 400
 
-    # --- 2. Check if storage server exists and is active ---
+    storage_server = video.storage_server
+
+    # Check if server exists
     if not storage_server or not storage_server.active:
         return "Storage server not found or inactive", 404
-
-    # --- 3. Redirect based on server type ---
-    if storage_server.server_type == "bytescale":
-        # Redirect to existing Bytescale download route
-        if type == "movie":
-            return redirect(url_for(
-                "main.movie_start_download",
-                type="movie",
-                name=filename,
-                id=id
-            ))
-        else:  # series
-            return redirect(url_for(
-                "main.movie_start_download",
-                type="series",
-                name=filename,
-                id=id,
-                season=season,
-                episode=episode
-            ))
     
-    # --- 4. Fallback for unsupported servers ---
-    return "Server type not supported yet", 501
+    # Check if filename exists
+    if not video.download_link:
+         return "File not linked in database", 404
+
+    # --- 2. LOGIC BRANCH ---
+    
+    # BRANCH A: BYTESCALE (Needs Proxy/API work)
+    if storage_server.server_type == "bytescale":
+        if type == "movie":
+            return redirect(url_for("main.movie_start_download", type="movie", name=clean_name, id=id))
+        else:
+            return redirect(url_for("main.movie_start_download", type="series", name=clean_name, id=id, season=season, episode=episode))
+
+    # BRANCH B: STANDARD SERVERS (AWS S3, Local, FTP, etc.)
+    # We just build the link and redirect the user directly.
+    else:
+        # Build the URL: Base + Filename
+        base = storage_server.base_url.rstrip('/')
+        path = video.download_link.lstrip('/')
+        final_url = f"{base}/{path}"
+        
+        print(f"Direct Redirect to: {final_url}")
+        return redirect(final_url)
 
 
 
-CHUNK_SIZE = 1024 * 1024  # 1 MB per chunk
+CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 @main_bp.route("/<type>/<name>/<int:id>/start")
 @main_bp.route("/<type>/<name>/<int:id>/<season>/<episode>/start")
 def movie_start_download(type, name, id, season=None, episode=None):
-    # --- 1. Fetch video object and filename ---
+    """
+    Specific Route for Bytescale Proxying.
+    We only come here if the Dispatcher sent us.
+    """
+    
+    # --- 1. Fetch Video ---
     if type == "movie":
         video = AllVideo.query.get_or_404(id)
-        filename = secure_filename(f"{video.name}.mp4")
+        clean_name = video.name
     else:
         video = Episode.query.get_or_404(id)
-        filename = secure_filename(f"{video.season.series.all_video.name}_S{season}E{episode}.mp4")
+        clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
 
-    if not video.download_link:
-        return "Download not available", 404
+    # --- 2. Construct Filename for User Download ---
+    filename_in_db = video.download_link
+    root, ext = os.path.splitext(filename_in_db)
+    if not ext: ext = ".mp4"
+    
+    output_filename = secure_filename(f"{clean_name}{ext}")
 
-    file_url = video.download_link
-    direct_url = file_url
+    # --- 3. Build The Source Link ---
+    base = video.storage_server.base_url.rstrip('/')
+    path = filename_in_db.lstrip('/')
+    source_url = f"{base}/{path}"
+    direct_url = source_url # Default if API fails
 
-    # --- 2. Try Bytescale direct URL ---
+    # --- 4. BYTESCALE API LOGIC ---
     try:
-        api_key = current_app.config.get("BYTESCALE_API_KEY")
+        api_key = video.storage_server.api_key
+        # Fallback to app config if server key is missing
+        if not api_key:
+            api_key = current_app.config.get("BYTESCALE_API_KEY")
+
         if api_key:
             headers_api = {"Authorization": f"Bearer {api_key}"}
+            # Generate a temporary download URL from Bytescale
             resp = requests.post(
                 "https://api.bytescale.com/v1/files/generate_download_url",
-                json={"url": file_url},
+                json={"url": source_url},
                 headers=headers_api,
                 timeout=10
             )
-            resp.raise_for_status()
-            direct_url = resp.json().get("download_url", file_url)
-            print("Using Bytescale direct URL")
+            if resp.status_code == 200:
+                direct_url = resp.json().get("download_url", source_url)
+                print("Using Bytescale Generated URL")
     except Exception as e:
-        print(f"Bytescale API failed, using original URL: {e}")
+        print(f"Bytescale API Error: {e}")
 
-    # --- 3. Get file size ---
+    # --- 5. PROXY STREAMING ---
+    # We stream the data so we can force the filename header
+    
     try:
         head = requests.head(direct_url, allow_redirects=True, timeout=10)
         total_size = int(head.headers.get("Content-Length", 0))
-    except Exception:
+    except:
         total_size = 0
 
-    # --- 4. Handle Range requests (pause/resume) ---
     range_header = request.headers.get("Range", None)
     start = 0
-    end = total_size - 1
+    end = total_size - 1 if total_size > 0 else 0
     status_code = 200
 
-    if range_header:
+    if range_header and total_size > 0:
         try:
             range_val = range_header.strip().split("=")[1]
             start = int(range_val.split("-")[0])
+            if "-" in range_val and range_val.split("-")[1]:
+                 end_val = int(range_val.split("-")[1])
+                 if end_val < total_size:
+                     end = end_val
             status_code = 206
         except:
             start = 0
 
-    # --- 5. Set headers ---
     headers = {
         "Content-Type": "application/octet-stream",
-        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Disposition": f'attachment; filename="{output_filename}"',
         "Accept-Ranges": "bytes",
         "Content-Length": str(end - start + 1)
     }
-
     if status_code == 206:
         headers["Content-Range"] = f"bytes {start}-{end}/{total_size}"
 
-    # --- 6. Stream generator ---
     def generate():
         try:
             with requests.get(
                 direct_url,
                 stream=True,
                 headers={"Range": f"bytes={start}-{end}"},
-                timeout=10
+                timeout=15
             ) as r:
                 r.raise_for_status()
                 for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
-                    if chunk:
-                        yield chunk
+                    yield chunk
         except Exception as e:
-            print(f"Streaming error: {e}")
+            print(f"Stream broken: {e}")
 
-    # --- 7. Return streaming response ---
     return Response(stream_with_context(generate()), status=status_code, headers=headers)
 
 @main_bp.route("/trailers/<string:det>/<string:name>")

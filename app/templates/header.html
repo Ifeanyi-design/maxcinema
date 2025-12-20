@@ -1,29 +1,36 @@
-<header id="header" class="w-full bg-white border-2 border-solid border-b-[#830506] flex flex-row justify-between items-center fixed top-0 left-0 p-3 z-50">
+<header id="header" 
+        class="fixed top-0 z-50
+               w-full left-0 xl:w-[100%] xl:px-20 xl:max-w-[1800px] xl:left-1/2 xl:-translate-x-1/2 xl:pt-7 bg-white xl:bg-gray-100">
+
+    <div class="xl:bg-white flex flex-row justify-between items-center p-3 relative w-full h-full xl:border-b-0 xl:border-t-2 xl:border-x-2 xl:rounded-t-lg xl:shadow-2xl border-b-2 border-[#830506]">
+
         <a href="{{ url_for('main.index') }}">
             <div id="logo" class="font-bold left-0">
                 <h1 class="text-[#830506] text-3xl md:text-[150%] lg:text-3xl">🎬MaxCinema</h1>
             </div>
         </a>
+
         <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50">
             <ul id="mainNav" class="flex sm:text-xl sm:gap-0 p-2 md:gap-0 lg:gap-4 justify-end font-medium md:text-[17px] flex-shrink-0 uppercase">
-                <li class="pt-2"><a href="{{ url_for('main.index') }}" class="lg:px-[20%] md:py-[15%] md:px-[5%] sm:text-[80%] lg:text-[100%] rounded-md mb-0">Homes</a></li>
-                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='all_movie', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md">Movies</a></li>
-                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='all_series', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md">Series</a></li>
-                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='trailers', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md">Trailers</a></li>
-                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='request') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md">Request</a></li>
-                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='trending') }}" class="lg:px-[20%] md:py-[15%] md:px-[5%] sm:text-[80%] lg:text-[100%] rounded-md">Trending</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.index') }}" class="lg:px-[20%] md:py-[15%] md:px-[5%] sm:text-[80%] lg:text-[100%] rounded-md mb-0 hover:text-[#830506]">Homes</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='all_movie', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Movies</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='all_series', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Series</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='trailers', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Trailers</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='request') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Request</a></li>
+                <li class="pt-2"><a href="{{ url_for('main.navbar', nav='trending') }}" class="lg:px-[20%] md:py-[15%] md:px-[5%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Trending</a></li>
+                
                 <li class="-mr-3">
                     <button id="gerneBtn" class="myanimate focus:outline-none rounded-md hover:bg-[#8B00FF] uppercase text-black md:py-[15%] lg:px-[20%] md:px-[5%] sm:text-[80%] lg:text-[100%] hover:text-white"
-                    aria-haspopup="true"
-                    aria-expanded="false"
-                    aria-controls="genreMenu">Genres 
+                    aria-haspopup="true" aria-expanded="false" aria-controls="genreMenu">Genres 
                     <i class="fa-solid fa-chevron-down"></i>
                     </button>
                 </li>
-                <li id="SearchBtn" class="flex items-center justify-center p-0 m-0 search">
+
+                <li id="SearchBtn" class="flex items-center justify-center p-0 m-0 search cursor-pointer">
                     <i class="fa-solid fa-magnifying-glass text-[#830506]"></i>
                 </li>
             </ul>
+
             <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
                 <input id="SearchInput" name="search" type="text"
                 placeholder="Search Movies..."
@@ -32,6 +39,7 @@
                     <i class="fa-solid fa-magnifying-glass text-white"></i>
                 </button>
             </form>
+
             <div id="genreMenu" class="pointer-events-none bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
@@ -57,49 +65,47 @@
             </div>
         </nav>
 
-
-        <div id="MobileSearchBtn" class="flex md:hidden items-center justify-center p-0 m-0 search absolute right-[70px]">
-                    <i class="fa-solid fa-magnifying-glass text-[#830506] font-extrabold"></i>
+        <div id="MobileSearchBtn" class="flex md:hidden items-center justify-center p-0 m-0 search absolute right-[70px] cursor-pointer">
+            <i class="fa-solid fa-magnifying-glass text-[#830506] font-extrabold"></i>
         </div>
-        <div id="Mobile-nav-btn" class="menu-btn z-50 md:hidden">
-           <span class="menu-btn-burger"></span>
+        <div id="Mobile-nav-btn" class="menu-btn z-50 md:hidden cursor-pointer">
+            <span class="menu-btn-burger"></span>
         </div>
         
-        <div id="NavMenu" class="bg-white z-50 nav  md:hidden absolute top-full right-8 mr-0 mt-3 max-h-[60vh] w-[50vw] p-2 rounded-lg shadow-xl border-2 overflow-hidden">
-                <ul id="Navs" class="grid grid-cols-2 menu-nav items-center text-center rounded-lg w-full gap-y-10 py-4 text-sm font-semibold">
-                    <li><a href="{{ url_for('main.index') }}">HOME</a></li>
-                    <li><a href="{{ url_for('main.navbar', nav='all_movie', page='1') }}">MOVIES</a></li>
-                    <li><a href="{{ url_for('main.navbar', nav='all_series', page='1') }}">SERIES</a></li>
-                    <li><a href="{{ url_for('main.navbar', nav='trailers', page='1') }}">TRAILERS</a></li>
-                    <li><a href="{{ url_for('main.navbar', nav='request') }}">REQUEST</a></li>
-                    <li><a href="{{ url_for('main.navbar', nav='trending') }}">TRENDING</a></li>
-                </ul>
-            </div>
-
+        <div id="NavMenu" class="bg-white z-50 nav md:hidden absolute top-full right-8 mr-0 mt-3 max-h-[60vh] w-[50vw] p-2 rounded-lg shadow-xl border-2 overflow-hidden">
+            <ul id="Navs" class="grid grid-cols-2 menu-nav items-center text-center rounded-lg w-full gap-y-10 py-4 text-sm font-semibold">
+                <li><a href="{{ url_for('main.index') }}">HOME</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='all_movie', page='1') }}">MOVIES</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='all_series', page='1') }}">SERIES</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='trailers', page='1') }}">TRAILERS</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='request') }}">REQUEST</a></li>
+                <li><a href="{{ url_for('main.navbar', nav='trending') }}">TRENDING</a></li>
+            </ul>
+        </div>
 
         <div id="MobilegenreMenu" class="py-3 md:hidden bg-white flex flex-col absolute top-full w-screen right-0 mr-0 max-h-[60vh] p-2 shadow-xl border-2">
             <ul id="MobilegenreNav" class="flex flex-row overflow-x-auto scrollbar-hide items-center text-center rounded-lg w-full font-semibold uppercase snap-x snap-mandatory scroll-smooth">
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2">Action</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Anime') }}" class="px-3 py-2">Anime</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Animation') }}" class="px-3 py-2">Animation</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Crime') }}" class="px-3 py-2">Crime</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Comedy') }}" class="px-3 py-2">Comedy</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Chinese') }}" class="px-3 py-2">Chinese</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Drama') }}" class="px-3 py-2">Drama</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Fantasy') }}" class="px-3 py-2">Fantasy</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Hollywood') }}" class="px-3 py-2">Hollywood</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Horror') }}" class="px-3 py-2">Horror</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Mystery') }}" class="px-3 py-2">Mystery</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Nollywood') }}" class="px-3 py-2">Nollywood</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Old') }}" class="px-3 py-2">Old</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Sci-Fi') }}" class="px-3 py-2 no-break">Sci-Fi</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Indian') }}" class="px-3 py-2">Indian</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Korean') }}" class="px-3 py-2">Korean</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Reality') }}" class="px-3 py-2">Reality</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Wrestling') }}" class="px-3 py-2">Wrestling</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 whitespace-nowrap">Action</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2 whitespace-nowrap">Adventure</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Anime') }}" class="px-3 py-2 whitespace-nowrap">Anime</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Animation') }}" class="px-3 py-2 whitespace-nowrap">Animation</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Crime') }}" class="px-3 py-2 whitespace-nowrap">Crime</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Comedy') }}" class="px-3 py-2 whitespace-nowrap">Comedy</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Chinese') }}" class="px-3 py-2 whitespace-nowrap">Chinese</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Drama') }}" class="px-3 py-2 whitespace-nowrap">Drama</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Fantasy') }}" class="px-3 py-2 whitespace-nowrap">Fantasy</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Hollywood') }}" class="px-3 py-2 whitespace-nowrap">Hollywood</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Horror') }}" class="px-3 py-2 whitespace-nowrap">Horror</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Mystery') }}" class="px-3 py-2 whitespace-nowrap">Mystery</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Nollywood') }}" class="px-3 py-2 whitespace-nowrap">Nollywood</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Old') }}" class="px-3 py-2 whitespace-nowrap">Old</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Sci-Fi') }}" class="px-3 py-2 whitespace-nowrap">Sci-Fi</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', genre_type='Indian') }}" class="px-3 py-2 whitespace-nowrap">Indian</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', genre_type='Korean') }}" class="px-3 py-2 whitespace-nowrap">Korean</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', genre_type='Reality') }}" class="px-3 py-2 whitespace-nowrap">Reality</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', genre_type='Wrestling') }}" class="px-3 py-2 whitespace-nowrap">Wrestling</a></li>
             </ul>
-            <div id="scrollHint" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+            <div id="scrollHint" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 animate-pulse pointer-events-none">
                 <i class="fa-solid fa-angles-right"></i>
             </div>
             <form action="{{ url_for('main.search_result', page=1) }}" id="MobileSearch" class="absolute md:hidden hidden flex-row bg-white top-full right-0 w-screen p-0 border border-gray-300 shadow-lg ">
@@ -111,4 +117,5 @@
                 </button>
             </form>
         </div>
-    </header>
+    </div>
+</header>

@@ -19,29 +19,41 @@
     
     {% endblock %}
 </head>
-<body id="BodyTop" class="relative bg-white scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %}">
+
+<body id="BodyTop" class="relative bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
+    
     {% if not dark %}
         {%include "header.html"%}
     {% else %}
         {% include "darkheader.html" %}
     {% endif %}
-    <!-- 🪧 Bottom Banner Ad -->
-    <section class="mt-16 px-6 md:px-12 lg:px-24">
-        <div class="bg-gray-800 p-6 rounded-xl text-center text-gray-300">
-        AD SPACE — Banner Placeholder
-        </div>
-    </section>
-    
-    {% block content %}
-    
-    {% endblock %}
-    
-    {%include "footer.html"%}
+
+    <div class="w-full xl:w-[85%] xl:max-w-[1600px] mx-auto bg-white min-h-screen 
+                xl:border-x-2 xl:border-[#830506] xl:shadow-2xl 
+                {% if dark %} dark:bg-[#0a0a0a] dark:border-gray-800 {% endif %} xl:rounded-b-lg">
+
+        <div style="height: var(--header-height, 80px);" class="w-full xl:-mb-24 transition-all duration-300"></div>
+
+        <main class="w-full px-4 sm:px-6 xl:px-8 max-w-7xl mx-auto">
+            
+            <section class="mt-4 px-0 md:px-12 xl:px-24">
+                <div class="bg-gray-800 p-6 rounded-xl text-center text-gray-300">
+                AD SPACE — Banner Placeholder
+                </div>
+            </section>
+            
+            {% block content %}
+            {% endblock %}
+        </main>
+        
+        {%include "footer.html"%}
+    </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/trending.js') }}"></script>
     <script src="{{ url_for('static', filename='js/comment.js') }}"></script>
     <script src="{{ url_for('static', filename='js/trailer_comment.js') }}"></script>
+    
     <script>
         function setHeaderPadding() {
             const header = document.getElementById("header");
@@ -53,15 +65,12 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             setHeaderPadding();
-            setTimeout(setHeaderPadding, 100); // one more refresh after images/fonts load
+            setTimeout(setHeaderPadding, 100); 
         });
 
         window.addEventListener("resize", setHeaderPadding);
     </script>
 
-
-    
-    <!-- <script src="{{ url_for('static', filename='js/loadmovies.js') }}"></script> -->
     {% block script %}
     {% endblock %}
 </body>
