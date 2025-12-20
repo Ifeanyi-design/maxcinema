@@ -18,7 +18,7 @@
 {% block content %}
 
 
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
+    <section id="Merger" class="flex flex-col md:flex-row gap-3 xl:mx-0 my-2">
         <section id="MovieDetails" class="my-2 md:my-5 flex flex-col md:w-5/6">
             <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
                 <h2 class="font-bold text-white text-[100%] md:text-[130%]">{{ video.name }} ({{ video.year_produced }})</h2>
@@ -61,8 +61,18 @@
                     {{ video.description }}
                 </p>
                 <h3 class="text-black font-bold my-5">{{ video.name }} ({{ video.year_produced }})</h3>
-
+                
                 <div class="flex flex-col text-black gap-7">
+                    {% if video.type == 'series' %}
+                        <div>
+                            <span class="font-bold">
+                                Title:</span> {{ current_episode.name}}
+                        </div>
+                        <div>
+                            <span class="font-bold">
+                                Episode Number:</span> {{ current_episode.episode_number }}
+                        </div>
+                    {% endif %}
                     <div>
                         <span class="font-bold">
                             Genre:</span> 
@@ -161,7 +171,7 @@
                     {% endif %}
 
                     {% if det == "series" %}
-                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
+                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
                             {% for season in seasons %}
                                 <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season.season_number, episode=episode) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center rounded-lg transition {% if season == current_season %}bg-red-600 hover:text-white hover:bg-red-700 text-white {% else %} border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700  {%endif%}">
                                     <span>Season {{ season.season_number }}</span>
@@ -170,7 +180,7 @@
                             {% endfor %}                          
                         </div>
                         
-                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
+                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
                             {% for episodes in current_season.episodes %}
                                 <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=episodes.episode_number) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center transition rounded-lg {% if episode == episodes.episode_number %}border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700 {% else %}  bg-red-600 hover:text-white hover:bg-red-700 text-white {%endif%}">
                                     <span>Episode {{ episodes.episode_number }}</span>
