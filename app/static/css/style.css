@@ -3816,6 +3816,22 @@ a:hover {
     margin-bottom: 1.25rem;
   }
 
+  .xl\:-mb-7 {
+    margin-bottom: -1.75rem;
+  }
+
+  .xl\:-mb-28 {
+    margin-bottom: -7rem;
+  }
+
+  .xl\:-mb-2 {
+    margin-bottom: -0.5rem;
+  }
+
+  .xl\:-mb-32 {
+    margin-bottom: -8rem;
+  }
+
   .xl\:w-\[85\%\] {
     width: 85%;
   }
@@ -3927,6 +3943,10 @@ a:hover {
 
   .xl\:pt-7 {
     padding-top: 1.75rem;
+  }
+
+  .xl\:pt-20 {
+    padding-top: 5rem;
   }
 
   .xl\:shadow-2xl {
