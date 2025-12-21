@@ -1,8 +1,13 @@
 from app import create_app, db
-from app.models import AllVideo
-from app.models import AllVideo, Movie, Series, Season, Episode, Genre, RecentItem
+from app.models import *
 import json
 app = create_app()
+
+def init_db():
+    with app.app_context():
+        db.create_all()
+
+init_db()
 
 if __name__ == "__main__":
     with app.app_context():
