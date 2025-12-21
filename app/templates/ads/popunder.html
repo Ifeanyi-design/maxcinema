@@ -1,27 +1,78 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 🔴 REPLACE THIS LINK with your Ad Network's Direct Link 🔴
-        const adUrl = "https://www.google.com"; 
+        // 🔴 REPLACE WITH YOUR AD LINK 🔴
+        const adUrl = "https://example.com/your-ad-link"; 
+        
+        // SETTINGS
+        const timeCooldown = 10 * 1000; // 10 Seconds (in milliseconds)
+        const clickFrequency = 3;       // Trigger ad every 3rd click
 
-        // Check if we already showed the ad this session (optional storage check)
-        if (!sessionStorage.getItem('adPopped')) {
+        // RULE 1: RELOAD TRAP
+        // This variable dies when page reloads, so it resets to true automatically on reload.
+        let isFirstClickOnPage = true; 
+
+        function openAd() {
+            // Update the global timer
+            localStorage.setItem('lastAdTime', Date.now());
             
-            // Listen for the FIRST click anywhere on the body
-            document.body.addEventListener('click', function() {
-                
-                // If the ad hasn't opened yet
-                if (!sessionStorage.getItem('adPopped')) {
-                    // Mark as shown so it doesn't annoy the user on every single click
-                    sessionStorage.setItem('adPopped', 'true');
-
-                    // Open the Ad URL in a new tab (The "Pop")
-                    window.open(adUrl, '_blank');
-                    
-                    // Attempt to focus back on the site (Simulates "Pop-under")
-                    // Note: Modern browsers often block the focus switch, so it might act as a "Pop-up"
-                    try { window.focus(); } catch (e) {}
-                }
-            }, { once: true }); // This ensures the listener runs only once
+            // Open the ad
+            window.open(adUrl, '_blank');
+            try { window.focus(); } catch (e) {}
         }
+
+        // Target the download buttons
+        const buttons = document.querySelectorAll('.download-ad-trigger');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const now = Date.now();
+                const lastAdTime = parseInt(localStorage.getItem('lastAdTime')) || 0;
+                let globalClickCount = parseInt(localStorage.getItem('globalAdClickCount')) || 0;
+
+                // Incremement click tracker
+                globalClickCount++;
+                localStorage.setItem('globalAdClickCount', globalClickCount);
+
+                let showAd = false;
+
+                // CHECK RULE 1: Is this the first click after loading/reloading this page?
+                if (isFirstClickOnPage) {
+                    showAd = true;
+                    isFirstClickOnPage = false; // Disable flag for this specific page view
+                }
+                
+                // CHECK RULE 2: Have 10 seconds passed since the last ad?
+                else if (now - lastAdTime > timeCooldown) {
+                    showAd = true;
+                }
+
+                // CHECK RULE 3: Is this the 3rd click?
+                else if (globalClickCount % clickFrequency === 0) {
+                    showAd = true;
+                }
+
+                // EXECUTE
+                if (showAd) {
+                    e.preventDefault();  // Stop Download
+                    e.stopPropagation(); // Stop other events
+                    openAd();            // Open Ad
+                    // User stays on page, must click again to download
+                } 
+                // Else: Download happens normally
+            });
+        });
+
+        // OPTIONAL: General Body Click (Keep it simple or remove if too annoying)
+        document.body.addEventListener('click', function(e) {
+            // If they clicked something that is NOT a download button
+            if (!e.target.closest('.download-ad-trigger')) {
+                const now = Date.now();
+                const lastAdTime = parseInt(localStorage.getItem('lastAdTime')) || 0;
+                // Use a longer cooldown for random clicks (e.g., 2 minutes)
+                if (now - lastAdTime > 120 * 1000) { 
+                    openAd(); 
+                }
+            }
+        });
     });
 </script>
