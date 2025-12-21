@@ -156,6 +156,11 @@
                         {% endif %}
                     </div>
 
+                    <div class="w-full my-6">
+                        <p class="text-xs text-gray-500 mb-1 text-center">SPONSORED</p>
+                        {% include 'ads/banner.html' %}
+                    </div>
+                    
                     {% if det == "movie" %}
                         <div class="flex gap-4 mt-4 font-semibold items-center justify-center">
                             <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">
@@ -288,6 +293,9 @@
 
 
         <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
+            <div class="w-full">
+                {% include 'ads/sidebar.html' %}
+            </div>
             <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
                 <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
                     <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>

@@ -1,0 +1,27 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 🔴 REPLACE THIS LINK with your Ad Network's Direct Link 🔴
+        const adUrl = "https://www.google.com"; 
+
+        // Check if we already showed the ad this session (optional storage check)
+        if (!sessionStorage.getItem('adPopped')) {
+            
+            // Listen for the FIRST click anywhere on the body
+            document.body.addEventListener('click', function() {
+                
+                // If the ad hasn't opened yet
+                if (!sessionStorage.getItem('adPopped')) {
+                    // Mark as shown so it doesn't annoy the user on every single click
+                    sessionStorage.setItem('adPopped', 'true');
+
+                    // Open the Ad URL in a new tab (The "Pop")
+                    window.open(adUrl, '_blank');
+                    
+                    // Attempt to focus back on the site (Simulates "Pop-under")
+                    // Note: Modern browsers often block the focus switch, so it might act as a "Pop-up"
+                    try { window.focus(); } catch (e) {}
+                }
+            }, { once: true }); // This ensures the listener runs only once
+        }
+    });
+</script>
