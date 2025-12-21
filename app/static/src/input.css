@@ -538,7 +538,8 @@ a:hover {
 }
 
 /* Notification */
-#comment-notification {
+#comment-notification,
+#trailer-comment-notification {
   position: fixed;
   top: 1rem;
   right: 1rem;
@@ -548,13 +549,16 @@ a:hover {
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
   opacity: 0;
+  visibility: hidden;
   transform: translateY(-20px);
   transition: all 0.5s ease;
-  z-index: 50;
+  z-index: 100;
 }
 
-#comment-notification.show {
+#comment-notification.show,
+#trailer-comment-notification.show {
   opacity: 1;
+  visibility: visible;
   transform: translateY(0);
 }
 

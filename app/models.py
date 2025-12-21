@@ -283,4 +283,21 @@ class StorageServer(db.Model):
         return self.max_storage_gb - self.used_storage_gb
 
 
+class MovieRequest(db.Model):
+    __tablename__ = "movie_request"  # Explicit table name
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False) # User's name
+    email = db.Column(db.String(120), nullable=False)
     
+    # What are they asking for?
+    movie_name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True) # Details like year, actors, or IMDb link
+    
+    # Track the request lifecycle
+    status = db.Column(db.String(20), default='Pending') # Pending, Filled, Rejected
+    
+    date_added = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Request {self.movie_name} by {self.name}>'

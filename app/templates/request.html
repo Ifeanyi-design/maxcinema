@@ -2,7 +2,6 @@
 
 {% block content %}
 
-
     <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
         <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6">
             <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
@@ -10,8 +9,6 @@
                 <h2 class="font-bold text-white text-[100%] md:text-[130%]">Request Movies</h2>
             </div>
             
-
-            <!-- Telegram CTA box -->
             <div id="telegramCta" class="mt-4">
                 <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
                     <div class="flex items-center gap-3">
@@ -24,170 +21,149 @@
                         <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
                 </div>
             </div>
+
             <div class="w-full bg-[#830506] aspect-[1/0.6] lg:aspect-[1/0.4] text-center flex justify-center items-center mt-2">
                 <h3 class="text-white text-5xl lg:text-7xl font-extrabold">MaxCinema</h3>
             </div>
-            <div class="text-black text-lg pt-4 flex flex-col gap-4">
+
+            <div id="request-instructions" class="text-black text-lg pt-4 flex flex-col gap-4 transition-all duration-300">
                 <p>Please use this new page to make movie requests, please be detailed enough.</p>
                 <p class="font-semibold">Add the year the movie was released, one of the actors or an iMDB link.</p>
                 <p class="text-[#830506] font-semibold italic">Please note that movies that are still in cinemas cannot be posted until it is <br>
                 released to digitals (OTT platforms) </p>
                 <p><b class="text-[#830506]">IMPORTANT: </b>Please use the search box to search before requesting, most of the <br>
                 movies requested sometimes had already been posted!</p>
-                <a href="#" class="bg-[#830506] text-[15px] font-medium w-6/12 lg:w-3/12 flex justify-center items-center rounded-md py-3">
+                
+                <button id="open-request-btn" class="bg-[#830506] text-[15px] font-medium w-6/12 lg:w-3/12 flex justify-center items-center rounded-md py-3 hover:bg-red-800 transition">
                     <span class="text-white">Click here to request</span>
                     <i class="fa-solid fa-arrow-right text-sm p-0 text-white pl-1"></i>
-                </a>
+                </button>
             </div>
-            <hr class="my-4 border-[1.5px] border-black">
-            <section class="w-full mt-4">
-                <div class="w-full bg-[#830506] text-white font-medium p-3">1 COMMENT</div>
-                    <div class="flex flex-col bg-gray-100 rounded-lg gap-2">
-                        <div class="flex items-center gap-3 p-2">
-                            <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User Profile"
-                            class="w-14 h-14 rounded-full object-cover">
-                            <div>
-                                <p class="font-semibold text-lg text-black">Maxwell</p>
-                                <p class="text-[12px] text-gray-700">Nov 5, 2025 At 17:16</p>
-                            </div>
+
+            <div id="request-form-container" class="hidden mt-6 bg-gray-100 p-6 rounded-lg shadow-md border-t-4 border-[#830506]">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-[#830506]">Submit Request</h3>
+                    <button id="close-request-btn" class="text-gray-500 hover:text-black font-semibold">
+                        <i class="fa-solid fa-times"></i> Cancel
+                    </button>
+                </div>
+
+                <form id="movie-request-form" class="flex flex-col gap-4 text-black">
+                    <div>
+                        <label class="font-semibold block mb-1">Movie Name <span class="text-red-600">*</span></label>
+                        <input type="text" name="movie_name" class="w-full bg-white border border-gray-300 rounded-md h-12 p-2 focus:border-[#830506] outline-none" placeholder="e.g. Deadpool & Wolverine" required>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-semibold block mb-1">Your Name <span class="text-red-600">*</span></label>
+                            <input type="text" name="name" class="w-full bg-white border border-gray-300 rounded-md h-12 p-2 focus:border-[#830506] outline-none" required>
                         </div>
-                        <p class="px-6 py-2 font-medium text-black">what is the name</p>
-                        <div class="px-6 py-3 font-bold flex items-center gap-1 text-sm text-red-600 hover:text-black cursor-pointer">
-                            <i class="fa-solid fa-reply"></i>
-                                Reply
+                        <div>
+                            <label class="font-semibold block mb-1">Email <span class="text-red-600">*</span></label>
+                            <input type="email" name="email" class="w-full bg-white border border-gray-300 rounded-md h-12 p-2 focus:border-[#830506] outline-none" required>
                         </div>
                     </div>
-                    <span class="font-bold text-black"><p class="pt-3 text-2xl">Leave a Reply</p></span>
-                    <form action="" class="mt-4 flex flex-col gap-5 text-black">
-                        <div>
-                            <legend>Comment</legend>
-                                <textarea name="" id="" class="w-full bg-gray-200 rounded-md h-[20vh] p-2"></textarea>
-                        </div>
-                        <div>
-                            <legend class="required">Name</legend>
-                            <input type="text" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                        </div>
-                        <div>
-                            <legend class="required">Email</legend>
-                            <input type="text" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                        </div>
-                        <button class="py-2 w-40 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">POST COMMENT</button>
-                    </form>
+
+                    <div>
+                        <label class="font-semibold block mb-1">Additional Details (Year, Actors, IMDb Link)</label>
+                        <textarea name="description" class="w-full bg-white border border-gray-300 rounded-md h-32 p-2 focus:border-[#830506] outline-none" placeholder="e.g. Released in 2024, starring Ryan Reynolds..."></textarea>
+                    </div>
+
+                    <button type="submit" class="bg-[#830506] text-white font-bold py-3 rounded-md hover:bg-red-800 transition shadow-lg mt-2">
+                        SUBMIT REQUEST
+                    </button>
+                </form>
+            </div>
+
+            <hr class="my-4 border-[1.5px] border-black">
+            
+            <section class="w-full mt-4">
+                <div class="w-full bg-[#830506] text-white font-medium p-3">COMMENTS</div>
+                <div class="flex flex-col bg-gray-100 rounded-lg gap-2 p-4">
+                    <p class="text-center text-gray-500">Comments are disabled for requests to keep it clean. Please check your email for updates.</p>
+                 </div>
             </section>
         </section>
-
-        
-
 
         <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
-            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for movie in trending_movie %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{ movie.name }}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Movies
-                    </a>
-                </div>
-
-
-            </section>
-
-
-            <section id="TrendingSeries" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for series in trending_series %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{ series.name }}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Series
-                    </a>
-                </div>
-
-
-            </section>
-
-            <section id="Trailers" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for trailer in trending_trailers %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{trailer.name}}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Trailers
-                    </a>
-                </div>
-
-
-            </section>
-        </section>
+             {% include 'sidebar_trending.html' ignore missing %} 
+             </section>
     </section>
 
+    <div id="request-notification" class="fixed bottom-5 right-5 z-[100] bg-green-500 text-white px-6 py-3 rounded-lg shadow-xl opacity-0 invisible translate-y-5 transition-all duration-300">
+        Request Submitted!
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const instructions = document.getElementById('request-instructions');
+        const formContainer = document.getElementById('request-form-container');
+        const openBtn = document.getElementById('open-request-btn');
+        const closeBtn = document.getElementById('close-request-btn');
+        const form = document.getElementById('movie-request-form');
+        const notif = document.getElementById('request-notification');
+
+        // 1. Toggle Form Visibility
+        openBtn.addEventListener('click', () => {
+            instructions.classList.add('hidden');
+            formContainer.classList.remove('hidden');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            formContainer.classList.add('hidden');
+            instructions.classList.remove('hidden');
+        });
+
+        // 2. Handle Form Submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Change button text to indicate loading
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = "Submitting...";
+            submitBtn.disabled = true;
+
+            const formData = new URLSearchParams(new FormData(form));
+
+            fetch('/request/movie', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success notification
+                    notif.textContent = data.message;
+                    notif.classList.remove('invisible', 'opacity-0', 'translate-y-5');
+                    notif.classList.add('bg-green-500'); // Ensure green
+                    
+                    setTimeout(() => {
+                        notif.classList.add('invisible', 'opacity-0', 'translate-y-5');
+                    }, 3000);
+
+                    // Reset and Close
+                    form.reset();
+                    formContainer.classList.add('hidden');
+                    instructions.classList.remove('hidden');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('An error occurred. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    });
+</script>
 {% endblock %}

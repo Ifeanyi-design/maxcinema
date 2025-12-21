@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
-from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment
+from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
@@ -62,6 +62,7 @@ def dashboard():
     total_trailers = Trailer.query.count()
     total_users = User.query.count()
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     # Storage info
     storage_servers = StorageServer.query.all()
@@ -95,7 +96,8 @@ def dashboard():
         total_users=total_users,
         total_views=total_views,
         storage_info=storage_info,
-        all_videos=all_videos_dict
+        all_videos=all_videos_dict,
+        total_requests=total_requests
     )
 
 
@@ -347,16 +349,28 @@ def add_series(prev):
 @admin_required
 def view_movies():
     movie=True
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     movies = AllVideo.query.filter_by(type='movie').order_by(AllVideo.created_at.desc()).all()
-    return render_template('admin/view_movies.html', movies=movies, movie=movie)
+    return render_template('admin/view_movies.html', movies=movies, movie=movie, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
 @admin_bp.route("/series/viewspec/<prev>/<name>/<id>")
 @login_required
 @admin_required
 def view_series_specific(prev, name, id):
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     series = AllVideo.query.get_or_404(id)
-    return render_template("admin/series.html", series=series, prev=prev)
+    return render_template("admin/series.html", series=series, prev=prev, total_requests=total_requests, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views)
 
 
 
@@ -365,10 +379,16 @@ def view_series_specific(prev, name, id):
 @login_required
 @admin_required
 def view_series():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     # show series entries (joining with AllVideo)
     series=True
     series_list = AllVideo.query.filter_by(type="series").order_by(AllVideo.created_at.desc()).all()
-    return render_template('admin/view_series.html', series_list=series_list, series=series)
+    return render_template('admin/view_series.html', series_list=series_list, series=series, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
 @admin_bp.route('/series/<int:series_id>/edit', methods=['GET', 'POST'])
@@ -551,6 +571,7 @@ def edit_season(prev, name, series_id, season_id):
 @login_required
 @admin_required
 def view_episodes(name, ns, prev, season_id):
+
     season = Season.query.get_or_404(season_id)
 
     return render_template("admin/episodes.html", prev=prev, season=season)
@@ -632,8 +653,14 @@ def delete_episode(name, id, prev, season_id, episode_id):
 
 @admin_bp.route("/trailers")
 def view_trailers():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     trailers = Trailer.query.all()
-    return render_template("admin/trailers.html", trailers=trailers)
+    return render_template("admin/trailers.html", trailers=trailers, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 @admin_bp.route("/delete-trailer/<int:trailer_id>", methods=["GET", "POST"])
 @login_required
@@ -673,10 +700,16 @@ def add_trailer(prev):
 
 @admin_bp.route("/users")
 def view_users():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     users = User.query.all()
     len_users = len(users)
     user=True
-    return render_template("admin/users.html", user=user, len_users=len_users, users=users)
+    return render_template("admin/users.html", user=user, len_users=len_users, users=users, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 @admin_bp.route("/add-user", methods=["GET", "POST"])
 @login_required
@@ -731,8 +764,14 @@ def delete_user(user_id):
 @admin_bp.route("/storage-servers")
 def view_storage():
     server = True
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
     servers = StorageServer.query.order_by(StorageServer.created_at.desc()).all()
-    return render_template("admin/view_storage.html", server=server, servers=servers)
+    return render_template("admin/view_storage.html", server=server, servers=servers, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 @admin_bp.route("/storage-servers/add", methods=["GET", "POST"])
 @login_required
@@ -813,3 +852,42 @@ def delete_storage_server(server_id):
         flash("Error deleting server.", "error")
         
     return redirect(url_for("admin.list_storage_servers"))
+
+
+@admin_bp.route('/requests')
+@login_required
+def view_requests():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+    # Get all requests, newest first
+    requests_list = MovieRequest.query.order_by(MovieRequest.date_added.desc()).all()
+    return render_template('admin/requests.html', requests=requests_list, total_requests=total_requests, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views)
+
+
+# 2. UPDATE STATUS (Filled/Rejected/Pending)
+@admin_bp.route('/request/status/<int:id>/<string:status>')
+@login_required
+def update_request_status(id, status):
+    req = MovieRequest.query.get_or_404(id)
+    
+    # Valid statuses only
+    if status in ['Pending', 'Filled', 'Rejected']:
+        req.status = status
+        db.session.commit()
+        flash(f'Request marked as {status}', 'success')
+    
+    return redirect(url_for('admin.view_requests'))
+
+# 3. DELETE REQUEST
+@admin_bp.route('/request/delete/<int:id>')
+@login_required
+def delete_request(id):
+    req = MovieRequest.query.get_or_404(id)
+    db.session.delete(req)
+    db.session.commit()
+    flash('Request deleted', 'success')
+    return redirect(url_for('admin.view_requests'))

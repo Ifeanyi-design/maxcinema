@@ -16,7 +16,7 @@ from . import listeners
 from .extensions import db, login_manager
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
-    Genre, RecentItem, Rating, Comment, Trailer
+    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest
 )
 
 main_bp = Blueprint("main", __name__)
@@ -765,13 +765,21 @@ def rate_video(video_id):
     })  
 
 @main_bp.route('/comment/add/<int:video_id>', methods=['POST'])
-@main_bp.route('/comment/add/<int:video_id>/<type>', methods=['POST'])
+@main_bp.route('/comment/add/<int:video_id>/<string:type>', methods=['POST'])
 def add_comment(video_id, type="video"):
     name = request.form.get('name')
     email = request.form.get('email')
     text = request.form.get('text')
-    video = None
+
+    # Basic Validation
+    if not all([name, email, text]):
+        return jsonify({'success': False, 'error': 'All fields required'}), 400
+
+    video_obj = None
+    comment = None
+
     if type == "trailer":
+        # 1. Create Comment
         comment = Comment(
             trailer_id=video_id,
             name=name,
@@ -779,13 +787,12 @@ def add_comment(video_id, type="video"):
             text=text,
             parent_id=None
         )
-        db.session.add(comment)
-        db.session.commit()
-        
-        video = Trailer.query.get_or_404(video_id)
-        s = Comment.query.filter_by(trailer_id=video_id, parent_id=None).count()
-        
-    else:
+        # 2. Get Video Object
+        video_obj = Trailer.query.get_or_404(video_id)
+        # 3. Update Count (Incrementing is faster than counting all rows every time)
+        video_obj.total_comment = (video_obj.total_comment or 0) + 1
+
+    else: # Default to "video" (Movie/Series)
         comment = Comment(
             video_id=video_id,
             name=name,
@@ -793,28 +800,29 @@ def add_comment(video_id, type="video"):
             text=text,
             parent_id=None
         )
+        video_obj = AllVideo.query.get_or_404(video_id)
+        video_obj.total_comment = (video_obj.total_comment or 0) + 1
 
+    # 4. Single Commit for everything
+    try:
         db.session.add(comment)
+        db.session.add(video_obj) # Ensure video update is tracked
         db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-        video = AllVideo.query.get_or_404(video_id)
-        s = Comment.query.filter_by(video_id=video_id, parent_id=None).count()
-        
-
-    db.session.add(comment)
-    db.session.commit()
-       
-    video.total_comment = int(s)
-    db.session.commit()
-    
-
-    # Render the comment HTML
-    html = render_template('comments.html', comment=comment, video=video)
+    if type == 'trailer':
+        # dark_comments.html expects 'trailer', not 'video'
+        html = render_template('dark_comments.html', comment=comment, trailer=video_obj)
+    else:
+        # comments.html expects 'video'
+        html = render_template('comments.html', comment=comment, video=video_obj)
     return jsonify({'success': True, 'html': html})
 
 
 @main_bp.route('/comment/reply/<int:video_id>', methods=['POST'])
-@main_bp.route('/comment/reply/<int:video_id>/<type>', methods=['POST'])
+@main_bp.route('/comment/reply/<int:video_id>/<string:type>', methods=['POST'])
 def reply_comment(video_id, type="video"):
     name = request.form.get('name')
     email = request.form.get('email')
@@ -824,34 +832,32 @@ def reply_comment(video_id, type="video"):
     if not all([name, email, text]):
         return jsonify({'success': False, 'error': 'All fields are required'})
 
+    video_obj = None
+    reply = None
+
     if type == "trailer":
         reply = Comment(
             trailer_id=video_id,
-            name=name,
-            email=email,
-            text=text,
+            name=name, email=email, text=text,
             parent_id=parent_id if parent_id else None
         )
+        video_obj = Trailer.query.get_or_404(video_id)
     else:
         reply = Comment(
             video_id=video_id,
-            name=name,
-            email=email,
-            text=text,
+            name=name, email=email, text=text,
             parent_id=parent_id if parent_id else None
         )
-    
-    video = None
-    if type == "trailer":
-        video = Trailer.query.get_or_404(video_id)
-    else:
-        video = AllVideo.query.get_or_404(video_id)
+        video_obj = AllVideo.query.get_or_404(video_id)
 
     db.session.add(reply)
     db.session.commit()
 
-    # Render the new comment as HTML
-    html = render_template('comments.html', comment=reply, video=video)
+    # 👇 THIS IS THE FIX 👇
+    if type == 'trailer':
+        html = render_template('dark_comments.html', comment=reply, trailer=video_obj)
+    else:
+        html = render_template('comments.html', comment=reply, video=video_obj)
     
     return jsonify({'success': True, 'html': html})
 
@@ -1016,7 +1022,32 @@ def generate_sitemap():
     ping_search_engines()
 
 
+@main_bp.route('/request/movie', methods=['POST'])
+def request_movie():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    movie_name = request.form.get('movie_name')
+    description = request.form.get('description')
 
+    # Basic Validation
+    if not all([name, email, movie_name]):
+        return jsonify({'success': False, 'error': 'Name, Email, and Movie Name are required'}), 400
+
+    new_request = MovieRequest(
+        name=name,
+        email=email,
+        movie_name=movie_name,
+        description=description,
+        status='Pending'
+    )
+
+    try:
+        db.session.add(new_request)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Request submitted successfully!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 
