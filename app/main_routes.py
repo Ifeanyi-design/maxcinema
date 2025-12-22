@@ -992,6 +992,7 @@ def live_search():
 
 @main_bp.route('/ping')
 def ping():
+    all = AllVideo.query.first()
     return "OK", 200
 
 
