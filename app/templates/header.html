@@ -31,16 +31,19 @@
                 </li>
             </ul>
 
-            <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
+                        <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
                 <input id="SearchInput" name="search" type="text"
                 placeholder="Search Movies..."
-                class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black" method="GET">
-                <button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
+                class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black" 
+                method="GET"
+                onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')"> <button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
                     <i class="fa-solid fa-magnifying-glass text-white"></i>
                 </button>
- <div id="desktopSuggestions" class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-xl rounded-b-md z-50 hidden max-h-[60vh] overflow-y-auto">
-        </div>
+                
+                <div id="desktopSuggestions" class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-xl rounded-b-md z-50 hidden max-h-[60vh] overflow-y-auto">
+                </div>
             </form>
+
 
             <div id="genreMenu" class="pointer-events-none bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
@@ -110,16 +113,19 @@
             <div id="scrollHint" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 animate-pulse pointer-events-none">
                 <i class="fa-solid fa-angles-right"></i>
             </div>
-            <form action="{{ url_for('main.search_result', page=1) }}" id="MobileSearch" class="absolute md:hidden hidden flex-row bg-white top-full right-0 w-screen p-0 border border-gray-300 shadow-lg ">
-                <input id="MobileSearchInput" name="search" type="text"
+                        <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
+                <input id="SearchInput" name="search" type="text"
                 placeholder="Search Movies..."
-                class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black">
-                <button class="flex items-center justify-center px-3 bg-[#830506]">
+                class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black" 
+                method="GET"
+                onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')"> <button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
                     <i class="fa-solid fa-magnifying-glass text-white"></i>
                 </button>
-<div id="mobileSuggestions" class="absolute left-0 top-full w-full bg-white border-t border-gray-200 shadow-xl z-50 hidden max-h-[60vh] overflow-y-auto">
-        </div>
+                
+                <div id="desktopSuggestions" class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-xl rounded-b-md z-50 hidden max-h-[60vh] overflow-y-auto">
+                </div>
             </form>
+
         </div>
     </div>
 </header>
