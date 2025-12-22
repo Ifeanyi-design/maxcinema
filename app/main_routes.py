@@ -990,6 +990,10 @@ def live_search():
     return jsonify(suggestions)
 
 
+@main_bp.route('/ping')
+def ping():
+    return "OK", 200
+
 
 # # ---------------- Dashboard ----------------
 # @main_bp.route("/admin")

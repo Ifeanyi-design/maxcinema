@@ -20,18 +20,9 @@
                     <i class="fa-solid fa-chevron-down"></i>
                     </button>
                 </li>
-                <li id="SearchBtn" class="flex items-center justify-center p-0 m-0 search">
-                    <i class="fa-solid fa-magnifying-glass text-[#830506]"></i>
-                </li>
+                
             </ul>
-            <form action="{{ url_for('main.search_result', search='boy') }}" id="desktopSearch" class="absolute hidden flex-row dark:bg-gray-700 bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
-                <input id="SearchInput" type="text"
-                placeholder="Search Movies..."
-                class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black dark:text-white">
-                <button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
-                    <i class="fa-solid fa-magnifying-glass text-white"></i>
-                </button>
-            </form>
+            
             <div id="genreMenu" class="pointer-events-none dark:bg-black bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
