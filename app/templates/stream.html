@@ -1,323 +1,151 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sitemap - MaxCinema</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-gold: #FFD700;
+            --text-gray: #ccc;
+        }
 
-{% block content %}
-    
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
-        <section id="MovieDetails" class="my-2 md:my-5 flex flex-col md:w-5/6">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">{{ video.name }} ({{ video.year_produced }}) | {{ video.length }}</h2>
-            </div>
-            <div class="text-sm flex-shrink-0 w-full border border-[#830506] flex items-center justify-center gap-1 px-4 py-1 text-center">
-                <span class="text-[#830506] flex text-center justify-center items-center p-1"><i class="fa-solid fas fa-clock pe-4"></i>{{ video.date_added.strftime('%b %d, %Y') }} <i class="fa-solid fa-folder-open pe-5 ps-2"></i>{{ video.type | title }}<i class="fas fa-comment ps-3"></i><p class="ps-3">0</p></span>
-                <span class="bg-[#830506] w-[3px] h-[18px]"></span>
-                <div class="flex text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                    <i class="fas fa-star text-orange-500"></i>
-                    <i class="fas fa-star text-orange-500"></i>
-                    <i class="fas fa-star text-orange-500"></i>
-                    <i class="fas fa-star text-orange-500"></i>
-                    <i class="fas fa-star text-orange-500"></i>
-                    <p class="text-[#830506] ml-1">5</p>
-                </div>
-            </div>
-            
-            <div class="overflow-hidden">
-                {% if False %}
-                <div id="video-player" class="mt-6 w-full bg-black rounded-xl border border-gray-700 overflow-hidden">
-                    <video id="videoPlayer" controls width="100%" preload="metadata" class="w-full h-[450px] bg-black">
-                        <source id="mainSource" src="{{ file_url }}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                {%endif%}
+        /* Header & Search */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h1 {
+            color: var(--text-gold);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        #searchParams {
+            padding: 12px 20px;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 30px;
+            border: 2px solid #333;
+            background: var(--bg-card);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+        }
+        #searchParams:focus {
+            border-color: var(--text-gold);
+        }
 
-                <div class="w-full h-16 bg-gray-900 rounded-lg mt-4 flex items-center justify-center text-gray-500 cursor-pointer">
-                    Click Ad (Redirect)
-                </div>
-                {% if False %}
-                    <div class="qualities mt-2">
-                        <strong>Select Quality:</strong>
-                        <div class="quality-buttons">
-                            {% for q, url in video.video_qualities.items() %}
-                                <button type="button"
-                                        class="quality-btn px-3 py-1 rounded {{ 'bg-red-700 text-white' if q==quality else 'bg-gray-200' }}"
-                                        data-url="{{ url }}"
-                                        data-quality="{{ q }}">
-                                    {{ q }}
-                                </button>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {%endif%}
+        /* Section Headings */
+        h2 {
+            border-left: 5px solid var(--text-gold);
+            padding-left: 15px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
 
-                {% if video.video_qualities %}
-                    <div class="mt-5 flex flex-wrap gap-3 justify-center download-buttons">
-                        {% for q, url in qualities.items() %}
-                            <a href="{{ url }}" download class="download-btn px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-bold">
-                                {{ q }} Download
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+        /* The Grid Layout */
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
 
-                {% if type=="series" %}
-                    <div class="mt-10">
-                        <h2 class="text-xl font-semibold mb-3 text-black">Episodes</h2>
-                        <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
-                            {% for ep in video.season.series.seasons[season-1].episodes %}
-                                <a href="{{ url_for('movie_stream_download', name=video.name, type='series', id='1', season=season, episode=ep) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center bg-red-600 rounded-lg hover:text-white hover:bg-red-700 transition text-white">
-                                    <span>Episode {{ i }}</span>
-                                    <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
-                                </a>
-                            {% endfor %}
-                                                            
-                        </div>
-                    </div>
-                {% endif %}
+        .sitemap-link {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-gray);
+            display: block;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
 
-                    <!-- Rating UI -->
-                    <div id="ratingContainer" class="mt-4 flex flex-col w-full justify-center items-center border border-[#830506] gap-2">
-                        <p class="font-semibold">What would you rate this?</p>
-                        <div id="starRating" class="flex items-center gap-2 text-4xl" role="radiogroup" aria-label="Rate this movie">
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="1" aria-label="1 star" role="radio" aria-checked="false">★</button>
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="2" aria-label="2 stars" role="radio" aria-checked="false">★</button>
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="3" aria-label="3 stars" role="radio" aria-checked="false">★</button>
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="4" aria-label="4 stars" role="radio" aria-checked="false">★</button>
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="5" aria-label="5 stars" role="radio" aria-checked="false">★</button>
-                            <span id="ratingValue" class="ml-3 text-sm text-black text-center">Not rated</span>
-                        </div>
-                    </div>
-                    <!-- Telegram CTA box -->
-                    <div id="telegramCta" class="mt-4">
-                        <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
-                            <div class="flex items-center gap-3">
-                                <i class="fa-brands fa-telegram-plane text-white text-2xl" aria-hidden="true"></i>
-                                <div>
-                                    <p class="text-white font-semibold">Join our Telegram group</p>
-                                    <p class="text-white text-sm opacity-90">Get updates, trailers and new releases</p>
-                                </div>
-                            </div>
-                            <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
-                        </div>
-                    </div>
+        .sitemap-link:hover {
+            background: #2a2a2a;
+            color: var(--text-gold);
+            border-color: var(--text-gold);
+            transform: translateY(-2px);
+        }
 
-                    <!-- Related Movies / You may like -->
-                    <section id="relatedMovies" class="mt-6 w-full">
-                        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                            <h2 class="font-bold text-white text-[100%] md:text-[110%]">You may Also like</h2>
-                        </div>
-                        <!-- responsive grid: 2 cols xs, up to 6 cols on large screens -->
-                        <div id="relatedList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-3">
-                            <!-- Six static placeholder cards. JS will update .card-img and .card-title. -->
-                            {% if video.type == "movie" %}
-                                {% for suggest in suggested %}
-                                    <a href="{{url_for('detail', det=suggest.type, name=suggest.name, id=suggest.id)}}" class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1 related-card">
-                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
-                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
-                                        </div>
-                                    
-                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
-                                    </a>
-                                {% endfor %}
-                            {% else %}                            
-                                {% for i in range(6) %}
-                                    <a href='{{ url_for("detail", det="series", name="Strangerthings", id="1", season="1", episode="1") }}' class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1">
-                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb;">
-                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
-                                        </div>
-                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">Loading...</div>
-                                    </a>
-                                {% endfor %}
-                            {% endif %}
-                            
-                        </div>
-                    </section>
+        .date-badge {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
 
-                    <section class="w-full text-black">
-                        <div class="w-full bg-[#830506] text-white font-medium p-3">1 COMMENT</div>
-                        <div class="flex flex-col bg-gray-100 rounded-lg gap-2">
-                            <div class="flex items-center gap-3 p-2">
-                                <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User Profile"
-                                class="w-14 h-14 rounded-full object-cover">
-                                <div>
-                                    <p class="font-semibold text-lg">Maxwell</p>
-                                    <p class="text-[12px] text-gray-700">Nov 5, 2025 At 17:16</p>
-                                </div>
-                            </div>
-                            <p class="px-6 py-2 font-medium">what is the name</p>
-                            <div class="px-6 py-3 font-bold flex items-center gap-1 text-sm text-red-600 hover:text-black cursor-pointer">
-                                <i class="fa-solid fa-reply"></i>
-                                Reply
-                            </div>
-                        </div>
-                        <span class="font-bold"><p class="pt-3 text-2xl">Leave a Reply</p></span>
-                        <form action="" class="mt-4 flex flex-col gap-5">
-                            <div>
-                                <legend>Comment</legend>
-                                <textarea name="" id="" class="w-full bg-gray-200 rounded-md h-[20vh] p-2"></textarea>
-                            </div>
-                            <div>
-                                <legend class="required">Name</legend>
-                                <input type="text" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                            </div>
-                            <div>
-                                <legend class="required">Email</legend>
-                                <input type="text" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                            </div>
-                            <button class="py-2 w-40 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">POST COMMENT</button>
-                        </form>
-                    </section>
-                    <div class="w-full h-16 bg-gray-900 rounded-lg mt-4 flex items-center justify-center text-gray-500 cursor-pointer">
-                    Click Ad (Redirect)
-                    </div>
+    <div class="container">
+        <div class="header">
+            <h1>MaxCinema Sitemap</h1>
+            <input type="text" id="searchParams" placeholder="Filter movies, series, or trailers..." onkeyup="filterLinks()">
+        </div>
 
-                </div>
-            </div>
-        </section>
+        <h2>Movies</h2>
+        <div class="link-grid" id="movies-grid">
+            {% for movie in movies %}
+            <a href="{{ url_for('main.detail', det='movie', name=movie.slug, id=movie.id) }}" class="sitemap-link">
+                {{ movie.name }}
+                <span class="date-badge">{{ movie.date_added.strftime('%b %d, %Y') if movie.date_added else '' }}</span>
+            </a>
+            {% endfor %}
+        </div>
 
+        <h2>Series</h2>
+        <div class="link-grid" id="series-grid">
+            {% for series in series_list %}
+            <a href="{{ url_for('main.detail', det='series', name=series.slug, id=series.id, season=1, episode=1) }}" class="sitemap-link">
+                {{ series.name }}
+                <span class="date-badge">{{ series.date_added.strftime('%b %d, %Y') if series.date_added else '' }}</span>
+            </a>
+            {% endfor %}
+        </div>
 
-        <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
-            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for movie in trending_movie %}
-                        <div onclick="window.location.href='{{ url_for("detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
+        <h2>Trailers</h2>
+        <div class="link-grid" id="trailers-grid">
+            {% for trailer in trailers %}
+            <a href="{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}" class="sitemap-link">
+                {{ trailer.name }}
+                <span class="date-badge">Trailer</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
 
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{ movie.name }}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Movies
-                    </a>
-                </div>
-
-
-            </section>
-
-
-            <section id="TrendingSeries" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for series in trending_series %}
-                        <div onclick="window.location.href='{{ url_for("detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{ series.name }}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('trending', type='series') }}#SeriesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Series
-                    </a>
-                </div>
-
-
-            </section>
-
-            <section id="Trailers" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for trailer in trending_trailers %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    {{trailer.name}}
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('trailer') }}" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Trailers
-                    </a>
-                </div>
-
-
-            </section>
-        </section>
-    </section>
-
-{% endblock %}
-
-{% block script %}
     <script>
-        (function(){
-            const player = document.getElementById('videoPlayer');
-            const mainSource = document.getElementById('mainSource');
-            const buttons = document.querySelectorAll('.quality-btn');
+        function filterLinks() {
+            let input = document.getElementById('searchParams');
+            let filter = input.value.toUpperCase();
+            let links = document.getElementsByClassName('sitemap-link');
 
-            function setActive(btn){
-                buttons.forEach(b => b.classList.remove('bg-red-700','text-white'));
-                btn.classList.add('bg-red-700','text-white');
+            for (let i = 0; i < links.length; i++) {
+                let txtValue = links[i].textContent || links[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    links[i].style.display = "";
+                } else {
+                    links[i].style.display = "none";
+                }
             }
-
-            buttons.forEach(btn => {
-                btn.addEventListener('click', function(){
-                    const url = this.dataset.url;
-                    const qual = this.dataset.quality;
-                    if(!url) return;
-                    // replace src and reload video without page reload
-                    mainSource.src = url;
-                    player.load();
-                    player.play().catch(()=>{ /* autoplay may be blocked */ });
-                    setActive(this);
-                    // Optionally update URL bar:
-                    // const newUrl = new URL(window.location);
-                    // newUrl.searchParams.set('quality', qual);
-                    // window.history.replaceState({}, '', newUrl);
-                });
-            });
-        })();
+        }
     </script>
-{% endblock %}
+</body>
+</html>

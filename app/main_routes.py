@@ -911,33 +911,19 @@ def sitemap():
 
 @main_bp.route("/sitemap")
 def sitemap_page():
-    # Movies
-    movies = AllVideo.query.filter_by(type="movie").all()
-
-    # Series: we’ll also fetch the latest season and episode for the sitemap
-    series_list = AllVideo.query.filter_by(type="series").all()
-    series_info = []
-    for series in series_list:
-        latest_season = None
-        latest_episode = None
-        if series.series and series.series.seasons:
-            latest_season = max(series.series.seasons, key=lambda s: s.season_number)
-            if latest_season.episodes:
-                latest_episode = max(latest_season.episodes, key=lambda e: e.episode_number)
-        series_info.append({
-            "series": series,
-            "latest_season": latest_season,
-            "latest_episode": latest_episode
-        })
-
+    # Fetch all content ordered by newest first
+    movies = AllVideo.query.filter_by(type="movie").order_by(AllVideo.date_added.desc()).all()
+    
+    # For Series, we just need the main series info, we don't need every episode for this list
+    series_list = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).all()
+    
     # Trailers
-    trailers = Trailer.query.all()
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).all()
 
     return render_template("sitemap.html",
                            movies=movies,
-                           series_info=series_info,
+                           series_list=series_list,
                            trailers=trailers)
-
 
 
 @main_bp.route('/request/movie', methods=['POST'])
