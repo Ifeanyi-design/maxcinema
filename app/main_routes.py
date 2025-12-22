@@ -955,6 +955,40 @@ def request_movie():
 
 
 
+@main_bp.route('/live_search')
+def live_search():
+    """
+    Returns the top 5 matches as JSON for the dropdown.
+    """
+    query = request.args.get("q", "").strip()
+    
+    # If empty, return nothing
+    if not query or len(query) < 2:
+        return jsonify([])
+
+    # Search Logic (Same as your main search, but simpler/faster)
+    search_filter = or_(
+        AllVideo.name.ilike(f"%{query}%"),
+        AllVideo.star_cast.ilike(f"%{query}%")
+    )
+    
+    # Only get Top 5, and only fetch columns we need (optimization)
+    results = AllVideo.query.filter(search_filter, AllVideo.active.is_(True))\
+              .order_by(AllVideo.views.desc())\
+              .limit(5).all()
+
+    # Convert database objects to a simple JSON list
+    suggestions = []
+    for video in results:
+        suggestions.append({
+            "name": video.name,
+            "image": video.image, # Ensure you have this column or use a placeholder
+            "year": video.date_added.year,
+            "url": url_for('main.detail', det=video.type, name=video.slug, id=video.id, _external=True)
+        })
+
+    return jsonify(suggestions)
+
 
 
 # # ---------------- Dashboard ----------------
