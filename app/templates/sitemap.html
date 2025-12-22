@@ -4,83 +4,17 @@
     <meta charset="UTF-8">
     <title>MaxCinema Site Map</title>
     <style>
-        /* Reset some default styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1e1e1e, #111);
-            color: #fff;
-            line-height: 1.6;
-            padding: 40px 20px;
-        }
-
-        h1 {
-            text-align: center;
-            font-size: 3rem;
-            color: #FFD700; /* Gold for MaxCinema */
-            margin-bottom: 40px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
-        }
-
-        h2 {
-            font-size: 2rem;
-            color: #FFA500;
-            margin: 30px 0 15px 0;
-            border-bottom: 2px solid #FFD700;
-            padding-bottom: 5px;
-        }
-
-        ul {
-            list-style: none;
-            margin-left: 0;
-            padding-left: 0;
-        }
-
-        li {
-            margin: 8px 0;
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: rgba(255, 215, 0, 0.05);
-            transition: background 0.3s ease;
-        }
-
-        li:hover {
-            background: rgba(255, 215, 0, 0.15);
-        }
-
-        a {
-            text-decoration: none;
-            color: #FFD700;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        a:hover {
-            color: #fff;
-            text-shadow: 0 0 8px #FFD700;
-            transform: translateX(5px);
-        }
-
-        .info {
-            color: #ccc;
-            font-size: 0.85rem;
-            margin-left: 6px;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.2rem;
-            }
-
-            h2 {
-                font-size: 1.6rem;
-            }
-        }
+        /* Your existing CSS matches here */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e1e1e, #111); color: #fff; line-height: 1.6; padding: 40px 20px; }
+        h1 { text-align: center; font-size: 3rem; color: #FFD700; margin-bottom: 40px; text-shadow: 2px 2px 8px rgba(0,0,0,0.6); }
+        h2 { font-size: 2rem; color: #FFA500; margin: 30px 0 15px 0; border-bottom: 2px solid #FFD700; padding-bottom: 5px; }
+        ul { list-style: none; }
+        li { margin: 8px 0; padding: 8px 12px; border-radius: 6px; background: rgba(255, 215, 0, 0.05); transition: background 0.3s ease; }
+        li:hover { background: rgba(255, 215, 0, 0.15); }
+        a { text-decoration: none; color: #FFD700; font-weight: 500; transition: all 0.3s ease; display: block; } /* Added display:block for better clicking */
+        a:hover { color: #fff; text-shadow: 0 0 8px #FFD700; transform: translateX(5px); }
+        .info { color: #ccc; font-size: 0.85rem; margin-top: 4px; font-style: italic; }
     </style>
 </head>
 <body>
@@ -88,83 +22,43 @@
 
         <h1>MaxCinema Site Map</h1>
 
-        <!-- Movies Section -->
         <h2>Movies</h2>
         <ul>
           {% for movie in movies %}
           <li>
-            <a href="{{ url_for(
-                'main.movie_details',
-                name=movie.slug,
-                det=movie.type,
-                id=movie.id,
-                _external=True
-            ) }}">
+            <a href="{{ url_for('main.movie_details', name=movie.slug, det=movie.type, id=movie.id, _external=True) }}">
               {{ movie.name }}
             </a>
             <div class="info">
-                Last updated: {{ movie.updated_at.strftime('%Y-%m-%d') if movie.updated_at else 'N/A' }}
+                Updated: {{ movie.updated_at.strftime('%Y-%m-%d') if movie.updated_at else 'Recent' }}
             </div>
           </li>
           {% endfor %}
         </ul>
 
-        <!-- Series Section -->
         <h2>Series</h2>
         <ul>
-          {% for item in series_list %}
-            {% set series = item.series %}
-            {% set latest_season = item.latest_season %}
-            {% set latest_episode = item.latest_episode %}
-
+          {% for series in series_list %}
           <li>
-            {% if latest_season and latest_episode %}
-            <a href="{{ url_for(
-                'main.series_details',
-                det=series.type,
-                name=series.slug,
-                season=latest_season.season_number,
-                episode=latest_episode.episode_number,
-                id=series.id,
-                _external=True
-            ) }}">
+            <a href="{{ url_for('main.series_details', det='series', name=series.slug, season=1, episode=1, id=series.id, _external=True) }}">
               {{ series.name }}
             </a>
-            {% else %}
-            <!-- fallback to movie_details -->
-            <a href="{{ url_for(
-                'main.movie_details',
-                det=series.type,
-                name=series.slug,
-                id=series.id,
-                _external=True
-            ) }}">
-              {{ series.name }}
-            </a>
-            {% endif %}
             <div class="info">
-                Last updated: {{ series.updated_at.strftime('%Y-%m-%d') if series.updated_at else 'N/A' }}
+                Updated: {{ series.updated_at.strftime('%Y-%m-%d') if series.updated_at else 'Recent' }}
             </div>
           </li>
-
           {% endfor %}
         </ul>
 
-        <!-- Trailers Section -->
         <h2>Trailers</h2>
         <ul>
           {% for trailer in trailers %}
           <li>
-            <a href="{{ url_for(
-                'main.watch_trailer',
-                det='trailer_watch',
-                name=trailer.slug,
-                _external=True
-            ) }}">
+            <a href="{{ url_for('main.watch_trailer', det='trailer_watch', name=trailer.slug, _external=True) }}">
               {{ trailer.name }}
             </a>
             <div class="info">
-                Last updated: {{ trailer.updated_at.strftime('%Y-%m-%d') if trailer.updated_at else 'N/A' }}
+                Updated: {{ trailer.date_added.strftime('%Y-%m-%d') if trailer.date_added else 'Recent' }}
             </div>
           </li>
           {% endfor %}
