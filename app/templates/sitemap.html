@@ -30,9 +30,9 @@
             text-align: center;
             margin-bottom: 40px;
             padding: 20px;
-            position: sticky; /* Keeps search bar at top when scrolling */
+            position: sticky; 
             top: 0;
-            background: rgba(18, 18, 18, 0.95); /* Semi-transparent background */
+            background: rgba(18, 18, 18, 0.95); 
             z-index: 100;
             border-bottom: 1px solid #333;
             backdrop-filter: blur(5px);
@@ -118,7 +118,7 @@
         .date-badge {
             font-size: 0.75rem;
             color: #666;
-            margin-top: auto; /* Pushes date to bottom of card */
+            margin-top: auto; 
             display: flex;
             align-items: center;
         }
@@ -174,20 +174,16 @@
 
     <script>
         function filterLinks() {
-            // 1. Get user input
             let input = document.getElementById('searchParams');
             let filter = input.value.toUpperCase();
-            
-            // 2. Get all cards
             let cards = document.getElementsByClassName('sitemap-card');
 
-            // 3. Loop and hide/show
             for (let i = 0; i < cards.length; i++) {
                 let txtValue = cards[i].textContent || cards[i].innerText;
                 if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    cards[i].style.display = "flex"; // Show as flex to keep layout
+                    cards[i].style.display = "flex"; 
                 } else {
-                    cards[i].style.display = "none"; // Hide
+                    cards[i].style.display = "none"; 
                 }
             }
         }
