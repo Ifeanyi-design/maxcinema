@@ -911,13 +911,13 @@ def sitemap():
 
 @main_bp.route("/sitemap")
 def sitemap_page():
-    # Fetch all content ordered by newest first
+    # 1. Fetch Movies
     movies = AllVideo.query.filter_by(type="movie").order_by(AllVideo.date_added.desc()).all()
-    
-    # For Series, we just need the main series info, we don't need every episode for this list
+
+    # 2. Fetch Series (This returns a list of AllVideo objects)
     series_list = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).all()
-    
-    # Trailers
+
+    # 3. Fetch Trailers
     trailers = Trailer.query.order_by(Trailer.date_added.desc()).all()
 
     return render_template("sitemap.html",
