@@ -77,8 +77,8 @@
     </section>
 
 
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-auto xl:mx-0 my-2">
-        <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6">
+    <section id="Merger" class="flex flex-col lg:flex-row gap-3 mx-auto xl:mx-0 my-2">
+        <section id="RecentlyAdded" class="my-2 lg:my-5 flex flex-col lg:w-5/6">
             <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
                 <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
                 <h2 class="font-bold text-white text-[100%] md:text-[130%]">Recently Added</h2>
@@ -236,9 +236,17 @@
         </section>
 
 
-        <section id="TrendingCol" class="flex flex-col md:w-1/3 gap-6">
-            <div class="w-full">
+        <section id="TrendingCol" class="flex flex-col lg:w-1/3 gap-6">
+            <div class="md:hidden lg:flex w-full">
                 {% include 'ads/sidebar.html' %}
+            </div>
+            <div class="hidden md:flex lg:hidden">
+                <div class="w-full">
+                    {% include 'ads/sidebar.html' %}
+                </div>
+                <div class="w-full">
+                    {% include 'ads/sidebar.html' %}
+                </div>
             </div>
             <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
                 <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">

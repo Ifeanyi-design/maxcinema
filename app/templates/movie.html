@@ -17,9 +17,9 @@
 
 {% block content %}
 
-
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-auto xl:mx-0 my-2">
-        <section id="MovieDetails" class="my-2 md:my-5 flex flex-col md:w-5/6">
+    <section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto xl:mx-0 my-2 w-full">
+        
+        <section id="MovieDetails" class="my-2 lg:my-5 flex flex-col w-full lg:flex-1 min-w-0">
             <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
                 <h2 class="font-bold text-white text-[100%] md:text-[130%]">{{ video.name }} ({{ video.year_produced }})</h2>
             </div>
@@ -192,11 +192,10 @@
                                     <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
                                 </a>
                             {% endfor %}
-                                                    
+                                                                    
                         </div>
                     {% endif %}
 
-                    <!-- Rating UI -->
                     <div id="ratingContainer" class="mt-4 flex flex-col w-full justify-center items-center border border-[#830506] gap-2">
                         <p class="font-semibold">What would you rate this?</p>
                         <div id="starRating" data-video-id="{{ video.id }}" class="flex items-center gap-2 text-4xl" role="radiogroup" aria-label="Rate this movie">
@@ -206,11 +205,9 @@
                             <span id="ratingValue" class="ml-3 text-sm text-black text-center">Not rated</span>
                         </div>
 
-                        <!-- Show average rating and breakdown -->
                         <p>Average Rating: <span id="averageRating">{{ video.rating }}</span> ({{ video.num_votes }} votes)</p>
                     </div>
 
-                    <!-- Telegram CTA box -->
                     <div id="telegramCta" class="mt-4">
                         <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
                             <div class="flex items-center gap-3">
@@ -224,14 +221,11 @@
                         </div>
                     </div>
 
-                    <!-- Related Movies / You may like -->
                     <section id="relatedMovies" class="mt-6 w-full">
                         <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
                             <h2 class="font-bold text-white text-[100%] md:text-[110%]">You may Also like</h2>
                         </div>
-                        <!-- responsive grid: 2 cols xs, up to 6 cols on large screens -->
                         <div id="relatedList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-3">
-                            <!-- Six static placeholder cards. JS will update .card-img and .card-title. -->
                             {% if det == "movie" %}
                                 {% for suggest in suggested %}
                                     <a href="{{url_for('main.detail', det=suggest.type, name=suggest.name, id=suggest.id)}}" class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1 related-card">
@@ -242,7 +236,7 @@
                                         <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
                                     </a>
                                 {% endfor %}
-                            {% else %}                            
+                            {% else %}                                
                                 {% for suggest in suggested %}
                                     <a href='{{ url_for("main.detail", det=suggest.type, name=suggest.name, id=suggest.id, season="1", episode="1") }}' class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1">
                                         <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
@@ -291,8 +285,7 @@
             </div>
         </section>
 
-
-        <section id="TrendingCol" class="flex flex-col md:w-1/3 gap-6">
+        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-[320px] shrink-0 gap-6">
             <div class="w-full">
                 {% include 'ads/sidebar.html' %}
             </div>
@@ -304,14 +297,12 @@
                 <div class="flex flex-col mt-2 gap-1 md:py-2">
                     {% for movie in trending_movie %}
                         <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
                             <div class="flex-shrink-0 w-1/3 h-full">
                                 <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
                                     class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
                                 </div>
                             </div>
 
-                            <!-- Title / Text -->
                             <div class="flex items-center p-2.5 w-2/3">
                                 <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
                                     {{ movie.name }}
@@ -341,14 +332,12 @@
                 <div class="flex flex-col mt-2 gap-1 md:py-2">
                     {% for series in trending_series %}
                         <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
                             <div class="flex-shrink-0 w-1/3 h-full">
                                 <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
                                     class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
                                 </div>
                             </div>
 
-                            <!-- Title / Text -->
                             <div class="flex items-center p-2.5 w-2/3">
                                 <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
                                     {{ series.name }}
@@ -377,14 +366,12 @@
                 <div class="flex flex-col mt-2 gap-1 md:py-2">
                     {% for trailer in trending_trailers %}
                         <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                            <!-- Image -->
                             <div class="flex-shrink-0 w-1/3 h-full">
                                 <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
                                     class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
                                 </div>
                             </div>
 
-                            <!-- Title / Text -->
                             <div class="flex items-center p-2.5 w-2/3">
                                 <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
                                     {{trailer.name}}
