@@ -2,7 +2,7 @@ from flask import Blueprint, make_response, render_template, abort, redirect, ur
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload, defer
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -992,8 +992,20 @@ def live_search():
 
 @main_bp.route('/ping')
 def ping():
-    all = AllVideo.query.first()
-    return "OK", 200
+    try:
+        # 1. Try to wake the DB with a tiny, zero-cost query
+        db.session.execute(text("SELECT 1"))
+        return "OK (DB Awake)", 200
+    except Exception as e:
+        # 2. If Neon is sleeping or erroring, CATCH the error.
+        # Do not let the app crash.
+        print(f"Ping managed a DB Error: {e}")
+        
+        # 3. CRITICAL: Rollback the session so the NEXT user doesn't get an error
+        db.session.rollback()
+        
+        # 4. Return OK anyway so Cron Job doesn't get red alerts
+        return "OK (DB Reset)", 200
 
 
 # # ---------------- Dashboard ----------------
