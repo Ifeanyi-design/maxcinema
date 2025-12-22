@@ -128,36 +128,3 @@ def recent_episode_update(mapper, connection, target):
 def generate_slug(mapper, connection, target):
     if not target.slug:
         target.slug = slugify(target.name)
-# # Trigger after insert, update, delete for AllVideo
-# @event.listens_for(AllVideo, 'after_insert')
-# @event.listens_for(AllVideo, 'after_update')
-# @event.listens_for(AllVideo, 'after_delete')
-# def update_sitemap_allvideo(mapper, connection, target):
-#     from app import create_app
-#     app = create_app()
-#     from app.main_routes import generate_sitemap
-#     with app.app_context():
-#         generate_sitemap()
-
-# # Trigger after insert, update, delete for Trailer
-# @event.listens_for(Trailer, 'after_insert')
-# @event.listens_for(Trailer, 'after_update')
-# @event.listens_for(Trailer, 'after_delete')
-# def update_sitemap_trailer(mapper, connection, target):
-#     from app import create_app
-#     app = create_app()
-#     from app.main_routes import generate_sitemap
-#     with app.app_context():
-#         generate_sitemap()
-
-
-# @event.listens_for(AllVideo, "before_insert")
-# @event.listens_for(AllVideo, "before_update")
-# def update_movie_video_qualities(mapper, connection, target):
-#     target.update_video_qualities()
-
-
-# @event.listens_for(Episode, "before_insert")
-# @event.listens_for(Episode, "before_update")
-# def update_episode_video_qualities(mapper, connection, target):
-#     target.update_video_qualities()

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context, session
+from flask import Blueprint, make_response, render_template, abort, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context, session
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload, defer
@@ -873,93 +873,41 @@ def admin_uploads():
 
     return render_template("download.html", movies=movies, episodes=episodes)
 
-import math
-
-
-@main_bp.route('/sitemap.xml', methods=['GET'])
+@main_bp.route('/sitemap.xml')
 def sitemap():
-    """Generate sitemap.xml with homepage, categories, trending, movies, series (latest episodes), and trailers."""
+    """
+    Dynamic Sitemap: Generates XML on the fly.
+    Always up to date with DB. No file saving required.
+    """
+    host = request.host_url.rstrip('/')
 
-    base_url = "http://127.0.0.1:5000"
-    per_page = 24
-    urls = []
+    # 1. Define Static Pages
+    static_urls = [
+        {'loc': f"{host}/"},
+        {'loc': f"{host}/trending/movie"},
+        {'loc': f"{host}/trending/series"},
+        {'loc': f"{host}/request/movie"},
+    ]
 
-    def format_date(dt):
-        return dt.strftime('%Y-%m-%d') if dt else datetime.utcnow().strftime('%Y-%m-%d')
+    # 2. Fetch Data (Limit to recent 2000 to keep it fast)
+    # If you have < 2000 movies, .limit() does nothing, which is fine.
+    movies = AllVideo.query.filter_by(type='movie').order_by(AllVideo.date_added.desc()).limit(2000).all()
+    series_list = AllVideo.query.filter_by(type='series').order_by(AllVideo.date_added.desc()).limit(1000).all()
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
 
-    # Homepage
-    urls.append({
-        "loc": f"{base_url}/",
-        "lastmod": format_date(datetime.utcnow())
-    })
-
-    # Categories
-    for cat in ["nav/all_movie", "nav/all_series", "nav/trailers"]:
-        urls.append({
-            "loc": f"{base_url}/{cat}",
-            "lastmod": format_date(datetime.utcnow())
-        })
-
-    # Trending
-    urls.append({
-        "loc": f"{base_url}/nav/trending",
-        "lastmod": format_date(datetime.utcnow())
-    })
-
-    # Pagination helper
-    def add_paginated(items, base_path):
-        total_items = len(items)
-        total_pages = math.ceil(total_items / per_page)
-        for page in range(1, total_pages + 1):
-            lastmod = format_date(items[-1].date_added if hasattr(items[-1], 'date_added') else items[-1].created_at)
-            urls.append({
-                "loc": f"{base_url}/{base_path}/{page}",
-                "lastmod": lastmod
-            })
-
-    # Movies
-    movies = AllVideo.query.filter_by(type='movie').all()
-    for movie in movies:
-        urls.append({
-            "loc": f"{base_url}/movie/{movie.slug}/{movie.id}",
-            "lastmod": format_date(movie.date_added or movie.created_at)
-        })
-    add_paginated(movies, "nav/all_movie")
-
-    # Series
-    series_list = AllVideo.query.filter_by(type='series').all()
-    series_info = []
-    for series in series_list:
-        # Get latest season
-        latest_season = Season.query.filter_by(series_id=series.id).order_by(Season.season_number.desc()).first()
-        # Get latest episode of that season
-        latest_episode = None
-        if latest_season:
-            latest_episode = Episode.query.filter_by(season_id=latest_season.id).order_by(Episode.episode_number.desc()).first()
-
-        series_info.append({
-            "series": series,
-            "latest_season": latest_season,
-            "latest_episode": latest_episode
-        })
-
-    add_paginated(series_list, "nav/all_series")
-
-    # Trailers
-    trailers = Trailer.query.all()
-    for trailer in trailers:
-        urls.append({
-            "loc": f"{base_url}/trailers/trailer_watch/{trailer.slug}",
-            "lastmod": format_date(trailer.date_added or trailer.created_at)
-        })
-    add_paginated(trailers, "trailers")
-
-    return render_template("sitemap_with_series.xml.jinja",
-                           urls=urls,
-                           movies=movies,
-                           series_info=series_info,
-                           trailers=trailers), 200, {'Content-Type': 'application/xml'}
-
+    # 3. Render Template
+    xml_content = render_template(
+        'sitemap.xml', 
+        static_urls=static_urls,
+        movies=movies,
+        series_list=series_list,
+        trailers=trailers
+    )
+    
+    # 4. Return as correct XML type
+    response = make_response(xml_content)
+    response.headers["Content-Type"] = "application/xml"
+    return response
 
 @main_bp.route("/sitemap")
 def sitemap_page():
@@ -990,36 +938,6 @@ def sitemap_page():
                            series_info=series_info,
                            trailers=trailers)
 
-def generate_sitemap():
-    movies = AllVideo.query.all()
-    series_list = AllVideo.query.filter_by(type='series').all()
-    trailers = Trailer.query.all()
-
-    def get_priority(updated_at):
-        if not updated_at:
-            return 0.5
-        days_old = (datetime.utcnow() - updated_at).days
-        if days_old <= 30:
-            return 1.0
-        elif days_old <= 90:
-            return 0.8
-        else:
-            return 0.6
-
-    sitemap_xml = render_template(
-        "sitemap_with_series.xml.jinja",
-        movies=movies,
-        series_list=series_list,
-        trailers=trailers,
-        get_priority=get_priority
-    )
-
-    # Save XML to static folder
-    sitemap_path = os.path.join(current_app.root_path, 'static', 'sitemap.xml')
-    with open(sitemap_path, 'w', encoding='utf-8') as f:
-        f.write(sitemap_xml)
-    print("Sitemap updated.")
-    ping_search_engines()
 
 
 @main_bp.route('/request/movie', methods=['POST'])
