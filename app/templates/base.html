@@ -68,6 +68,74 @@
 
         window.addEventListener("resize", setHeaderPadding);
     </script>
+<script>
+    let searchTimeout = null;
+
+    function fetchSuggestions(inputId, resultBoxId) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(resultBoxId);
+        const query = input.value.trim();
+
+        // 1. Clear timer (debouncing)
+        clearTimeout(searchTimeout);
+
+        // 2. If empty, hide box
+        if (query.length < 2) {
+            box.innerHTML = "";
+            box.classList.add('hidden');
+            return;
+        }
+
+        // 3. Wait 300ms then fetch
+        searchTimeout = setTimeout(() => {
+            fetch(`/live_search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    box.innerHTML = ""; // Clear old results
+
+                    if (data.length > 0) {
+                        box.classList.remove('hidden'); // Show box
+
+                        data.forEach(movie => {
+                            // Create the link container
+                            const link = document.createElement('a');
+                            link.href = movie.url;
+                            link.className = "flex items-center p-3 hover:bg-gray-100 border-b border-gray-100 transition duration-150";
+
+                            // Inject HTML (Image + Title + Year)
+                            link.innerHTML = `
+                                <img src="${movie.image}" alt="${movie.name}" class="w-10 h-14 object-cover rounded shadow-sm mr-3">
+                                <div class="flex flex-col text-left">
+                                    <span class="text-sm font-bold text-gray-800 leading-tight">${movie.name}</span>
+                                    <span class="text-xs text-gray-500 mt-1">${movie.year}</span>
+                                </div>
+                            `;
+                            box.appendChild(link);
+                        });
+                    } else {
+                        box.classList.add('hidden'); // Hide if no matches
+                    }
+                })
+                .catch(err => console.error("Live Search Error:", err));
+        }, 300);
+    }
+
+    // Optional: Close search box when clicking outside
+    document.addEventListener('click', function(e) {
+        const desktopBox = document.getElementById('desktopSuggestions');
+        const mobileBox = document.getElementById('mobileSuggestions');
+        
+        // If click is NOT inside desktop search form, hide results
+        if (!document.getElementById('desktopSearch').contains(e.target)) {
+            desktopBox.classList.add('hidden');
+        }
+        // If click is NOT inside mobile search form, hide results
+        if (!document.getElementById('MobileSearch').contains(e.target)) {
+            mobileBox.classList.add('hidden');
+        }
+    });
+</script>
+
 
     {% block script %}
     {% endblock %}
