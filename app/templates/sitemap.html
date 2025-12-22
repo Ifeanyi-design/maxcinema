@@ -165,7 +165,7 @@
             {% for trailer in trailers %}
             <a href="{{ url_for('main.watch_trailer', det='trailer_watch', name=trailer.slug) }}" class="sitemap-card">
                 <strong>{{ trailer.name }}</strong>
-                <span class="date-badge">Trailer</span>
+                <span class="date-badge">{{ trailer.date_added.strftime('%Y-%m-%d') if trailer.date_added else 'Recent' }}</span>
             </a>
             {% endfor %}
         </div>
