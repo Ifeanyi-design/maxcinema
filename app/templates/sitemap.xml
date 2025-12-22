@@ -11,7 +11,7 @@
 
   {% for movie in movies %}
   <url>
-    <loc>{{ url_for('main.detail', det='movie', name=movie.slug, id=movie.id, _external=True) }}</loc>
+    <loc>{{ host }}{{ url_for('main.detail', det='movie', name=movie.slug, id=movie.id, _external=False) }}</loc>
     <lastmod>{{ movie.date_added.strftime('%Y-%m-%d') if movie.date_added else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -20,7 +20,7 @@
 
   {% for item in series_list %}
   <url>
-    <loc>{{ url_for('main.detail', det='series', name=item.slug, id=item.id, season=1, episode=1, _external=True) }}</loc>
+    <loc>{{ host }}{{ url_for('main.detail', det='series', name=item.slug, id=item.id, season=1, episode=1, _external=False) }}</loc>
     <lastmod>{{ item.date_added.strftime('%Y-%m-%d') if item.date_added else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
@@ -29,7 +29,7 @@
 
   {% for trailer in trailers %}
   <url>
-    <loc>{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id, _external=True) }}</loc>
+    <loc>{{ host }}{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id, _external=False) }}</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
