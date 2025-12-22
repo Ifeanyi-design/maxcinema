@@ -879,7 +879,7 @@ def sitemap():
     Dynamic Sitemap: Generates XML on the fly.
     Always up to date with DB. No file saving required.
     """
-    host = request.host_url.rstrip('/')
+    host = "https://www.maxcinema.name.ng"
 
     # 1. Define Static Pages
     static_urls = [
@@ -897,7 +897,8 @@ def sitemap():
 
     # 3. Render Template
     xml_content = render_template(
-        'sitemap.xml', 
+        'sitemap.xml',
+        host=host, 
         static_urls=static_urls,
         movies=movies,
         series_list=series_list,
