@@ -25,32 +25,41 @@
             margin: 0 auto;
         }
 
-        /* Header & Search */
+        /* HEADER & SEARCH BAR STYLES */
         .header {
             text-align: center;
             margin-bottom: 40px;
+            padding: 20px;
+            background: #252525;
+            border-radius: 10px;
         }
+        
         h1 {
             color: var(--text-gold);
             font-size: 2.5rem;
-            margin-bottom: 10px;
+            margin: 0 0 20px 0;
         }
+
+        /* The Search Bar Input */
         #searchParams {
-            padding: 12px 20px;
+            padding: 15px 20px;
             width: 100%;
             max-width: 500px;
             border-radius: 30px;
-            border: 2px solid #333;
-            background: var(--bg-card);
-            color: #fff;
-            font-size: 1rem;
+            border: 2px solid var(--text-gold);
+            background: #ffffff; /* White background to be visible */
+            color: #000000;      /* Black text */
+            font-size: 1.1rem;
             outline: none;
-        }
-        #searchParams:focus {
-            border-color: var(--text-gold);
+            display: block;      /* Ensure it sits on its own line */
+            margin: 0 auto;      /* Center it */
         }
 
-        /* Section Headings */
+        #searchParams:focus {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        /* SECTION HEADINGS */
         h2 {
             border-left: 5px solid var(--text-gold);
             padding-left: 15px;
@@ -59,7 +68,7 @@
             font-size: 1.8rem;
         }
 
-        /* The Grid Layout */
+        /* GRID LAYOUT */
         .link-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -68,17 +77,17 @@
 
         .sitemap-link {
             background: var(--bg-card);
-            padding: 10px 15px;
+            padding: 15px;
             border-radius: 8px;
             text-decoration: none;
             color: var(--text-gray);
             display: block;
             transition: all 0.2s;
-            border: 1px solid transparent;
+            border: 1px solid #333;
         }
 
         .sitemap-link:hover {
-            background: #2a2a2a;
+            background: #333;
             color: var(--text-gold);
             border-color: var(--text-gold);
             transform: translateY(-2px);
@@ -87,8 +96,9 @@
         .date-badge {
             display: block;
             font-size: 0.75rem;
-            color: #666;
-            margin-top: 4px;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
         }
     </style>
 </head>
@@ -97,15 +107,16 @@
     <div class="container">
         <div class="header">
             <h1>MaxCinema Sitemap</h1>
-            <input type="text" id="searchParams" placeholder="Filter movies, series, or trailers..." onkeyup="filterLinks()">
+            
+            <input type="text" id="searchParams" placeholder="Type here to search movies..." onkeyup="filterLinks()">
         </div>
 
         <h2>Movies</h2>
         <div class="link-grid" id="movies-grid">
             {% for movie in movies %}
             <a href="{{ url_for('main.detail', det='movie', name=movie.slug, id=movie.id) }}" class="sitemap-link">
-                {{ movie.name }}
-                <span class="date-badge">{{ movie.date_added.strftime('%b %d, %Y') if movie.date_added else '' }}</span>
+                <strong>{{ movie.name }}</strong>
+                <span class="date-badge">Added: {{ movie.date_added.strftime('%b %d, %Y') if movie.date_added else 'Recent' }}</span>
             </a>
             {% endfor %}
         </div>
@@ -114,8 +125,8 @@
         <div class="link-grid" id="series-grid">
             {% for series in series_list %}
             <a href="{{ url_for('main.detail', det='series', name=series.slug, id=series.id, season=1, episode=1) }}" class="sitemap-link">
-                {{ series.name }}
-                <span class="date-badge">{{ series.date_added.strftime('%b %d, %Y') if series.date_added else '' }}</span>
+                <strong>{{ series.name }}</strong>
+                <span class="date-badge">Added: {{ series.date_added.strftime('%b %d, %Y') if series.date_added else 'Recent' }}</span>
             </a>
             {% endfor %}
         </div>
@@ -124,7 +135,7 @@
         <div class="link-grid" id="trailers-grid">
             {% for trailer in trailers %}
             <a href="{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}" class="sitemap-link">
-                {{ trailer.name }}
+                <strong>{{ trailer.name }}</strong>
                 <span class="date-badge">Trailer</span>
             </a>
             {% endfor %}
@@ -133,16 +144,20 @@
 
     <script>
         function filterLinks() {
+            // 1. Get what the user typed
             let input = document.getElementById('searchParams');
             let filter = input.value.toUpperCase();
+            
+            // 2. Get all links
             let links = document.getElementsByClassName('sitemap-link');
 
+            // 3. Loop through them and hide ones that don't match
             for (let i = 0; i < links.length; i++) {
                 let txtValue = links[i].textContent || links[i].innerText;
                 if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    links[i].style.display = "";
+                    links[i].style.display = ""; // Show
                 } else {
-                    links[i].style.display = "none";
+                    links[i].style.display = "none"; // Hide
                 }
             }
         }
