@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from sqlalchemy.pool import NullPool  # <--- NEW IMPORT ADDED HERE
 
 load_dotenv()
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -8,21 +9,22 @@ root_dir = os.path.dirname(basedir)
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-    # ✅ CONNECTION KEEPER (Prevents "server has gone away" errors)
+
+    # ✅ CONNECTION KEEPER (The "Nuclear" Fix for Neon/Serverless)
+    # We use NullPool to force a fresh connection for every request.
+    # This prevents the "SSL connection closed" and "Rollback" errors.
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,  
-        "pool_recycle": 300,
-        "pool_size": 10,
-        "max_overflow": 20,
+        "pool_pre_ping": True,    
+        "pool_recycle": 300,      
+        "poolclass": NullPool,    # <--- THIS IS THE FIX
     }
 
     # =========================================================
     # 🚀 INSTANT-BOOT CONFIG (VERSION 2)
     # =========================================================
-    
+
     CLOUD_DB_URL = os.environ.get("DATABASE_URL")
-    
+
     # Fix 'channel_binding' crash automatically
     if CLOUD_DB_URL and "channel_binding=require" in CLOUD_DB_URL:
         CLOUD_DB_URL = CLOUD_DB_URL.replace("&channel_binding=require", "").replace("?channel_binding=require", "")
