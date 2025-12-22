@@ -569,4 +569,9 @@ a:hover {
 .episode-list-img {
   background-position: center;
   background-size: cover;
+}
+
+iframe {
+  max-width: 100%;
+  display: block;
 }/*# sourceMappingURL=input.css.map */

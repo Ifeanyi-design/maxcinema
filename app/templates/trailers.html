@@ -3,7 +3,7 @@
 {% block content %}
     
 
-    <section id="Merger" class="flex flex-col lg:flex-row gap-3 mx-5 my-2">
+    <section id="Merger" class="flex flex-col lg:flex-row gap-3 mx-2 xl:mx-0 my-2">
         <section id="RecentlyAdded" class="my-2 lg:my-5 mx-auto flex flex-col justify-center lg:w-5/6">
             <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
                 <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
@@ -84,7 +84,7 @@
                 </div>
                 <div class="flex flex-col mt-2 gap-1 md:py-2">
                     {% for trailer in trending_trailers %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28 dark:border-gray-500" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28 dark:border-gray-500" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
                             <!-- Image -->
                             <div class="flex-shrink-0 w-1/3 h-full">
                                 <div style="background: url('{{trailer.image}}'); background-position: center; background-size: cover;"
@@ -93,10 +93,16 @@
                             </div>
 
                             <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base dark:text-white">
-                                    {{trailer.name}}
-                                </h3>
+                            <div class="flex flex-col justify-center"></div>
+                                <div class="flex items-center p-2.5 w-2/3">
+                                    <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base dark:text-white">
+                                        {{trailer.name}}
+                                    </h3>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <p class="truncate">{{trailer.date_added.strftime('%b %d, %Y')}}</p>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
