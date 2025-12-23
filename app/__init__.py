@@ -3,12 +3,14 @@ from .models import User, Genre, AllVideo, Movie, Series, Season, Episode, Comme
 import json
 from flask import Flask
 from .config import Config
+from werkzeug.middleware.proxy_fix import ProxyFix
 from .extensions import db, migrate, login_manager
 
 def create_app(config_class=Config):
     """Application factory for Flask app"""
     
     app = Flask(__name__)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     app.config.from_object(config_class)
     # app.config['SERVER_NAME'] = '192.168.43.141:5000'
     # Initialize extensions
