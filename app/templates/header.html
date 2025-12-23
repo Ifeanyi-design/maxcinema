@@ -4,11 +4,15 @@
 
     <div class="xl:bg-white flex flex-row justify-between items-center p-3 relative w-full h-full xl:border-b-0 xl:border-t-2 xl:border-x-2 xl:rounded-t-lg xl:shadow-2xl border-b-2 border-[#830506]">
 
-        <a href="{{ url_for('main.index') }}">
-            <div id="logo" class="font-bold left-0">
-                <h1 class="text-[#830506] text-3xl md:text-[150%] lg:text-3xl">🎬MaxCinema</h1>
+        <a href="{{ url_for('main.index') }}" class="flex items-center">
+            <div id="logo" class="left-0">
+                <img src="https://i.imgur.com/UlSeHMa.png" 
+             alt="MaxCinema" 
+             class="h-[60px] md:h-[70px] w-auto">
             </div>
         </a>
+
+
 
         <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50">
             <ul id="mainNav" class="flex sm:text-xl sm:gap-0 p-2 md:gap-0 lg:gap-4 justify-end font-medium md:text-[17px] flex-shrink-0 uppercase">
