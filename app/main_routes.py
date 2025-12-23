@@ -437,6 +437,20 @@ def download_dispatcher(type, id, season=None, episode=None):
         final_url = f"{base}/{path}"
 
         return redirect(final_url)
+    
+    elif server_type in ["streamwish", "doodstream"]:
+        link = video.download_link.strip()
+        
+        # If it is a full link (e.g., https://dood.li/d/abc12345)
+        if link.startswith("http"):
+            return redirect(link)
+
+        # If it is just the code (e.g., abc12345), build the full URL
+        base = storage_server.base_url.rstrip("/")
+        path = link.lstrip("/")
+        final_url = f"{base}/{path}"
+
+        return redirect(final_url)
 
     # =====================================================
     # STANDARD SERVERS (S3, Local, FTP, etc.)
