@@ -411,6 +411,15 @@ def download_dispatcher(type, id, season=None, episode=None):
                 episode=episode
             ))
 
+    elif server_type == "gofile":
+        # GoFile direct URL: base + download_link
+        link = video.download_link.strip()
+        if link.startswith("http"):
+            return redirect(link)
+        base = storage_server.base_url.rstrip("/")
+        final_url = f"{base}/{link}"
+        return redirect(final_url)
+
     # =====================================================
     # TERABOX
     # =====================================================
