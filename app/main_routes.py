@@ -1034,22 +1034,38 @@ def live_search():
     return jsonify(suggestions)
 
 
+from sqlalchemy import text  # Ensure this is imported at the top
+
 @main_bp.route('/ping')
 def ping():
-    try:
-        # 1. Try to wake the DB with a tiny, zero-cost query
-        db.session.execute(text("SELECT 1"))
-        return "OK (DB Awake)", 200
-    except Exception as e:
-        # 2. If Neon is sleeping or erroring, CATCH the error.
-        # Do not let the app crash.
-        print(f"Ping managed a DB Error: {e}")
-        
-        # 3. CRITICAL: Rollback the session so the NEXT user doesn't get an error
-        db.session.rollback()
-        
-        # 4. Return OK anyway so Cron Job doesn't get red alerts
-        return "OK (DB Reset)", 200
+    # =========================================================
+    # ✅ OPTION 1: LIGHTWEIGHT PING (ACTIVE)
+    # This keeps your Flask App awake, but lets Neon DB sleep.
+    # This is CRITICAL for the Free Tier (saves your 100 hours).
+    # =========================================================
+    return "App is awake (DB Sleeping)", 200
+
+
+    # =========================================================
+    # ❌ OPTION 2: HEAVY PING (OLD CODE - COMMENTED OUT)
+    # This wakes up the Database every time. 
+    # WARNING: This will use up your 100 hours in 4 days.
+    # Only uncomment this if you start paying for a Database.
+    # =========================================================
+    # try:
+    #     # 1. Try to wake the DB with a tiny, zero-cost query
+    #     db.session.execute(text("SELECT 1"))
+    #     return "OK (DB Awake)", 200
+    # except Exception as e:
+    #     # 2. If Neon is sleeping or erroring, CATCH the error.
+    #     # Do not let the app crash.
+    #     print(f"Ping managed a DB Error: {e}")
+    #
+    #     # 3. CRITICAL: Rollback the session so the NEXT user doesn't get an error
+    #     db.session.rollback()
+    #
+    #     # 4. Return OK anyway so Cron Job doesn't get red alerts
+    #     return "OK (DB Reset)", 200
 
 
 # # ---------------- Dashboard ----------------
