@@ -173,7 +173,7 @@ class StorageServerForm(FlaskForm):
         ('terabox', 'Terabox'),
         ('streamwish', 'StreamWish'),
         ('1fichier', '1Fichier'),
-        ('gofile', 'GoFile') 
+        ('gofile', 'GoFile'), 
         ('pixeldrain', 'PixelDrain')
     ], validators=[DataRequired()])
     
