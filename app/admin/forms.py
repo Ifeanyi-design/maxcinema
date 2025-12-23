@@ -171,7 +171,11 @@ class StorageServerForm(FlaskForm):
         ('bytescale', 'Bytescale / Cloud Image'),
         ('ftp', 'FTP Server'),
         ('terabox', 'Terabox'),
-        ('streamwish', 'StreamWish')
+        ('streamwish', 'StreamWish'),
+        ('doodstream', 'DoodStream'),
+        ('1fichier', '1Fichier'),
+        ('gofile', 'GoFile'), 
+        ('pixeldrain', 'PixelDrain')
     ], validators=[DataRequired()])
     
     base_url = StringField('Base URL / Path', validators=[
