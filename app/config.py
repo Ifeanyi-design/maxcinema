@@ -12,12 +12,21 @@ class Config:
 
     # ✅ CONNECTION KEEPER (The "Nuclear" Fix for Neon/Serverless)
     # We use NullPool to force a fresh connection for every request.
-    # This prevents the "SSL connection closed" and "Rollback" errors.
+        # ✅ CONNECTION KEEPER (The Real Fix)
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "pool_pre_ping": True,    
-        "pool_recycle": 300,      
-        "poolclass": NullPool,    # <--- THIS IS THE FIX
+        "poolclass": NullPool,        # 1. Force fresh connection (Fixes SSL errors)
+        "pool_pre_ping": True,        # 2. Safety check
+        # "pool_recycle": 300,        # REMOVE THIS: NullPool makes this useless.
+        
+        "connect_args": {
+            "connect_timeout": 60,    # <--- CRITICAL FIX: Wait 60s for Neon to wake up
+            "keepalives": 1,          # TCP Keepalive (Helps network stability)
+            "keepalives_idle": 30,
+            "keepalives_interval": 10,
+            "keepalives_count": 5
+        }
     }
+
 
     # =========================================================
     # 🚀 INSTANT-BOOT CONFIG (VERSION 2)
