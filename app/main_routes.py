@@ -370,54 +370,74 @@ def series_details(det, name, season, episode, id):
 @main_bp.route("/download/<type>/<int:id>")
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
-    """
-    Dispatcher: Checks Server Type.
-    - If Bytescale: Redirects to the special proxy route.
-    - If Standard: Redirects directly to the file URL.
-    """
 
-    # --- 1. Fetch Video & Server ---
+    # --- Fetch video ---
     if type == "movie":
         video = AllVideo.query.get_or_404(id)
-        # Use the name from the DB for the user's saved file
-        clean_name = video.name 
     elif type == "series":
         video = Episode.query.get_or_404(id)
-        clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
     else:
         return "Invalid type", 400
 
     storage_server = video.storage_server
 
-    # Check if server exists
     if not storage_server or not storage_server.active:
         return "Storage server not found or inactive", 404
-    
-    # Check if filename exists
+
     if not video.download_link:
-         return "File not linked in database", 404
+        return "File not linked in database", 404
 
-    # --- 2. LOGIC BRANCH ---
-    
-    # BRANCH A: BYTESCALE (Needs Proxy/API work)
-    if storage_server.server_type == "bytescale":
+    server_type = storage_server.server_type.lower()
+
+    # =====================================================
+    # BYTESCALE
+    # =====================================================
+    if server_type == "bytescale":
         if type == "movie":
-            return redirect(url_for("main.movie_start_download", type="movie", name=clean_name, id=id))
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="movie",
+                name=video.name,
+                id=id
+            ))
         else:
-            return redirect(url_for("main.movie_start_download", type="series", name=clean_name, id=id, season=season, episode=episode))
+            clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="series",
+                name=clean_name,
+                id=id,
+                season=season,
+                episode=episode
+            ))
 
-    # BRANCH B: STANDARD SERVERS (AWS S3, Local, FTP, etc.)
-    # We just build the link and redirect the user directly.
-    else:
-        # Build the URL: Base + Filename
-        base = storage_server.base_url.rstrip('/')
-        path = video.download_link.lstrip('/')
+    # =====================================================
+    # TERABOX
+    # =====================================================
+    elif server_type == "terabox":
+
+        link = video.download_link.strip()
+
+        # If already a full URL → use it
+        if link.startswith("http"):
+            return redirect(link)
+
+        # Else build from base_url
+        base = storage_server.base_url.rstrip("/")
+        path = link.lstrip("/")
         final_url = f"{base}/{path}"
-        
-        print(f"Direct Redirect to: {final_url}")
+
         return redirect(final_url)
 
+    # =====================================================
+    # STANDARD SERVERS (S3, Local, FTP, etc.)
+    # =====================================================
+    else:
+        base = storage_server.base_url.rstrip("/")
+        path = video.download_link.lstrip("/")
+        final_url = f"{base}/{path}"
 
+        return redirect(final_url)
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
 
