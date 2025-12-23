@@ -126,15 +126,17 @@
                             </div>
 
                             <!-- Title / Text -->
-                            <div class="flex flex-col justify-center"></div>
-                                <div class="flex items-center p-2.5 w-2/3">
-                                    <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base dark:text-white">
-                                        {{trailer.name}}
+                            <div class="flex flex-col justify-center">
+                                <div class="flex items-center p-2.5 w-full">
+                                    <h3 class="text-black dark:text-white line-clamp-2 font-semibold text-sm md:text-base">
+                                        {{ trailer.name }}
                                     </h3>
                                 </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <p class="truncate">{{trailer.date_added.strftime('%b %d, %Y')}}</p>
+                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
+                                    <div class="flex items-center space-x-1">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <p class="truncate"> {{ trailer.date_added.strftime('%b %d, %Y') }} </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
