@@ -170,7 +170,8 @@ class StorageServerForm(FlaskForm):
         ('aws_s3', 'AWS S3 Bucket'),
         ('bytescale', 'Bytescale / Cloud Image'),
         ('ftp', 'FTP Server'),
-        ('terabox', 'Terabox')
+        ('terabox', 'Terabox'),
+        ('streamwish', 'StreamWish')
     ], validators=[DataRequired()])
     
     base_url = StringField('Base URL / Path', validators=[
