@@ -271,3 +271,44 @@
     </aside>
 </section>
 {% endblock %}
+
+{% block script %}
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareBtn = document.getElementById('shareVideoBtn');
+    
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const shareData = {
+                title: '{{ video.name }} | MaxCinema',
+                text: 'Check out {{ video.name }} on MaxCinema - {{ video.description[:100] }}...',
+                url: window.location.href,
+            };
+
+            try {
+                if (navigator.share) {
+                    // Trigger Native Mobile Share (WhatsApp, Telegram, etc.)
+                    await navigator.share(shareData);
+                } else {
+                    // Desktop Fallback: Copy to Clipboard
+                    await navigator.clipboard.writeText(window.location.href);
+                    
+                    // Visual feedback for desktop users
+                    const originalText = shareBtn.innerHTML;
+                    shareBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Link Copied!</span>';
+                    shareBtn.classList.add('text-green-600', 'border-green-600');
+                    
+                    setTimeout(() => {
+                        shareBtn.innerHTML = originalText;
+                        shareBtn.classList.remove('text-green-600', 'border-green-600');
+                    }, 2000);
+                }
+            } catch (err) {
+                console.log('Error sharing:', err);
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}
