@@ -447,36 +447,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-
-
-
-
-
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    const banner = document.getElementById('cookie-banner');
-    const acceptBtn = document.getElementById('accept-cookies');
-    const closeBtn = document.getElementById('close-banner');
-
-    // 1. Check if user already accepted
-    if (!localStorage.getItem('maxcinema_cookies_accepted')) {
-        // Show banner after 2 seconds
-        setTimeout(() => {
-            banner.classList.remove('translate-y-32');
-            banner.classList.add('translate-y-0');
-        }, 2000);
-    }
-
-    // 2. Accept logic
-    acceptBtn.onclick = () => {
-        localStorage.setItem('maxcinema_cookies_accepted', 'true');
-        banner.classList.add('translate-y-32');
-    };
-
-    // 3. Simple close logic
-    closeBtn.onclick = () => {
-        banner.classList.add('translate-y-32');
-    };
-});
-
