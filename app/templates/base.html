@@ -65,14 +65,15 @@
             {% endblock %}
         </main>
         
-        <div id="cookie-banner" 
-     class="fixed bottom-6 left-4 right-4 md:left-auto md:right-10 md:max-w-sm bg-white border-l-4 border-[#830506] shadow-2xl p-6 rounded-r-xl z-[100000] transition-all duration-700 opacity-0 pointer-events-none translate-y-10">
-    <div class="text-left relative z-[100001]">
+       <div id="cookie-banner" 
+     style="position: fixed; bottom: -300px; left: 20px; right: 20px; transition: all 0.8s ease-in-out; z-index: 999999;"
+     class="md:left-auto md:right-10 md:max-w-sm bg-white border-l-4 border-[#830506] shadow-2xl p-6 rounded-r-xl">
+    <div class="text-left">
         <h4 class="text-gray-900 font-black uppercase text-xs tracking-widest mb-1">Cookie Policy</h4>
         <p class="text-gray-500 text-[11px] md:text-xs leading-relaxed mb-4">
             We use cookies to improve your experience. By using MaxCinema, you agree to our <a href="{{ url_for('main.privacy') }}" class="text-[#830506] font-bold underline">Privacy Policy</a>.
         </p>
-        <div class="flex gap-3 relative z-[100002]">
+        <div class="flex gap-3">
             <button id="accept-cookies" class="bg-[#830506] text-white text-[10px] font-black uppercase px-8 py-2.5 rounded-full hover:bg-black transition-all cursor-pointer shadow-lg active:scale-95">
                 Accept
             </button>
@@ -117,36 +118,36 @@
 
         if (!banner) return;
 
-        // Check if already accepted
+        // 1. Check if user already accepted
         if (localStorage.getItem('maxcinema_cookies_accepted')) {
             banner.style.display = 'none';
             return;
         }
 
-        // Show after delay
+        // 2. Slide it up after 2 seconds
         setTimeout(() => {
-            banner.style.transform = 'translateY(0)';
+            banner.style.bottom = '24px';
         }, 2000);
 
-        // Accept Action
+        // 3. Accept Logic
         if (acceptBtn) {
             acceptBtn.onclick = function() {
                 localStorage.setItem('maxcinema_cookies_accepted', 'true');
-                banner.style.transform = 'translateY(250%)';
-                setTimeout(() => { banner.style.display = 'none'; }, 600);
+                banner.style.bottom = '-300px';
+                console.log("Accepted");
             };
         }
 
-        // Close Action
+        // 4. Close Logic
         if (closeBtn) {
             closeBtn.onclick = function() {
-                banner.style.transform = 'translateY(250%)';
-                setTimeout(() => { banner.style.display = 'none'; }, 600);
+                banner.style.bottom = '-300px';
             };
         }
     });
 })();
 </script>
+
 
 
     <script>
