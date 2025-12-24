@@ -1,70 +1,81 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8">
+<section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-2 lg:px-4 max-w-[1600px] my-8 mt-24">
     
-    <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 xl:w-3/4">
+    <section id="ContentSection" class="flex flex-col lg:w-3/4 mx-auto w-full">
         
-        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-3 rounded-t-lg shadow-md">
-            <h2 class="font-extrabold text-white text-lg md:text-xl flex items-center gap-2 italic uppercase">
-                <i class="fa-solid fa-layer-group"></i> {{ genre.name if genre else "Search Results" }}
+        <div class="w-full bg-[#830506] flex items-center justify-between px-6 py-6 rounded-t-2xl shadow-lg relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                <i class="fa-solid fa-layer-group text-8xl text-white transform -rotate-12 translate-x-4 -translate-y-4"></i>
+            </div>
+
+            <h2 class="font-black text-white text-xl md:text-3xl flex items-center gap-3 italic uppercase tracking-tighter relative z-10">
+                {% if genre %}
+                    <i class="fa-solid fa-tag text-yellow-400"></i> {{ genre.name }}
+                {% else %}
+                    <i class="fa-solid fa-magnifying-glass text-yellow-400"></i> Search Results
+                {% endif %}
             </h2>
+            
+            {% if videos.total %}
+            <span class="relative z-10 bg-black/20 text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider hidden md:block">
+                {{ videos.total }} Titles Found
+            </span>
+            {% endif %}
         </div>
 
-        <div id="telegramCta" class="border-x border-gray-100 bg-white px-2 py-4">
-            <div class="flex flex-col md:flex-row items-center justify-between p-4 rounded-xl shadow-lg transition-transform hover:scale-[1.01]" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
+        <div class="bg-white border-x border-gray-100 px-4 py-2 shadow-sm">
+            <div class="flex flex-col md:flex-row items-center justify-between p-4 rounded-xl shadow-md transition-all hover:shadow-lg group" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
                 <div class="flex items-center gap-4 mb-4 md:mb-0">
-                    <div class="bg-white/20 p-3 rounded-full">
-                        <i class="fa-brands fa-telegram-plane text-white text-3xl"></i>
+                    <div class="bg-white/20 p-3 rounded-full group-hover:scale-110 transition-transform">
+                        <i class="fa-brands fa-telegram-plane text-white text-2xl"></i>
                     </div>
                     <div>
-                        <p class="text-white font-bold text-lg leading-tight">Join our Telegram group</p>
-                        <p class="text-white/90 text-sm italic">Never miss an update in this category</p>
+                        <p class="text-white font-black text-sm md:text-base leading-tight">Join MaxCinema Community</p>
+                        <p class="text-white/80 text-[10px] font-bold uppercase italic">Never miss an update in this category</p>
                     </div>
                 </div>
-                <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-full hover:bg-gray-100 transition-colors shadow-md text-center text-sm uppercase">
-                    Join Community
+                <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-2.5 rounded-full hover:bg-gray-50 transition-colors shadow-sm text-xs uppercase tracking-widest text-center">
+                    Join Now
                 </a>
             </div>
         </div>
 
-        <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-2 border-x border-b rounded-b-lg border-gray-100">
+        {% if videos.items %}
+        <div id="ResultsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 py-8 bg-white px-4 border-x border-b border-gray-100 rounded-b-2xl shadow-sm">
             {% for movie in videos.items %}
-                {# Clean URL Logic #}
+                {# Clean Link Logic #}
                 {% set link = url_for("main.detail", det=movie.type, name=movie.name, id=movie.id, season="1", episode="1") if movie.type == "series" else url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) %}
 
-                <div class="group relative flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+                <div class="group relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer hover:-translate-y-1"
                      onclick="window.location.href='{{ link }}'">
                     
-                    <div class="absolute top-2 left-2 z-40 bg-black/70 backdrop-blur-sm text-white rounded px-2 py-1 flex items-center gap-1">
-                        <i class="fas fa-star text-yellow-400 text-[10px]"></i>
-                        <span class="text-[11px] font-bold">{{ movie.rating | round(1) }}</span>
+                    <div class="absolute top-2 left-2 z-40 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm border border-gray-200">
+                        <i class="fas fa-star text-yellow-500 text-[9px]"></i>
+                        <span class="text-[10px] font-black text-gray-900">{{ movie.rating | round(1) }}</span>
                     </div>
 
-                    <div class="relative w-full aspect-[2/3] overflow-hidden">
-                        <img src="{{ movie.image }}" alt="{{ movie.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                    <div class="relative w-full aspect-[2/3] overflow-hidden bg-gray-100">
+                        <img src="{{ movie.image }}" alt="{{ movie.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
                         
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                             <i class="fa-solid fa-circle-play text-white text-5xl"></i>
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                            <i class="fa-solid fa-circle-play text-white text-5xl drop-shadow-lg transform scale-90 group-hover:scale-100 transition-transform"></i>
                         </div>
                     </div>
 
                     <div class="p-3 flex flex-col flex-grow">
-                        <h3 class="text-sm md:text-base font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-[#830506] transition-colors leading-tight min-h-[2.5rem]">
+                        <h3 class="text-xs md:text-sm font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-[#830506] transition-colors leading-tight min-h-[2.5rem]">
                             {{ movie.name }}
                         </h3>
 
-                        <div class="flex justify-between items-center text-[10px] font-semibold text-gray-500 uppercase border-t pt-2 border-gray-50">
+                        <div class="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase border-t pt-2 border-gray-50 mt-auto">
                             <span class="flex items-center gap-1">
                                 <i class="fas fa-calendar-alt text-[#830506]"></i>
-                                {{ movie.date_added.strftime('%b %d, %Y') }}
+                                {{ movie.date_added.strftime('%Y') }}
                             </span>
-                            <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[9px]">
+                            <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[9px] tracking-wide">
                                 {{ movie.type }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <i class="fas fa-comment text-[#830506]"></i>
-                                {{ movie.total_comment }}
                             </span>
                         </div>
                     </div>
@@ -75,10 +86,25 @@
         <div class="flex justify-center py-10 gap-2">
             {% include 'pagnation.html' %}
         </div>
+
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-20 bg-white border-x border-b rounded-b-2xl border-gray-100 text-center">
+            <div class="bg-gray-50 p-6 rounded-full mb-4 shadow-inner">
+                <i class="fa-solid fa-film text-4xl text-gray-300"></i>
+            </div>
+            <h3 class="text-xl font-black text-gray-900 uppercase tracking-tighter italic">No Titles Found</h3>
+            <p class="text-sm text-gray-500 mt-2 font-medium">Try checking back later or browse other categories.</p>
+            <a href="{{ url_for('main.index') }}" class="mt-6 px-8 py-3 bg-[#830506] text-white rounded-full font-black text-xs uppercase shadow-md hover:bg-black transition-colors tracking-widest">
+                Go Home
+            </a>
+        </div>
+        {% endif %}
     </section>
 
-    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
-        {% include 'sidebar_trending.html' %}
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/4 gap-8">
+        <div class="sticky top-24">
+            {% include 'sidebar_trending.html' %}
+        </div>
     </aside>
 </section>
 {% endblock %}

@@ -1,37 +1,39 @@
-<div class="w-full">
-    {% include 'ads/sidebar.html' %}
-</div>
-{% set categories = [
+<div class="sticky top-24 space-y-6">
+            
+            <div class="w-full flex flex-col gap-4">
+                <div class="rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                    {% include 'ads/sidebar.html' %}
+                </div>
+            </div>
+
+            {% set categories = [
                 {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},
                 {'id': 'TrendingSeries', 'title': 'Trending Series', 'icon': 'fa-fire', 'data': trending_series, 'type': 'series'},
                 {'id': 'Trailers', 'title': 'New Trailers', 'icon': 'fa-play-circle', 'data': trending_trailers, 'type': 'trailer'}
             ] %}
 
             {% for cat in categories %}
-                <section id="{{ cat.id }}" class="flex flex-col w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-2">
-                        <h2 class="font-bold text-white text-sm md:text-base uppercase flex items-center gap-2 tracking-wide">
+                <section id="{{ cat.id }}" class="flex flex-col w-full bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="w-full bg-[#830506] flex items-center justify-between px-4 py-3">
+                        <h2 class="font-black text-white text-xs uppercase flex items-center gap-2 tracking-wide">
                             <i class="fa-solid {{ cat.icon }}"></i> {{ cat.title }}
                         </h2>
                     </div>
 
-                    <div class="flex flex-col p-2 gap-2">
+                    <div class="flex flex-col">
                         {% for item in cat.data %}
                         <div onclick="window.location.href='{% if cat.type == 'trailer' %}{{ url_for('main.detail', det='trailer_watch', name=item.slug, id=item.id) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season='1', episode='1') }}{% endif %}'" 
-                            class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 md:h-24 lg:h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200">
+                            class="group flex items-center gap-3 p-2 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0">
                             
-                            <div class="flex-shrink-0 w-20 h-full overflow-hidden">
-                                <div style="background-image: url('{{ item.image }}');"
-                                    class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
-                                </div>
+                            <div class="flex-shrink-0 w-16 h-12 rounded overflow-hidden relative">
+                                <img src="{{ item.image }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                             </div>
 
-                            <div class="flex flex-col justify-center px-3 overflow-hidden">
-                                <h3 class="text-gray-900 text-xs md:text-sm font-bold line-clamp-2 leading-tight group-hover:text-[#830506] transition-colors">
+                            <div class="flex flex-col justify-center overflow-hidden">
+                                <h3 class="text-gray-900 text-[11px] font-bold line-clamp-1 group-hover:text-[#830506] transition-colors leading-tight">
                                     {{ item.name }}
                                 </h3>
-                                <div class="flex items-center gap-2 mt-1 text-[10px] text-gray-500 font-semibold italic">
-                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
+                                <div class="flex items-center gap-2 mt-1 text-[9px] text-gray-400 font-bold uppercase">
                                     <span>{{ (item.updated_at or item.date_added).strftime('%b %d, %Y') }}</span>
                                 </div>
                             </div>
@@ -39,11 +41,12 @@
                         {% endfor %}
                     </div>
 
-                    <div class="p-2 border-t border-gray-50">
+                    <div class="p-2 bg-gray-50 border-t border-gray-100 text-center">
                         <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
-                        class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
-                            View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i>
+                        class="text-[10px] font-black text-[#830506] hover:underline uppercase tracking-widest">
+                            View All <i class="fa-solid fa-arrow-right ml-1"></i>
                         </a>
                     </div>
                 </section>
             {% endfor %}
+        </div>

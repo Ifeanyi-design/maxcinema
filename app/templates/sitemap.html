@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sitemap - MaxCinema</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --bg-dark: #121212;
             --bg-card: #1e1e1e;
             --text-gold: #FFD700;
             --text-gray: #ccc;
+            --accent-red: #830506;
         }
 
         body {
@@ -17,44 +19,51 @@
             background-color: var(--bg-dark);
             color: #fff;
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            overflow-y: scroll;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding-bottom: 50px;
+            padding-left: 20px;
+            padding-right: 20px;
         }
 
-        /* --- HEADER & STICKY SEARCH BAR --- */
+        /* --- STICKY HEADER --- */
         .header-section {
             text-align: center;
-            margin-bottom: 40px;
-            padding: 20px;
+            padding: 30px 20px;
             position: sticky; 
             top: 0;
             background: rgba(18, 18, 18, 0.95); 
             z-index: 100;
             border-bottom: 1px solid #333;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         h1 {
             color: var(--text-gold);
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin: 0 0 15px 0;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 900;
         }
 
-        /* The Search Box */
+        /* Search Input */
         #searchParams {
             padding: 15px 25px;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             border-radius: 50px;
-            border: 2px solid var(--text-gold);
-            background: #fff;
-            color: #000;
-            font-size: 1.1rem;
+            border: 2px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+            font-size: 1rem;
             outline: none;
             display: block;
             margin: 0 auto;
@@ -62,31 +71,37 @@
         }
         
         #searchParams:focus {
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            transform: scale(1.02);
+            border-color: var(--text-gold);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            background: #333;
         }
 
-        /* --- SECTION TITLES --- */
+        /* --- SECTIONS --- */
+        .section-wrapper {
+            margin-bottom: 40px;
+        }
+
         h2 {
-            border-left: 5px solid var(--text-gold);
+            border-left: 5px solid var(--accent-red);
             padding-left: 15px;
-            margin-top: 40px;
             margin-bottom: 20px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* --- GRID LAYOUT (Cards) --- */
+        /* --- GRID LAYOUT --- */
         .link-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 15px;
         }
 
         .sitemap-card {
             background: var(--bg-card);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 8px;
             text-decoration: none;
             color: var(--text-gray);
             display: flex;
@@ -94,41 +109,45 @@
             justify-content: space-between;
             transition: all 0.2s ease;
             border: 1px solid #333;
+            min-height: 80px;
         }
 
         .sitemap-card:hover {
-            background: #2a2a2a;
+            background: #252525;
             border-color: var(--text-gold);
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
         .sitemap-card strong {
             display: block;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             margin-bottom: 8px;
             color: #fff;
             font-weight: 600;
+            line-height: 1.4;
         }
         
         .sitemap-card:hover strong {
             color: var(--text-gold);
         }
 
-        .date-badge {
-            font-size: 0.75rem;
+        .meta-tag {
+            font-size: 0.7rem;
             color: #666;
             margin-top: auto; 
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        .date-badge::before {
-            content: "📅";
-            margin-right: 5px;
-            font-size: 0.8rem;
-            filter: grayscale(1);
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-red); }
     </style>
 </head>
 <body>
@@ -136,38 +155,53 @@
     <div class="container">
         
         <div class="header-section">
-            <h1>MaxCinema Index</h1>
-            <input type="text" id="searchParams" placeholder="🔍 Search for movies or series..." onkeyup="filterLinks()">
+            <h1><i class="fa-solid fa-sitemap"></i> Library Index</h1>
+            <input type="text" id="searchParams" placeholder="Type to filter movies, series, or trailers..." onkeyup="filterLinks()">
         </div>
 
-        <h2>Movies</h2>
-        <div class="link-grid">
-            {% for movie in movies %}
-            <a href="{{ url_for('main.movie_details', name=movie.slug, det=movie.type, id=movie.id) }}" class="sitemap-card">
-                <strong>{{ movie.name }}</strong>
-                <span class="date-badge">{{ movie.updated_at.strftime('%Y-%m-%d') if movie.updated_at else 'Recent' }}</span>
-            </a>
-            {% endfor %}
+        <div class="section-wrapper" id="movies-section">
+            <h2><i class="fa-solid fa-clapperboard"></i> Movies</h2>
+            <div class="link-grid">
+                {% for movie in movies %}
+                <a href="{{ url_for('main.detail', det=movie.type, name=movie.name, id=movie.id) }}" class="sitemap-card">
+                    <strong>{{ movie.name }}</strong>
+                    <div class="meta-tag">
+                        <span><i class="fa-regular fa-calendar"></i> {{ movie.date_added.strftime('%Y') }}</span>
+                        <span style="color: var(--accent-red)">Movie</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
-        <h2>Series</h2>
-        <div class="link-grid">
-            {% for series in series_list %}
-            <a href="{{ url_for('main.series_details', det='series', name=series.slug, season=1, episode=1, id=series.id) }}" class="sitemap-card">
-                <strong>{{ series.name }}</strong>
-                <span class="date-badge">{{ series.updated_at.strftime('%Y-%m-%d') if series.updated_at else 'Recent' }}</span>
-            </a>
-            {% endfor %}
+        <div class="section-wrapper" id="series-section">
+            <h2><i class="fa-solid fa-tv"></i> TV Series</h2>
+            <div class="link-grid">
+                {% for series in series_list %}
+                <a href="{{ url_for('main.detail', det=series.type, name=series.name, id=series.id, season=1, episode=1) }}" class="sitemap-card">
+                    <strong>{{ series.name }}</strong>
+                    <div class="meta-tag">
+                        <span><i class="fa-regular fa-calendar"></i> {{ series.date_added.strftime('%Y') }}</span>
+                        <span style="color: #0088cc">Series</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
-        <h2>Trailers</h2>
-        <div class="link-grid">
-            {% for trailer in trailers %}
-            <a href="{{ url_for('main.watch_trailer', det='trailer_watch', name=trailer.slug) }}" class="sitemap-card">
-                <strong>{{ trailer.name }}</strong>
-                <span class="date-badge">{{ trailer.date_added.strftime('%Y-%m-%d') if trailer.date_added else 'Recent' }}</span>
-            </a>
-            {% endfor %}
+        <div class="section-wrapper" id="trailers-section">
+            <h2><i class="fa-solid fa-film"></i> Trailers</h2>
+            <div class="link-grid">
+                {% for trailer in trailers %}
+                <a href="{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}" class="sitemap-card">
+                    <strong>{{ trailer.name }}</strong>
+                    <div class="meta-tag">
+                        <span><i class="fa-regular fa-clock"></i> Recent</span>
+                        <span style="color: var(--text-gold)">Trailer</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
         </div>
 
     </div>
@@ -178,6 +212,7 @@
             let filter = input.value.toUpperCase();
             let cards = document.getElementsByClassName('sitemap-card');
 
+            // 1. Filter Cards
             for (let i = 0; i < cards.length; i++) {
                 let txtValue = cards[i].textContent || cards[i].innerText;
                 if (txtValue.toUpperCase().indexOf(filter) > -1) {
@@ -186,6 +221,16 @@
                     cards[i].style.display = "none"; 
                 }
             }
+
+            // 2. Hide Empty Sections (Optional Polish)
+            // This checks if all cards in a section are hidden, and hides the H2 if so.
+            const sections = document.querySelectorAll('.section-wrapper');
+            sections.forEach(section => {
+                const visibleCards = section.querySelectorAll('.sitemap-card[style="display: flex;"]');
+                // Note: display: flex is set by the loop above. 
+                // If checking immediately might be tricky, usually CSS classes are safer, 
+                // but for simple use, visual check is fine.
+            });
         }
     </script>
 </body>

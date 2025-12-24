@@ -1,80 +1,112 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto lg:w-[95%] my-8">
+<section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-2 lg:px-4 max-w-[1600px] my-8 mt-24">
     
-    <section id="DMCASection" class="flex flex-col lg:w-2/3 bg-white dark:bg-[#111111] rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+    <section id="DMCASection" class="flex flex-col lg:w-3/4 mx-auto w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         
-        <div class="w-full bg-[#830506] flex flex-col items-center justify-center px-4 py-6 text-center">
-            <i class="fa-solid fa-scale-balanced text-white text-3xl mb-2"></i>
-            <h1 class="font-black text-white text-2xl md:text-3xl uppercase tracking-tighter">DMCA Takedown Policy</h1>
-            <p class="text-white/80 text-xs mt-2 font-bold uppercase tracking-widest">Digital Millennium Copyright Act Compliance</p>
-        </div>
-
-        <div class="w-full border-b border-gray-100 dark:border-gray-800">
-            <img src="https://i.imgur.com/KLN2bPo.png" alt="DMCA Banner" class="w-full aspect-[3/1] object-cover opacity-90">
-        </div>
-
-        <div class="p-6 md:p-10 text-gray-800 dark:text-gray-300 leading-relaxed">
+        <div class="w-full bg-[#830506] px-6 py-10 relative overflow-hidden text-center">
+            <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                <i class="fa-solid fa-scale-balanced text-9xl text-white transform -rotate-12 translate-x-4 -translate-y-4"></i>
+            </div>
             
-            <div class="mb-8 p-4 bg-gray-50 dark:bg-white/5 border-l-4 border-[#830506] rounded-r-md">
-                <p class="text-sm md:text-base font-medium">
-                    While we comply with the DMCA, the <b>movies, trailers, videos, and posters</b> posted on <b>MaxCinema</b> are intended for promotional purposes only.
-                </p>
+            <div class="relative z-10">
+                <div class="inline-flex items-center justify-center p-3 bg-white/10 rounded-full mb-4 backdrop-blur-sm border border-white/10">
+                    <i class="fa-solid fa-gavel text-2xl text-white"></i>
+                </div>
+                <h1 class="font-black text-white text-2xl md:text-4xl uppercase tracking-tighter mb-2">
+                    DMCA Takedown Policy
+                </h1>
+                <p class="text-white/80 text-xs font-bold uppercase tracking-[0.2em]">Intellectual Property Rights</p>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-12 text-gray-700 leading-relaxed text-sm md:text-base font-medium">
+            
+            <div class="bg-blue-50 border-l-4 border-[#0088cc] p-6 rounded-r-xl mb-10 flex gap-4">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-circle-info text-[#0088cc] text-xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-[#0088cc] font-black uppercase text-xs tracking-wider mb-1">Promotional Use Only</h4>
+                    <p class="text-gray-700 text-sm">
+                        While we comply with the DMCA, the movies, trailers, and posters posted on <b>MaxCinema</b> are intended for promotional purposes only.
+                    </p>
+                </div>
             </div>
 
             <p class="mb-6">
-                MaxCinema is in compliance with the <b>Digital Millennium Copyright Act (“DMCA”)</b>. It is our policy to respond to any infringement notices and take appropriate actions under the DMCA and other applicable intellectual property laws.
+                MaxCinema is in full compliance with the <b>Digital Millennium Copyright Act (“DMCA”)</b>. It is our policy to respond to any infringement notices and take appropriate actions under the DMCA and other applicable intellectual property laws.
             </p>
 
-            <p class="mb-6">
-                If your copyrighted material has been uploaded on MaxCinema or if hyperlinks to your copyrighted material are returned through our search engine and you want this material removed, you must provide a written communication that details the information listed in the following section.
+            <p class="mb-10">
+                If your copyrighted material has been uploaded on MaxCinema or if hyperlinks to your copyrighted material are returned through our search engine and you want this material removed, you must provide a written communication that details the information listed below.
             </p>
 
-            <div class="mb-8 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-lg">
-                <p class="text-red-800 dark:text-red-400 text-sm font-bold">
-                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-                    PLEASE BE AWARE: You will be liable for damages (including costs and attorneys’ fees) if you misrepresent information listed on our site that is infringing on your copyrights.
+            <div class="mb-12 bg-red-50 border border-red-100 rounded-xl p-6 text-center">
+                <i class="fa-solid fa-triangle-exclamation text-red-500 text-3xl mb-3"></i>
+                <h3 class="text-red-800 font-black uppercase text-sm tracking-widest mb-2">Legal Warning</h3>
+                <p class="text-red-700 text-xs md:text-sm font-medium">
+                    You will be liable for damages (including costs and attorneys’ fees) if you misrepresent information listed on our site that is infringing on your copyrights.
                 </p>
             </div>
 
-            <h2 class="text-[#830506] font-black text-xl uppercase mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-list-check"></i> Required Elements
-            </h2>
+            <div class="mb-12">
+                <h2 class="flex items-center gap-3 text-xl font-black text-gray-900 uppercase tracking-tight mb-6">
+                    <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-[#830506] text-white text-xs">
+                        <i class="fa-solid fa-list-check"></i>
+                    </span>
+                    Required Elements
+                </h2>
 
-            <ul class="space-y-4 mb-8">
-                {% set requirements = [
-                    "Evidence of the authorized person to act on behalf of the owner of the exclusive right.",
-                    "Sufficient contact information (Phone, Address, and Valid Email).",
-                    "Identification of the copyrighted work claimed to have been infringed with search terms.",
-                    "A statement of 'Good Faith Belief' that the use is not authorized by the owner or the law.",
-                    "A statement that the notification is accurate under penalty of perjury.",
-                    "The physical or electronic signature of the authorized person."
-                ] %}
+                <div class="grid grid-cols-1 gap-3">
+                    {% set requirements = [
+                        "Evidence of the authorized person to act on behalf of the owner.",
+                        "Sufficient contact info (Phone, Address, Valid Email).",
+                        "Exact URL(s) of the copyrighted work claimed to be infringing.",
+                        "A statement of 'Good Faith Belief' that use is unauthorized.",
+                        "A statement that the notification is accurate under penalty of perjury.",
+                        "Physical or electronic signature of the authorized person."
+                    ] %}
+                    
+                    {% for item in requirements %}
+                    <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <i class="fa-solid fa-check-circle text-green-500 mt-1 text-lg"></i>
+                        <span class="text-gray-700 font-bold text-sm">{{ item }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-gray-900 text-white p-8 rounded-2xl text-center shadow-xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-[#830506] opacity-10"></div>
                 
-                {% for item in requirements %}
-                <li class="flex items-start gap-3">
-                    <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
-                    <span class="text-sm md:text-base">{{ item }}</span>
-                </li>
-                {% endfor %}
-            </ul>
-
-            <div class="bg-gray-100 dark:bg-white/5 p-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
-                <p class="font-bold mb-2">Send all infringement notices to:</p>
-                <a href="mailto:contact@maxcinema.com" class="text-[#830506] text-xl font-black hover:underline">contact@maxcinema.com</a>
-                <p class="text-xs mt-3 font-bold text-gray-500 uppercase italic">Please allow up to 48 hours for a response.</p>
+                <p class="text-gray-400 font-bold uppercase text-xs tracking-widest mb-4">Send Infringement Notices To</p>
+                
+                <a href="mailto:contact@maxcinema.com" class="text-2xl md:text-4xl font-black text-white hover:text-yellow-400 transition-colors">
+                    contact@maxcinema.com
+                </a>
+                
+                <div class="mt-6 flex justify-center gap-2">
+                    <span class="px-3 py-1 bg-white/10 rounded-full text-[10px] uppercase font-bold text-gray-300 border border-white/10">
+                        <i class="fa-regular fa-clock mr-1"></i> Response: 24-48 Hours
+                    </span>
+                </div>
             </div>
 
-            <div class="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-500">
-                <p class="mb-2">By using our website, you hereby consent to our disclaimer and agree to its terms and conditions.</p>
-                <p><i>Last Updated: 28 August, 2024</i></p>
+            <div class="mt-10 pt-6 border-t border-gray-100 text-center">
+                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                    Last Updated: August 28, 2024 • MaxCinema Legal Team
+                </p>
             </div>
+
         </div>
     </section>
 
-    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
-        {% include "sidebar_trending.html" %}
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/4 gap-8">
+        <div class="sticky top-24">
+            {% include "sidebar_trending.html" %}
+        </div>
     </aside>
 </section>
 {% endblock %}

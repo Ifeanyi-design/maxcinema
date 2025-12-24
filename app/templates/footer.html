@@ -1,43 +1,43 @@
 <footer class="relative w-full mt-10">
     <div class="w-full bg-[#0a0a0a] flex flex-col items-center border-t-4 border-[#830506] shadow-2xl">
         
-        <a href="#header" class="group w-full text-center py-4 bg-[#111111] hover:bg-[#830506] text-gray-400 hover:text-white font-black uppercase text-xs tracking-[0.2em] transition-all duration-300 ease-in-out border-b border-white/5">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+           class="group w-full text-center py-4 bg-[#111111] hover:bg-[#830506] text-gray-400 hover:text-white font-black uppercase text-xs tracking-[0.2em] transition-all duration-300 ease-in-out border-b border-white/5 cursor-pointer">
             Back To Top <i class="fa-solid fa-chevron-up ml-2 group-hover:-translate-y-1 transition-transform"></i>
-        </a>
+        </button>
 
         <div class="max-w-7xl w-full px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-12 text-center md:text-left">
             
             <div class="flex flex-col items-center md:items-start space-y-4">
                 <img src="https://i.imgur.com/7Pope30.png" alt="MaxCinema" class="h-10 w-auto opacity-90">
-                <p class="text-gray-500 text-sm font-medium max-w-xs leading-relaxed">
+                <p class="text-gray-500 text-xs md:text-sm font-medium max-w-xs leading-relaxed">
                     Your ultimate destination for the latest movies, series, and trailers. Experience cinema like never before.
                 </p>
-                <div class="flex gap-4 text-gray-400">
-                    <a href="#" class="hover:text-[#830506] transition-colors"><i class="fa-brands fa-telegram text-xl"></i></a>
-                    <a href="#" class="hover:text-[#830506] transition-colors"><i class="fa-brands fa-x-twitter text-xl"></i></a>
-                    <a href="#" class="hover:text-[#830506] transition-colors"><i class="fa-brands fa-facebook text-xl"></i></a>
+                <div class="flex gap-4 text-gray-400 mt-2">
+                    <a href="#" class="hover:text-[#830506] hover:scale-110 transition-all"><i class="fa-brands fa-telegram text-xl"></i></a>
+                    <a href="#" class="hover:text-[#830506] hover:scale-110 transition-all"><i class="fa-brands fa-x-twitter text-xl"></i></a>
+                    <a href="#" class="hover:text-[#830506] hover:scale-110 transition-all"><i class="fa-brands fa-facebook text-xl"></i></a>
+                    <a href="#" class="hover:text-[#830506] hover:scale-110 transition-all"><i class="fa-brands fa-instagram text-xl"></i></a>
                 </div>
             </div>
 
             <div class="flex flex-col space-y-4">
-                <h4 class="text-white font-black uppercase tracking-widest text-sm border-b border-[#830506] pb-2 inline-block md:self-start mx-auto md:mx-0">Company</h4>
-                <ul class="text-gray-400 space-y-2 text-sm font-bold">
-                    <li><a href="{{ url_for('main.contact_us') }}" class="hover:text-white transition-colors">Contact Us</a></li>
-                    <li><a href="{{ url_for('main.privacy') }}" class="hover:text-white transition-colors">Privacy Policy</a></li>
-                    <li><a href="{{ url_for('main.dcma') }}" class="hover:text-white transition-colors">DMCA Takedown</a></li>
-                    <li><a href="{{ url_for('main.sitemap_page') }}" class="hover:text-white transition-colors">Sitemap</a></li>
-                    <li><a href="#" class="hover:text-white transition-colors">Advertise</a></li>
+                <h4 class="text-white font-black uppercase tracking-widest text-xs border-b-2 border-[#830506] pb-2 inline-block md:self-start mx-auto md:mx-0 w-fit">Company</h4>
+                <ul class="text-gray-500 space-y-2 text-xs md:text-sm font-bold uppercase tracking-wide">
+                    <li><a href="{{ url_for('main.contact_us') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Contact Us</a></li>
+                    <li><a href="{{ url_for('main.privacy') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Privacy Policy</a></li>
+                    <li><a href="{{ url_for('main.dcma') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> DMCA Takedown</a></li>
+                    <li><a href="{{ url_for('main.sitemap_page') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Sitemap</a></li>
                 </ul>
             </div>
 
             <div class="flex flex-col space-y-4">
-                <h4 class="text-white font-black uppercase tracking-widest text-sm border-b border-[#830506] pb-2 inline-block md:self-start mx-auto md:mx-0">Resources</h4>
-                <ul class="text-gray-400 space-y-2 text-sm font-bold">
-                    <li><a href="{{ url_for('main.navbar', nav='request') }}" class="hover:text-white transition-colors">Movie Request</a></li>
-                    <li><a href="{{ url_for('main.trailer') }}" class="hover:text-white transition-colors">Movie Teasers</a></li>
-                    <li><a href="#" class="hover:text-white transition-colors">Subtitle Search</a></li>
-                    <li><a href="#" class="hover:text-white transition-colors">NPDL Library</a></li>
-                    <li><a href="#" class="hover:text-white transition-colors">NGM Archive</a></li>
+                <h4 class="text-white font-black uppercase tracking-widest text-xs border-b-2 border-[#830506] pb-2 inline-block md:self-start mx-auto md:mx-0 w-fit">Resources</h4>
+                <ul class="text-gray-500 space-y-2 text-xs md:text-sm font-bold uppercase tracking-wide">
+                    <li><a href="{{ url_for('main.navbar', nav='request') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Movie Request</a></li>
+                    <li><a href="{{ url_for('main.trailer') }}" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Movie Teasers</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> Subtitle Search</a></li>
+                    <li><a href="#" class="hover:text-white transition-colors flex items-center justify-center md:justify-start gap-2"><i class="fa-solid fa-angle-right text-[#830506] text-[10px]"></i> NPDL Library</a></li>
                 </ul>
             </div>
         </div>
@@ -47,16 +47,10 @@
                 <p class="text-gray-600 text-[10px] font-black tracking-widest uppercase">
                     &copy; 2025 MAXCINEMA. All Rights Reserved.
                 </p>
-                <p class="text-gray-600 text-[10px] font-medium italic">
-                    Designed for Cinema Lovers
+                <p class="text-gray-600 text-[10px] font-medium italic flex items-center gap-1">
+                    Designed for <i class="fa-solid fa-heart text-[#830506]"></i> Cinema
                 </p>
             </div>
         </div>
     </div>
-
-
-    
-  </div>
-    
-
 </footer>

@@ -2,518 +2,131 @@
 
 {% block content %}
 
-    <section class="flex flex-col">
-        <section id="MoviesTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Trending Movies</h2>
-            </div>
+{# === 1. MACRO DEFINITION === #}
+{% macro render_slider(section_id, title, icon, items, is_gold=False) %}
+<section id="{{ section_id }}" class="relative group my-12 pl-4 lg:pl-0 scroll-mt-32">
+    
+    <div class="flex items-center gap-3 mb-6 px-2 lg:px-0">
+        <div class="h-8 w-1.5 {{ 'bg-yellow-500' if is_gold else 'bg-[#830506]' }} rounded-full"></div>
+        <h2 class="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter italic">
+            <i class="fa-solid {{ icon }} {{ 'text-yellow-500' if is_gold else 'text-[#830506]' }} mr-2 text-lg"></i>
+            {{ title }}
+        </h2>
+        <div class="h-[1px] flex-grow bg-gray-200 ml-4 rounded-full"></div>
+    </div>
 
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
+    <button onclick="scrollSection('{{ section_id }}', -300)" 
+            class="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 h-12 w-12 items-center justify-center rounded-full bg-white text-gray-700 border border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-[#830506] hover:text-white hover:scale-110 -ml-5 shadow-xl cursor-pointer">
+        <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <button onclick="scrollSection('{{ section_id }}', 300)" 
+            class="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 h-12 w-12 items-center justify-center rounded-full bg-white text-gray-700 border border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-[#830506] hover:text-white hover:scale-110 -mr-5 shadow-xl cursor-pointer">
+        <i class="fa-solid fa-chevron-right"></i>
+    </button>
 
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for movie in trending_movie %}
-                    <a href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = movie.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <p class="text-white ml-1">{{ movie.rating | round(1) }}</p>
-                        </div>
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ movie.image }}');"
-                            role="img" aria-label="{{ movie.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ movie.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ movie.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ movie.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
+    <div id="{{ section_id }}_container" class="flex overflow-x-auto gap-4 pb-6 scrollbar-hide scroll-smooth px-2 snap-x">
+        {% for video in items %}
+            <a href='{{ url_for("main.detail", det=video.type, name=video.name, id=video.id, season="1" if video.type == "series" else none, episode="1" if video.type == "series" else none) }}' 
+               class="relative flex-none w-[150px] md:w-[200px] aspect-[2/3] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 hover:border-[#830506] transition-all duration-300 hover:scale-105 hover:shadow-lg group/card snap-start">
                 
+                <div class="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1 border border-gray-200 shadow-sm">
+                    <i class="fas fa-star text-yellow-500 text-[10px]"></i>
+                    <span class="text-[10px] font-bold text-gray-900">{{ video.rating | round(1) }}</span>
+                </div>
 
-            </div>
+                <img src="{{ video.image }}" alt="{{ video.name }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" loading="lazy">
 
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
 
-        </section>
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
+                    <div class="bg-[#830506] h-12 w-12 rounded-full flex items-center justify-center shadow-lg transform scale-0 group-hover/card:scale-100 transition-transform duration-300 border-2 border-white">
+                        <i class="fa-solid fa-play text-white ml-1"></i>
+                    </div>
+                </div>
 
-        <section id="SeriesTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Trending Series</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for series in trending_series %}
-                    <a href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = series.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <p class="text-white ml-1">{{ series.rating | round(1) }}</p>
+                <div class="absolute bottom-0 left-0 w-full p-3">
+                    <h3 class="text-white text-xs md:text-sm font-bold line-clamp-2 leading-tight mb-1 group-hover/card:text-[#830506] transition-colors drop-shadow-md">
+                        {{ video.name }}
+                    </h3>
+                    <div class="flex justify-between items-center text-[10px] text-gray-300 font-bold uppercase tracking-wider">
+                        <span>{{ video.date_added.strftime('%Y') }}</span>
+                        <div class="flex items-center gap-1">
+                            <i class="fas fa-comment text-[8px]"></i> {{ video.total_comment }}
                         </div>
-                        
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ series.image }}');"
-                            role="img" aria-label="{{ series.name }}">
-                        </div>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endmacro %}
 
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ series.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ series.total_comment }}</p>
-                            </div>
-                        </div>
 
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ series.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
+{# === 2. PAGE CONTENT === #}
+<div class="w-full max-w-[1600px] mx-auto px-0 lg:px-8 mt-24 mb-12">
+    
+    <div class="text-center mb-8 px-4">
+        <h1 class="text-3xl md:text-5xl font-black text-gray-900 italic uppercase tracking-tighter">
+            MaxCinema <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#830506] to-red-600">Charts</span>
+        </h1>
+        <p class="text-gray-500 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em] mt-2">
+            Top Rated • Most Viewed • Classics
+        </p>
+    </div>
+
+    <div class="sticky top-20 z-40 bg-white/95 backdrop-blur-md border-y border-gray-100 py-3 mb-8 shadow-sm">
+        <div class="flex overflow-x-auto gap-3 px-4 lg:px-0 justify-start lg:justify-center scrollbar-hide">
+            <a href="#MoviesTrendingSection" class="px-4 py-1.5 bg-gray-100 hover:bg-[#830506] hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap">Movies</a>
+            <a href="#SeriesTrendingSection" class="px-4 py-1.5 bg-gray-100 hover:bg-[#830506] hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap">Series</a>
+            <a href="#ActionTrendingSection" class="px-4 py-1.5 bg-gray-100 hover:bg-[#830506] hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap">Action</a>
+            <a href="#AnimationTrendingSection" class="px-4 py-1.5 bg-gray-100 hover:bg-[#830506] hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap">Anime</a>
+            <a href="#NewbieTrendingSection" class="px-4 py-1.5 bg-gray-100 hover:bg-[#830506] hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap">Starters</a>
+            <a href="#OldTrendingSection" class="px-4 py-1.5 bg-yellow-100 text-yellow-700 hover:bg-yellow-500 hover:text-white rounded-full text-[10px] font-black uppercase tracking-wide transition-colors whitespace-nowrap"><i class="fa-solid fa-crown mr-1"></i> Legends</a>
+        </div>
+    </div>
+
+    {{ render_slider('MoviesTrendingSection', 'Trending Movies', 'fa-film', trending_movie) }}
+    {{ render_slider('SeriesTrendingSection', 'Trending Series', 'fa-tv', trending_series) }}
+    {{ render_slider('ActionTrendingSection', 'Adrenaline Rush', 'fa-bomb', trending_actions) }}
+    {{ render_slider('AnimationTrendingSection', 'Animation & Anime', 'fa-ghost', trending_animations) }}
+    {{ render_slider('NewbieTrendingSection', 'Start Watching Here', 'fa-compass', get_started_items) }}
+    {{ render_slider('SciFiTrendingSection', 'Sci-Fi & Fantasy', 'fa-rocket', trending_sci_fic) }}
+    {{ render_slider('OldTrendingSection', 'Legends of Cinema', 'fa-crown', old_but_gold, is_gold=True) }}
+
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    // Smooth Horizontal Scroll for Cards
+    function scrollSection(id, distance) {
+        const container = document.getElementById(id + '_container');
+        if(container) {
+            container.scrollBy({
+                left: distance,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // Offset logic for the Sticky Nav Links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                const headerOffset = 140; // Adjust for sticky header + nav
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
                 
-
-            </div>
-
-
-        </section>
-
-        <section id="ActionTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Action Movies</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for movie in trending_actions %}
-                    <a href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = movie.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-
-                            <p class="text-white ml-1">{{ movie.rating | round(1) }}</p>
-                        </div>
-                
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ movie.image }}');"
-                            role="img" aria-label="{{ movie.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ movie.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ movie.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ movie.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
-                
-
-            </div>
-
-
-        </section>
-
-        <section id="AnimationTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Animation?</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for animation in trending_animations %}
-                    <a href='{{ url_for("main.detail", det=animation.type, name=animation.name, id=animation.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = animation.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <p class="text-white ml-1">{{ animation.rating | round(1) }}</p>
-                        </div>
-                       
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ animation.image }}');"
-                            role="img" aria-label="{{ animation.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ animation.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ animation.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ animation.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
-                
-
-            </div>
-
-
-        </section>
-
-        <section id="NewbieTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Start Watching Here</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for started in get_started_items %}
-                    <a href='{{ url_for("main.detail", det=started.type, name=started.name, id=started.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = started.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <p class="text-white ml-1">{{ started.rating | round(1) }}</p>
-                        </div>
-                        
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ started.image }}');"
-                            role="img" aria-label="{{ started.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ started.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ started.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ started.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
-                
-
-            </div>
-
-
-        </section>
-
-        <section id="SciFiTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Science Fiction?</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for sci in trending_sci_fic %}
-                    <a href='{{ url_for("main.detail", det=sci.type, name=sci.name, id=sci.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = sci.rating | float %}
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <p class="text-white ml-1">{{ sci.rating | round(1) }}</p>
-                        </div>
-                       
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ sci.image }}');"
-                            role="img" aria-label="{{ sci.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ sci.date_added.strftime('%b %d, %Y') }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ sci.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ sci.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
-                
-
-            </div>
-
-
-        </section>
-
-        <section id="OldTrendingSection" class="TrendingSection relative mx-0 my-5 flex flex-col scroll-mt-40">
-            <div class="w-full bg-[#830506] flex justify-center items-center px-4 py-2 md:py-3">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">
-                    
-                    <i class="fa-solid fa-clapperboard"></i>
-                    Legends of Cinema</h2>
-            </div>
-
-            <button id="ScrollTrendingLeft" class="ScrollTrendingLeft absolute hoverscollerbtn left-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="ScrollTrendingRight" class="ScrollTrendingRight absolute hoverscollerbtn right-3 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full p-2 hover:bg-[#830506] hover:text-white text-[#830506]">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <div id="trendingcontain" class="trendingcontain mt-2 flex overflow-x-auto gap-4 scrollbar-thin scrollbar-thumb-red-700 scrollbar-track-gray-200 w-full px-2 scroll-smooth snap-x">
-
-                {% for old in old_but_gold %}
-                    <a href='{{ url_for("main.detail", det=old.type, name=old.name, id=old.id) }}' class="relative trendingBoxes flex flex-col flex-none w-48 md:w-60 lg:w-64 rounded-md boxescard snap-start bg-white overflow-hidden">
-                        
-                        <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                            {% set rating = old.rating | float %}
-
-                            <div class="stars-container">
-                                {% for i in range(1, 6) %}
-                                    {% set fraction = rating - (i - 1) %}
-                                    {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                    {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-
-                            <p class="text-white ml-1">{{ old.rating | round(1) }}</p>
-                        </div>
-
-                        
-                        <!-- Image -->
-                        <div class="flex-shrink-0 w-full aspect-[2/2.5] md:aspect-[2/2.5] bg-center bg-cover usedbg transition-transform duration-300 hover:scale-105"
-                            style="background-image: url('{{ old.image }}');"
-                            role="img" aria-label="{{ old.name }}">
-                        </div>
-
-                        <!-- Info -->
-                        <div class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-calendar-alt"></i>
-                                <p class="truncate">{{ old.date_added.strftime("%b %d, %Y") }}</p>
-                            </div>
-                            <div class="flex items-center space-x-1">
-                                <i class="fas fa-comment"></i>
-                                <p>{{ old.total_comment }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Title -->
-                        <div class="px-2 pb-2 text-black font-semibold text-sm md:text-base overflow-hidden">
-                            <h3 class="line-clamp-2 text-left">{{ old.name }}</h3>
-                        </div>
-                    </a>
-                {% endfor %}
-                
-
-            </div>
-
-
-        </section>
-    </section>
-
-
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        });
+    });
+</script>
 {% endblock %}
