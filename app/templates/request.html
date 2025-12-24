@@ -91,7 +91,7 @@
                                   class="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 font-medium"></textarea>
                     </div>
 
-                    <button type="submit" id="requestSubmitBtn" class="w-full py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-[0.2em] rounded-full shadow-xl shadow-[#830506]/20 transition-all transform active:scale-95">
+                    <button type="submit" class="w-full py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-[0.2em] rounded-full shadow-xl shadow-[#830506]/20 transition-all transform active:scale-95">
                         Submit Request
                     </button>
                 </form>
@@ -99,11 +99,11 @@
 
             <div class="mt-12 pt-8 border-t border-gray-100 text-center">
                 <div class="inline-block bg-[#830506] text-white font-black px-6 py-2 rounded-t-lg text-xs tracking-widest uppercase">
-                    Status
+                    Discussion
                 </div>
                 <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
                     <p class="text-gray-400 font-bold text-sm italic">
-                        "Requests are processed within 24-48 hours. Please check your email inbox (and spam) for download links."
+                        "Comments are disabled for requests to maintain speed. We will notify you via email once your request is processed."
                     </p>
                 </div>
             </div>
@@ -117,19 +117,9 @@
     </aside>
 </section>
 
-<div id="request-notification" class="fixed bottom-10 right-4 left-4 md:left-auto md:right-10 z-[10000] bg-white border-l-8 border-green-500 px-6 py-5 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col gap-1 transform translate-y-32 opacity-0 transition-all duration-500 max-w-sm">
-    <div class="flex items-center gap-3">
-        <div class="bg-green-100 p-2 rounded-full">
-            <i class="fa-solid fa-check text-green-600"></i>
-        </div>
-        <div class="flex flex-col">
-            <span class="text-gray-900 font-black uppercase text-[11px] tracking-widest">Success</span>
-            <span id="notif-message" class="text-gray-600 font-bold text-sm">Request Submitted Successfully!</span>
-        </div>
-    </div>
-    <div class="w-full bg-gray-100 h-1 mt-3 rounded-full overflow-hidden">
-        <div id="notif-progress" class="bg-green-500 h-full w-full transition-all linear"></div>
-    </div>
+<div id="request-notification" class="fixed bottom-10 right-10 z-[10000] bg-green-600 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] font-black uppercase text-xs tracking-widest flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-500">
+    <i class="fa-solid fa-circle-check text-xl"></i>
+    <span>Request Submitted Successfully!</span>
 </div>
 {% endblock %}
 
@@ -142,14 +132,12 @@
         const closeBtn = document.getElementById('close-request-btn');
         const form = document.getElementById('movie-request-form');
         const notif = document.getElementById('request-notification');
-        const progressBar = document.getElementById('notif-progress');
 
         // 1. Toggle Form Visibility
         openBtn.onclick = () => {
             instructions.classList.add('hidden');
             formContainer.classList.remove('hidden');
-            // Scroll smoothly to form
-            window.scrollTo({ top: formContainer.offsetTop - 100, behavior: 'smooth' });
+            window.scrollTo({ top: 100, behavior: 'smooth' });
         };
 
         closeBtn.onclick = () => {
@@ -157,17 +145,14 @@
             instructions.classList.remove('hidden');
         };
 
-        // 2. Handle Submission
+        // 2. Handle Form Submission
         form.onsubmit = function(e) {
             e.preventDefault();
 
-            const submitBtn = document.getElementById('requestSubmitBtn');
+            const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
-            
-            // Loading State
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> PROCESSING...';
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...';
             submitBtn.disabled = true;
-            submitBtn.style.opacity = "0.7";
 
             const formData = new URLSearchParams(new FormData(form));
 
@@ -179,43 +164,30 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Reset Form
+                    // Show success notification
+                    notif.classList.remove('opacity-0', 'translate-y-20');
+                    notif.classList.add('opacity-1', 'translate-y-0');
+
+                    setTimeout(() => {
+                        notif.classList.add('opacity-0', 'translate-y-20');
+                        notif.classList.remove('opacity-1', 'translate-y-0');
+                    }, 4000);
+
+                    // Reset and Close
                     form.reset();
                     formContainer.classList.add('hidden');
                     instructions.classList.remove('hidden');
-
-                    // Show Notification
-                    document.getElementById('notif-message').innerText = data.message || "Request Sent Successfully!";
-                    notif.classList.remove('opacity-0', 'translate-y-32');
-                    notif.classList.add('opacity-100', 'translate-y-0');
-
-                    // Animate Progress Bar
-                    progressBar.style.width = '100%';
-                    setTimeout(() => {
-                        progressBar.style.transition = 'width 4s linear';
-                        progressBar.style.width = '0%';
-                    }, 100);
-
-                    // Hide after 4 seconds
-                    setTimeout(() => {
-                        notif.classList.add('opacity-0', 'translate-y-32');
-                        notif.classList.remove('opacity-100', 'translate-y-0');
-                        // Reset progress for next time
-                        setTimeout(() => { progressBar.style.transition = 'none'; progressBar.style.width = '100%'; }, 500);
-                    }, 4100);
-
                 } else {
                     alert('Error: ' + (data.error || 'Submission failed'));
                 }
             })
             .catch(err => {
                 console.error(err);
-                alert('Connection Error. Please check your network.');
+                alert('An error occurred. Please try again.');
             })
             .finally(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
-                submitBtn.style.opacity = "1";
             });
         };
     });
