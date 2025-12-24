@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8 mt-24">
+<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto lg:w-[95%] my-8 mt-24">
     
-    <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 xl:w-3/4 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+    <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         
         <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-6 shadow-md">
             <h1 class="font-black text-white text-xl md:text-3xl uppercase tracking-tighter text-center">
@@ -139,7 +139,7 @@
         </div>
     </section>
 
-    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 xl:w-1/4 gap-8">
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-8">
         <div class="sticky top-24">
             {% include 'sidebar_trending.html' ignore missing %}
         </div>
