@@ -85,9 +85,9 @@ document.addEventListener('click', function(e) {
         // FIX: Cancel button is now Light Gray with Black text so it's visible in Dark Mode
         let replyHtml = `
             <div class="${boxClass} px-5 mt-4 flex flex-col gap-5 slide-fade-enter">
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Name</legend><input type="text" class="r-name w-full ${inputBg} rounded-md h-[7vh] p-2" placeholder="Name"></div>
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Email</legend><input type="email" class="r-email w-full ${inputBg} rounded-md h-[7vh] p-2" placeholder="Email"></div>
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Comment</legend><textarea class="r-text w-full ${inputBg} rounded-md h-[20vh] p-2" placeholder="Reply..."></textarea></div>
+                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Name</legend><input type="text" class="r-name w-full ${inputBg} text-black rounded-md h-[7vh] p-2" placeholder="Name"></div>
+                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Email</legend><input type="email" class="r-email w-full ${inputBg} text-black rounded-md h-[7vh] p-2" placeholder="Email"></div>
+                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Comment</legend><textarea class="r-text w-full ${inputBg} text-black rounded-md h-[20vh] p-2" placeholder="Reply..."></textarea></div>
                 <div class="flex gap-3">
                     <button class="do-reply py-2 w-40 bg-red-600 rounded-lg text-white hover:bg-red-700" 
                         data-parent="${parentId}" data-video="${videoId}" data-trailer="${isTrailer}">Send</button>
