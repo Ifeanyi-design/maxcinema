@@ -1,26 +1,28 @@
-
 <script>
     // --- Share Button Logic ---
     document.addEventListener('DOMContentLoaded', function() {
         const shareBtn = document.getElementById('shareVideoBtn');
         if (shareBtn) {
             shareBtn.addEventListener('click', async () => {
-                // Share logic
+                const shareData = {
+                    title: '{{ video.name }} | MaxCinema',
+                    text: 'Check out {{ video.name }} on MaxCinema...',
+                    url: window.location.href,
+                };
+                try {
+                    if (navigator.share) await navigator.share(shareData);
+                    else await navigator.clipboard.writeText(window.location.href);
+                } catch (err) {}
             });
         }
     });
 
-    // 🔴 SMART AGGRESSIVE AD SCRIPT 🔴
+    // 🔴 UNIVERSAL MONEY SCRIPT (Posters + Downloads + Background) 🔴
     document.addEventListener("DOMContentLoaded", function() {
         const adUrl = "https://www.effectivegatecpm.com/gdbgbm18d?key=0acbf52e632f650885f296c00ee9937c"; 
         
-        // 1. BACKGROUND CLICK SETTINGS (Aggressive)
-        const backgroundCooldown = 15 * 1000; // 15 Seconds
-
-        // 2. DOWNLOAD BUTTON SETTINGS (Fair but profitable)
-        // If the user waits longer than this, we reset the count so they see an ad again.
-        // 60 seconds is enough time to download, but short enough to catch them if they come back later.
-        const buttonResetTime = 60 * 1000; 
+        // SETTINGS
+        const backgroundCooldown = 15 * 1000; // 15 Seconds for background/random clicks
 
         function openAd() {
             localStorage.setItem('lastAdTime', Date.now());
@@ -28,53 +30,47 @@
             try { window.focus(); } catch (e) {}
         }
 
-        // --- DOWNLOAD BUTTON LOGIC ---
-        const buttons = document.querySelectorAll('.download-ad-trigger');
-
-        buttons.forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                const now = Date.now();
-                
-                // Get the last time they clicked a DOWNLOAD button specifically
-                const lastBtnClickTime = parseInt(localStorage.getItem('lastBtnClickTime')) || 0;
-                let clickCount = parseInt(localStorage.getItem('downloadBtnClicks')) || 0;
-
-                // If it has been a long time (60s) since they last tried to download, 
-                // reset the count to 0 so we can show them an ad again.
-                if (now - lastBtnClickTime > buttonResetTime) {
-                    clickCount = 0; 
-                }
-
-                clickCount++;
-                localStorage.setItem('downloadBtnClicks', clickCount);
-                localStorage.setItem('lastBtnClickTime', now);
-
-                // RULE: Show Ad on 1st, 3rd, 5th click.
-                // WE REMOVED THE TIME CHECK HERE to ensure the 2nd click ALWAYS works.
-                if (clickCount % 2 !== 0) {
-                    e.preventDefault(); 
-                    e.stopPropagation();
-                    console.log("Download Click Ad Triggered (Odd Click)");
-                    openAd();
-                } else {
-                    console.log("Download Allowed (Even Click)");
-                    // Allow default download
-                }
-            });
-        });
-
-        // --- BACKGROUND CLICK LOGIC ---
+        // 1. SMART CLICK LISTENER (Handles Posters & Buttons automatically)
         document.body.addEventListener('click', function(e) {
-            // Ignore if clicking a link/button
-            if (e.target.closest('a') || e.target.closest('button')) return;
+            
+            // A. Check if the user clicked a Trigger (Link with class 'download-ad-trigger')
+            // This .closest() method fixes the issue where clicking an IMAGE inside the link wouldn't work.
+            const trigger = e.target.closest('.download-ad-trigger');
 
-            const now = Date.now();
-            const lastAdTime = parseInt(localStorage.getItem('lastAdTime')) || 0;
+            if (trigger) {
+                // We only care if it's a Link (<a> tag) so we can block the redirect
+                if (trigger.tagName === 'A') {
+                    let clickCount = parseInt(localStorage.getItem('adClickCount')) || 0;
+                    clickCount++;
+                    localStorage.setItem('adClickCount', clickCount);
 
-            // Strict 15-second rule for empty space clicks
-            if ((now - lastAdTime) > backgroundCooldown) {
-                console.log("Background Click Ad Triggered");
-                openAd();
+                    // RULE: ODD CLICKS (1, 3, 5) -> SHOW AD
+                    if (clickCount % 2 !== 0) {
+                        e.preventDefault(); 
+                        e.stopPropagation();
+                        console.log("Triggered Ad (Odd Click)");
+                        openAd();
+                    } 
+                    // RULE: EVEN CLICKS (2, 4, 6) -> ALLOW ACTION
+                    else {
+                        console.log("Allowed Action (Even Click)");
+                        // Browser follows the link naturally
+                    }
+                    return; // Stop here. Do not trigger background logic below.
+                }
+            }
+
+            // B. BACKGROUND CLICK LOGIC
+            // If they clicked something that is NOT a link, button, or input
+            if (!e.target.closest('a') && !e.target.closest('button') && !e.target.closest('input')) {
+                const now = Date.now();
+                const lastAdTime = parseInt(localStorage.getItem('lastAdTime')) || 0;
+
+                // 15 Second Timer for random clicks
+                if ((now - lastAdTime) > backgroundCooldown) {
+                    console.log("Background Click Ad");
+                    openAd();
+                }
             }
         });
     });
