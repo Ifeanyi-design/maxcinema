@@ -48,8 +48,7 @@
                 {# Clean Link Logic #}
                 {% set link = url_for("main.detail", det=movie.type, name=movie.name, id=movie.id, season="1", episode="1") if movie.type == "series" else url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) %}
 
-                <div class="group relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer hover:-translate-y-1"
-                     onclick="window.location.href='{{ link }}'">
+                <a class="group download-ad-trigger relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer hover:-translate-y-1" href="{{ link }}">
                     
                     <div class="absolute top-2 left-2 z-40 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm border border-gray-200">
                         <i class="fas fa-star text-yellow-500 text-[9px]"></i>
@@ -79,7 +78,7 @@
                             </span>
                         </div>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         </div>
 
