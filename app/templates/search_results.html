@@ -1,68 +1,86 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8 mt-24">
+<section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8 mt-24">
     
     <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 xl:w-3/4">
         
-        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-4 rounded-t-lg shadow-md">
-            <h2 class="font-extrabold text-white text-lg md:text-xl flex items-center gap-2 italic uppercase">
-                <i class="fa-solid fa-magnifying-glass text-sm"></i> 
-                Search: <span class="text-white/80 ml-1">"{{ query }}"</span>
-            </h2>
+        <div class="relative overflow-hidden rounded-t-2xl bg-[#1a1a1a] p-8 border-b border-white/5 shadow-2xl">
+            <div class="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#830506] opacity-20 blur-3xl"></div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-[#830506]">Discovery Engine</span>
+                    <h2 class="text-3xl md:text-4xl font-black text-white italic uppercase tracking-tighter">
+                        Search <span class="text-white/40">/</span> <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">"{{ query }}"</span>
+                    </h2>
+                </div>
+                <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                    {{ videos.total if videos.total else 0 }} Titles found
+                </p>
+            </div>
         </div>
 
-        <div id="telegramCta" class="border-x border-gray-100 bg-white px-2 py-4">
-            <div class="flex flex-col md:flex-row items-center justify-between p-4 rounded-xl shadow-lg transition-transform hover:scale-[1.01]" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
-                <div class="flex items-center gap-4 mb-4 md:mb-0">
-                    <div class="bg-white/20 p-3 rounded-full">
+        <div class="bg-[#1a1a1a] px-4 py-4 border-x border-white/5">
+            <div class="relative group flex flex-col md:flex-row items-center justify-between p-6 rounded-2xl overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(0,136,204,0.3)]" style="background: linear-gradient(135deg, #0088cc 0%, #005580 100%);">
+                <div class="flex items-center gap-5 relative z-10">
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/20 group-hover:scale-110 transition-transform">
                         <i class="fa-brands fa-telegram-plane text-white text-3xl"></i>
                     </div>
                     <div>
-                        <p class="text-white font-bold text-lg leading-tight">Join our Telegram group</p>
-                        <p class="text-white/90 text-sm italic">Get notified when we add what you're looking for</p>
+                        <p class="text-white font-black text-lg tracking-tight">Join the Inner Circle</p>
+                        <p class="text-white/70 text-xs font-medium italic">Instant alerts when your request drops</p>
                     </div>
                 </div>
-                <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-full hover:bg-gray-100 transition-colors shadow-md text-center text-sm uppercase">
-                    Join Now
+                <a href="#" class="mt-4 md:mt-0 relative z-10 bg-white text-[#0088cc] font-black px-8 py-3 rounded-xl hover:bg-gray-100 transition-all shadow-xl text-xs uppercase tracking-widest active:scale-95">
+                    Connect Now
                 </a>
             </div>
         </div>
 
         {% if videos.items %}
-            <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-2 border-x border-b rounded-b-lg border-gray-100">
+            <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-8 bg-[#1a1a1a] px-4 border-x border-b rounded-b-2xl border-white/5 shadow-2xl">
                 {% for video in videos.items %}
-                    {# Logic to handle URLs based on type #}
                     {% set detail_url = url_for("main.detail", det=video.type, name=video.name, id=video.id) if video.type == 'movie' else url_for("main.detail", det=video.type, name=video.name, id=video.id, season=1, episode=1) %}
                     
-                    <div class="group relative flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+                    <div class="group relative flex flex-col bg-[#222] rounded-xl overflow-hidden border border-white/5 hover:border-[#830506]/50 transition-all duration-500"
                          onclick="window.location.href='{{ detail_url }}'">
                         
-                        <div class="absolute top-2 left-2 z-40 bg-black/70 backdrop-blur-sm text-white rounded px-2 py-1 flex items-center gap-1">
-                            <i class="fas fa-star text-yellow-400 text-[10px]"></i>
-                            <span class="text-[11px] font-bold">{{ video.rating | round(1) }}</span>
+                        <div class="absolute top-3 right-3 z-40 bg-black/80 backdrop-blur-md border border-white/10 text-white rounded-lg px-2 py-1 flex items-center gap-1.5 shadow-xl">
+                            <i class="fas fa-star text-[#830506] text-[10px]"></i>
+                            <span class="text-[11px] font-black">{{ video.rating | round(1) }}</span>
                         </div>
 
-                        <div class="relative w-full aspect-[2/3] overflow-hidden bg-gray-200">
-                            <img src="{{ video.image }}" alt="{{ video.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                        <div class="relative aspect-[2/3] overflow-hidden">
+                            <img src="{{ video.image }}" alt="{{ video.name }}" class="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-1">
                             
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                                 <i class="fa-solid fa-circle-play text-white text-5xl"></i>
+                            <div class="absolute bottom-3 left-3 z-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span class="bg-[#830506] text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded">
+                                    {{ video.type }}
+                                </span>
+                            </div>
+
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                            <div class="absolute inset-0 bg-[#830506]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                                 <div class="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500">
+                                     <i class="fa-solid fa-play text-[#830506] ml-1"></i>
+                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-3 flex flex-col flex-grow">
-                            <h3 class="text-sm font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-[#830506] transition-colors leading-tight min-h-[2.5rem]">
+                        <div class="p-4 bg-gradient-to-b from-[#222] to-[#1a1a1a]">
+                            <h3 class="text-sm font-bold text-white line-clamp-2 group-hover:text-[#830506] transition-colors leading-tight min-h-[2.5rem] mb-3">
                                 {{ video.name }}
                             </h3>
 
-                            <div class="flex justify-between items-center text-[10px] font-semibold text-gray-500 uppercase border-t pt-2 border-gray-50">
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
-                                    {{ video.date_added.strftime('%b %d, %Y') if video.date_added else "Unknown" }}
+                            <div class="flex items-center justify-between">
+                                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar"></i>
+                                    {{ video.date_added.strftime('%Y') if video.date_added else "N/A" }}
                                 </span>
-                                <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[9px]">
-                                    {{ video.type }}
+                                <div class="h-1 w-1 rounded-full bg-gray-700"></div>
+                                <span class="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                                    {{ video.quality if video.quality else 'HD' }}
                                 </span>
                             </div>
                         </div>
@@ -70,33 +88,40 @@
                 {% endfor %}
             </div>
 
-            <div class="flex justify-center py-10">
+            <div class="flex justify-center py-12">
                 {% include "pagnation.html" %}
             </div>
 
         {% else %}
-            <div class="flex flex-col items-center justify-center py-20 bg-white border-x border-b rounded-b-lg border-gray-100 px-6 text-center">
-                <div class="bg-gray-100 p-6 rounded-full mb-6">
-                    <i class="fa-solid fa-face-frown text-6xl text-gray-300"></i>
+            <div class="flex flex-col items-center justify-center py-24 bg-[#1a1a1a] border-x border-b rounded-b-2xl border-white/5 px-6 text-center shadow-2xl">
+                <div class="relative mb-8">
+                    <div class="absolute inset-0 animate-ping rounded-full bg-[#830506]/20"></div>
+                    <div class="relative bg-[#222] p-8 rounded-full border border-white/5">
+                        <i class="fa-solid fa-magnifying-glass-minus text-5xl text-[#830506]"></i>
+                    </div>
                 </div>
-                <h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter italic mb-2">No results for "{{ query }}"</h3>
-                <p class="text-gray-500 max-w-md mb-8 font-medium">We couldn't find exactly what you were looking for. Try checking your spelling or search for a more general title.</p>
+                <h3 class="text-3xl font-black text-white uppercase tracking-tighter italic mb-4">No Matches Found</h3>
+                <p class="text-gray-500 max-w-sm mb-10 font-bold text-sm leading-relaxed uppercase tracking-wider">
+                    Our scouts couldn't find <span class="text-white">"{{ query }}"</span>. Shall we hunt it down for you?
+                </p>
                 
-                <div class="flex flex-wrap gap-4 justify-center">
-                    <a href="{{ url_for('main.index') }}" class="bg-[#830506] text-white px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-black transition-all">
-                        Back to Home
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{{ url_for('main.index') }}" class="group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-[#830506] hover:text-white transition-all shadow-xl">
+                        <i class="fa-solid fa-house"></i> Return Home
                     </a>
-                    <a href="{{ url_for('main.navbar', nav='request') }}" class="bg-blue-600 text-white px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-blue-700 transition-all">
-                        Request this Movie
+                    <a href="{{ url_for('main.navbar', nav='request') }}" class="flex items-center gap-3 bg-[#830506] text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white hover:text-black transition-all shadow-xl">
+                        <i class="fa-solid fa-paper-plane"></i> Request Title
                     </a>
                 </div>
             </div>
         {% endif %}
     </section>
 
-    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 xl:w-1/4 gap-8">
         <div class="sticky top-28">
-            {% include "sidebar_trending.html" %}
+            <div class="bg-[#1a1a1a] rounded-2xl p-4 border border-white/5 shadow-2xl">
+                {% include "sidebar_trending.html" %}
+            </div>
         </div>
     </aside>
 </section>
