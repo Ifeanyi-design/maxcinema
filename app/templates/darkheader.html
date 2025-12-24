@@ -1,7 +1,9 @@
- <header id="header" class="w-full bg-white dark:bg-[#0a0a0a] border-2 border-black border-b-[#830506] flex flex-row justify-between items-center fixed top-0 left-0 p-3 z-50">
+ <header id="header" class="w-full bg-white dark:bg-[#0a0a0a] border-2 dark:border-black border-b-[#830506] flex flex-row justify-between items-center fixed top-0 left-0 p-3 z-50">
         <a href="{{ url_for('main.index') }}">
-            <div id="logo" class="font-bold left-0">
-                <h1 class="text-[#830506] text-3xl md:text-[150%] lg:text-3xl">🎬MaxCinema</h1>
+            <div id="logo" class="left-0">
+                <img src="https://i.imgur.com/slhBAEp.png" 
+             alt="MaxCinema" 
+             class="responsive-logo">
             </div>
         </a>
         <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50">
@@ -20,9 +22,9 @@
                     <i class="fa-solid fa-chevron-down"></i>
                     </button>
                 </li>
-                
+
             </ul>
-            
+
             <div id="genreMenu" class="pointer-events-none dark:bg-black bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
@@ -55,7 +57,7 @@
         <div id="Mobile-nav-btn" class="menu-btn z-50 md:hidden">
            <span class="menu-btn-burger"></span>
         </div>
-        
+
         <div id="NavMenu" class="bg-white z-50 nav dark:bg-[#0a0a0a] md:hidden absolute top-full right-8 mr-0 mt-3 max-h-[60vh] w-[50vw] p-2 rounded-lg shadow-xl border-2 overflow-hidden">
                 <ul id="Navs" class="grid grid-cols-2 menu-nav items-center text-center rounded-lg w-full gap-y-10 py-4 text-sm font-semibold">
                     <li><a href="{{ url_for('main.index') }}">HOME</a></li>
