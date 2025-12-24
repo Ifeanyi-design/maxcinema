@@ -1,170 +1,103 @@
 {% extends "base.html" %}
 
 {% block content %}
+<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8 mt-24">
+    
+    <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 xl:w-3/4">
+        
+        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-4 rounded-t-lg shadow-md">
+            <h2 class="font-extrabold text-white text-lg md:text-xl flex items-center gap-2 italic uppercase">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i> 
+                Search: <span class="text-white/80 ml-1">"{{ query }}"</span>
+            </h2>
+        </div>
 
-
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-2 xl:mx-0 my-2">
-        <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">Results for {{query}}</h2>
+        <div id="telegramCta" class="border-x border-gray-100 bg-white px-2 py-4">
+            <div class="flex flex-col md:flex-row items-center justify-between p-4 rounded-xl shadow-lg transition-transform hover:scale-[1.01]" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
+                <div class="flex items-center gap-4 mb-4 md:mb-0">
+                    <div class="bg-white/20 p-3 rounded-full">
+                        <i class="fa-brands fa-telegram-plane text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold text-lg leading-tight">Join our Telegram group</p>
+                        <p class="text-white/90 text-sm italic">Get notified when we add what you're looking for</p>
+                    </div>
+                </div>
+                <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-full hover:bg-gray-100 transition-colors shadow-md text-center text-sm uppercase">
+                    Join Now
+                </a>
             </div>
-            
+        </div>
 
-            <!-- Telegram CTA box -->
-            <div id="telegramCta" class="mt-4">
-                <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-brands fa-telegram-plane text-white text-2xl" aria-hidden="true"></i>
-                        <div>
-                            <p class="text-white font-semibold">Join our Telegram group</p>
-                            <p class="text-white text-sm opacity-90">Get updates, trailers and new releases</p>
+        {% if videos.items %}
+            <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-2 border-x border-b rounded-b-lg border-gray-100">
+                {% for video in videos.items %}
+                    {# Logic to handle URLs based on type #}
+                    {% set detail_url = url_for("main.detail", det=video.type, name=video.name, id=video.id) if video.type == 'movie' else url_for("main.detail", det=video.type, name=video.name, id=video.id, season=1, episode=1) %}
+                    
+                    <div class="group relative flex flex-col bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+                         onclick="window.location.href='{{ detail_url }}'">
+                        
+                        <div class="absolute top-2 left-2 z-40 bg-black/70 backdrop-blur-sm text-white rounded px-2 py-1 flex items-center gap-1">
+                            <i class="fas fa-star text-yellow-400 text-[10px]"></i>
+                            <span class="text-[11px] font-bold">{{ video.rating | round(1) }}</span>
+                        </div>
+
+                        <div class="relative w-full aspect-[2/3] overflow-hidden bg-gray-200">
+                            <img src="{{ video.image }}" alt="{{ video.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                                 <i class="fa-solid fa-circle-play text-white text-5xl"></i>
+                            </div>
+                        </div>
+
+                        <div class="p-3 flex flex-col flex-grow">
+                            <h3 class="text-sm font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-[#830506] transition-colors leading-tight min-h-[2.5rem]">
+                                {{ video.name }}
+                            </h3>
+
+                            <div class="flex justify-between items-center text-[10px] font-semibold text-gray-500 uppercase border-t pt-2 border-gray-50">
+                                <span class="flex items-center gap-1">
+                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
+                                    {{ video.date_added.strftime('%b %d, %Y') if video.date_added else "Unknown" }}
+                                </span>
+                                <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-[9px]">
+                                    {{ video.type }}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                        <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
-                </div>
+                {% endfor %}
             </div>
-            {% if videos.items %}
-                <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2 md:py-4">
-                
-                    {% for video in videos.items %}
-                        {% if video.type == 'movie' %}
-                            <div class="relative flex flex-col boxescard recentBox rounded-md overflow-hidden"
-                        onclick="window.location.href='{{url_for("main.detail", det=video.type, name=video.name, id=video.id)}}'">
-                            <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                                {% set rating = video.rating | float %}
-                                <div class="stars-container">
-                                    {% for i in range(1, 6) %}
-                                        {% set fraction = rating - (i - 1) %}
-                                        {% if fraction >= 1 %}
-                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% elif fraction > 0 %}
-                                        <span class="moviestar partial">
-                                            <i class="fas fa-star base" aria-hidden="true"></i>
-                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                            <i class="fas fa-star fill" aria-hidden="true"></i>
-                                            </span>
-                                        </span>
-                                        {% else %}
-                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                <p class="text-white ml-1">{{ video.rating | round(1) }}</p>
-                            </div>
-                            <!-- Image wrapper -->
-                            <div class="w-full aspect-[2/3] relative">
-                                <img 
-                                src="{{ video.image }}"
-                                alt="{{ video.name }}"
-                                class="absolute inset-0 w-full h-full object-cover"
-                                >
-                            </div>
 
-                            <div class="flex flex-col justify-between flex-grow">
-                                <!-- Info -->
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate">{{ video.date_added.strftime('%b %d, %Y') if video.date_added else "Unknown" }}</p>
-                                    </div>
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-comment"></i>
-                                        <p>{{ video.total_comment }}</p>
-                                    </div>
-                                    
-                                </div>
-
-                                <!-- Title -->
-                                <div id="recentBoxtitle" class="text-black text-left p-2.5 font-semibold text-sm md:text-base">
-                                <h3 class="line-clamp-2 leading-snug">{{ video.name }}</h3>
-                                </div>
-
-                                <div id="recentBoxtype" class="w-fit rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
-                                <h3>{{ video.type | title }}</h3>
-                                </div>
-                            </div>
-
-                        </div>
-                        {% elif video.type == 'series' %}
-                            <div class="relative flex flex-col boxescard recentBox rounded-md overflow-hidden"
-                        onclick="window.location.href='{{url_for("main.detail", det=video.type, name=video.name, id=video.id)}}'">
-                            <div class="absolute z-40 bg-black flex left-0 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                                {% set rating = video.rating | float %}
-                                <div class="stars-container">
-                                    {% for i in range(1, 6) %}
-                                        {% set fraction = rating - (i - 1) %}
-                                        {% if fraction >= 1 %}
-                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% elif fraction > 0 %}
-                                        <span class="moviestar partial">
-                                            <i class="fas fa-star base" aria-hidden="true"></i>
-                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                            <i class="fas fa-star fill" aria-hidden="true"></i>
-                                            </span>
-                                        </span>
-                                        {% else %}
-                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                <p class="text-white ml-1">{{ video.rating | round(1) }}</p>
-                            </div>
-                            <!-- Image wrapper -->
-                            <div class="w-full aspect-[2/3] relative">
-                                <img 
-                                src="{{ video.image }}"
-                                alt="{{ video.name }}"
-                                class="absolute inset-0 w-full h-full object-cover"
-                                >
-                            </div>
-
-                            <div class="flex flex-col justify-between flex-grow">
-                                <!-- Info -->
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate">{{ video.date_added.strftime('%b %d, %Y') if video.date_added else "Unknown" }}</p>
-                                    </div>
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-comment"></i>
-                                        <p>{{ video.total_comment }}</p>
-                                    </div>
-                                    
-                                </div>
-
-                                <!-- Title -->
-                                <div id="recentBoxtitle" class="text-black text-left p-2.5 font-semibold text-sm md:text-base">
-                                <h3 class="line-clamp-2 leading-snug">{{ video.name }}</h3>
-                                </div>
-
-                                <div id="recentBoxtype" class="w-fit rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
-                                <h3>{{ video.type | title }}</h3>
-                                </div>
-                            </div>
-
-                        </div>
-                        {% endif %}
-                        
-                    {% endfor %}                             
-                
-                </div>
-            {% else %}
-                <div class="p-6 text-center text-gray-600">
-                    <h3 class="text-2xl font-semibold mb-4 text-red-700">No results found for "{{ query }}"</h3>
-                    <p class="mb-4 text-black">Try adjusting your search terms and try again.</p>
-                    <a href="{{ url_for('main.index') }}" class="inline-block bg-[#830506] text-white px-4 py-2 rounded-md hover:opacity-95 hover:text-white">Go Back Home</a>
-                </div>
-            {% endif %}
-            <div class="flex justify-center gap-2 pt-3">
+            <div class="flex justify-center py-10">
                 {% include "pagnation.html" %}
             </div>
-        </section>
 
-
-        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
-            {% include "sidebar_trending.html" %}
-        </section>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-20 bg-white border-x border-b rounded-b-lg border-gray-100 px-6 text-center">
+                <div class="bg-gray-100 p-6 rounded-full mb-6">
+                    <i class="fa-solid fa-face-frown text-6xl text-gray-300"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 uppercase tracking-tighter italic mb-2">No results for "{{ query }}"</h3>
+                <p class="text-gray-500 max-w-md mb-8 font-medium">We couldn't find exactly what you were looking for. Try checking your spelling or search for a more general title.</p>
+                
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <a href="{{ url_for('main.index') }}" class="bg-[#830506] text-white px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-black transition-all">
+                        Back to Home
+                    </a>
+                    <a href="{{ url_for('main.navbar', nav='request') }}" class="bg-blue-600 text-white px-8 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-blue-700 transition-all">
+                        Request this Movie
+                    </a>
+                </div>
+            </div>
+        {% endif %}
     </section>
 
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
+        <div class="sticky top-28">
+            {% include "sidebar_trending.html" %}
+        </div>
+    </aside>
+</section>
 {% endblock %}
