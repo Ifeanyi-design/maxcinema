@@ -1,21 +1,5 @@
 <script>
-    // --- Share Button Logic ---
-    document.addEventListener('DOMContentLoaded', function() {
-        const shareBtn = document.getElementById('shareVideoBtn');
-        if (shareBtn) {
-            shareBtn.addEventListener('click', async () => {
-                const shareData = {
-                    title: '{{ video.name }} | MaxCinema',
-                    text: 'Check out {{ video.name }} on MaxCinema...',
-                    url: window.location.href,
-                };
-                try {
-                    if (navigator.share) await navigator.share(shareData);
-                    else await navigator.clipboard.writeText(window.location.href);
-                } catch (err) {}
-            });
-        }
-    });
+    
 
     // 🔴 UNIVERSAL MONEY SCRIPT (Posters + Downloads + Background) 🔴
     document.addEventListener("DOMContentLoaded", function() {
