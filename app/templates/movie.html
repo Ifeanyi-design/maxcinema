@@ -88,6 +88,12 @@
                         <span class="text-base md:text-lg">Download S{{season}} E{{episode}}</span>
                     </a>
                 {% endif %}
+
+                <button id="shareVideoBtn" 
+                class="flex-1 md:flex-none flex items-center justify-center gap-4 px-10 py-4 bg-white border-2 border-gray-100 text-gray-900 font-black uppercase tracking-widest rounded-xl shadow-lg hover:border-[#830506] hover:text-[#830506] transition-all active:scale-95">
+            <i class="fa-solid fa-share-nodes text-xl"></i>
+                <span>Share</span>
+                </button>
             </div>
 
             {% if video.type == 'series' %}
