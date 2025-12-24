@@ -44,7 +44,7 @@
                     {% set detail_url = url_for("main.detail", det=video.type, name=video.name, id=video.id) if video.type == 'movie' else url_for("main.detail", det=video.type, name=video.name, id=video.id, season=1, episode=1) %}
                     
                     <a class="group download-ad-trigger relative flex flex-col bg-[#222] rounded-xl overflow-hidden border border-white/5 hover:border-[#830506]/50 transition-all duration-500"
-                         href='{{ detail_url }}">
+                         href="{{ detail_url }}">
                         
                         <div class="absolute top-3 right-3 z-40 bg-black/80 backdrop-blur-md border border-white/10 text-white rounded-lg px-2 py-1 flex items-center gap-1.5 shadow-xl">
                             <i class="fas fa-star text-[#830506] text-[10px]"></i>
