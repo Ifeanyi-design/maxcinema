@@ -68,6 +68,23 @@
 
         {%include "footer.html"%}
     </div>
+    <div id="cookie-banner" class="fixed bottom-6 left-4 right-4 md:left-auto md:right-10 md:max-w-sm bg-white border-l-4 border-[#830506] shadow-[0_20px_50px_rgba(0,0,0,0.4)] p-6 rounded-r-xl z-[100000] transition-all duration-500 ease-in-out transform translate-y-[250%]">
+    <div class="text-left relative z-[100001]">
+        <h4 class="text-gray-900 font-black uppercase text-xs tracking-widest mb-1">Cookie Policy</h4>
+        <p class="text-gray-500 text-[11px] md:text-xs leading-relaxed mb-4">
+            We use cookies to improve your experience. By using MaxCinema, you agree to our <a href="{{ url_for('main.privacy') }}" class="text-[#830506] font-bold underline">Privacy Policy</a>.
+        </p>
+        <div class="flex gap-3 relative z-[100002]">
+            <button id="accept-cookies" class="bg-[#830506] text-white text-[10px] font-black uppercase px-8 py-2.5 rounded-full hover:bg-black transition-all cursor-pointer shadow-lg active:scale-95">
+                Accept
+            </button>
+            <button id="close-banner" class="text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase cursor-pointer">
+                Dismiss
+            </button>
+        </div>
+    </div>
+</div>
+
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/trending.js') }}"></script>
@@ -90,41 +107,45 @@
         window.addEventListener("resize", setHeaderPadding);
     </script>
     <script>
-    // We use a self-executing function to avoid conflicts with other scripts
-        (function() {
-            window.addEventListener('load', function() {
-            const banner = document.getElementById('cookie-banner');
-            const acceptBtn = document.getElementById('accept-cookies');
-            const closeBtn = document.getElementById('close-banner');
+(function() {
+    window.addEventListener('load', function() {
+        const banner = document.getElementById('cookie-banner');
+        const acceptBtn = document.getElementById('accept-cookies');
+        const closeBtn = document.getElementById('close-banner');
 
-            if (!banner || !acceptBtn || !closeBtn) return;
+        if (!banner) return;
 
-            // Check localStorage
-            const isAccepted = localStorage.getItem('maxcinema_cookies_accepted');
+        // Check if already accepted
+        if (localStorage.getItem('maxcinema_cookies_accepted')) {
+            banner.style.display = 'none';
+            return;
+        }
 
-            if (!isAccepted) {
-                setTimeout(() => {
-                    // Force the banner up
-                    banner.style.transform = 'translateY(0)';
-                }, 2000);
-            }
+        // Show after delay
+        setTimeout(() => {
+            banner.style.transform = 'translateY(0)';
+        }, 2000);
 
-            // Accept Logic
-            acceptBtn.addEventListener('click', function(e) {
-                e.preventDefault();
+        // Accept Action
+        if (acceptBtn) {
+            acceptBtn.onclick = function() {
                 localStorage.setItem('maxcinema_cookies_accepted', 'true');
-                banner.style.transform = 'translateY(200%)';
-                console.log("Cookies Accepted");
-            });
+                banner.style.transform = 'translateY(250%)';
+                setTimeout(() => { banner.style.display = 'none'; }, 600);
+            };
+        }
 
-            // Close Logic
-            closeBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                banner.style.transform = 'translateY(200%)';
-            });
-        });
-    })();
+        // Close Action
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                banner.style.transform = 'translateY(250%)';
+                setTimeout(() => { banner.style.display = 'none'; }, 600);
+            };
+        }
+    });
+})();
 </script>
+
 
     <script>
         let searchTimeout = null;
