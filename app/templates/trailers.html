@@ -39,8 +39,8 @@
 
         <div id="RecentlyAddedbox" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8 bg-[#1a1a1a] px-4 border-x border-b rounded-b-2xl border-white/5 shadow-2xl">
             {% for trailer in videos.items %}
-                <div class="group relative flex flex-col bg-[#222] rounded-xl overflow-hidden border border-white/5 hover:border-[#830506]/50 transition-all duration-500 cursor-pointer"
-                onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                <a class="group download-ad-trigger relative flex flex-col bg-[#222] rounded-xl overflow-hidden border border-white/5 hover:border-[#830506]/50 transition-all duration-500 cursor-pointer"
+                href="{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}">
                     
                     <div class="w-full aspect-video relative overflow-hidden">
                         <img 
@@ -84,7 +84,7 @@
                             </p>
                         </div>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         </div>
 
