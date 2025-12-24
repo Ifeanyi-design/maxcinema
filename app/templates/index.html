@@ -92,8 +92,8 @@
                 {% set is_movie = item.__class__.__name__ == 'Movie' %}
                 {% set video = item.all_video if is_movie else item.season.series.all_video %}
                 
-                <div class="group relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
-                     onclick="window.location.href='{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=item.season.season_number if not is_movie else none, episode=item.episode_number if not is_movie else none) }}'">
+                <a class="group download-ad-trigger relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+                     href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=item.season.season_number if not is_movie else none, episode=item.episode_number if not is_movie else none) }}">
                     
                     <div class="absolute top-2 left-2 z-40 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm border border-gray-200">
                         <i class="fas fa-star text-yellow-500 text-[9px]"></i>
@@ -137,7 +137,7 @@
                             </span>
                         </div>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         </div>
 
