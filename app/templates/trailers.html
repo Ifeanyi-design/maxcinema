@@ -1,125 +1,133 @@
 {% extends "base.html" %}
 
 {% block content %}
+<section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8 mt-24">
     
-
-    <section id="Merger" class="flex flex-col lg:flex-row gap-3 mx-2 xl:mx-0 my-2">
-        <section id="RecentlyAdded" class="my-2 lg:my-5 mx-auto flex flex-col justify-center lg:w-5/6">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">All Trailers</h2>
-            </div>
+    <section id="RecentlyAdded" class="flex flex-col lg:w-2/3 xl:w-3/4">
+        
+        <div class="relative overflow-hidden rounded-t-2xl bg-[#1a1a1a] p-8 border-b border-white/5 shadow-2xl">
+            <div class="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#830506] opacity-10 blur-3xl"></div>
             
-
-            <!-- Telegram CTA box -->
-            <div id="telegramCta" class="mt-4">
-                <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
-                    <div class="flex items-center gap-3">
-                        <i class="fa-brands fa-telegram-plane text-white text-2xl" aria-hidden="true"></i>
-                        <div>
-                            <p class="text-white font-semibold">Join our Telegram group</p>
-                            <p class="text-white text-sm opacity-90">Get updates, trailers and new releases</p>
-                        </div>
-                    </div>
-                        <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
+            <div class="relative z-10 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-[0.3em] text-[#830506] mb-1 block">Coming Soon</span>
+                    <h1 class="text-3xl md:text-4xl font-black text-white italic uppercase tracking-tighter">
+                        All <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">Trailers</span>
+                    </h1>
+                </div>
+                <div class="hidden md:block bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Total Previews</p>
+                    <p class="text-white font-black text-center">{{ videos.total }}</p>
                 </div>
             </div>
-            <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2 md:py-4">
-                {% for trailer in videos.items %}
-                    <div class="relative flex flex-col boxescard trailerBox trailersAll rounded-md overflow-hidden dark:border-gray-500"
-                    onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                        <!-- Image wrapper -->
-                        <div class="w-full aspect-[1.5/2] relative">
-                            <img 
+        </div>
+
+        <div class="bg-[#111] border-x border-white/5 p-4">
+            <div class="flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl shadow-xl gap-4" style="background: linear-gradient(135deg, #0088cc 0%, #005580 100%);">
+                <div class="flex items-center gap-4">
+                    <div class="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/20">
+                        <i class="fa-brands fa-telegram-plane text-white text-2xl"></i>
+                    </div>
+                    <div class="text-center md:text-left">
+                        <p class="text-white font-black text-sm md:text-base leading-tight">Join MaxCinema Community</p>
+                        <p class="text-white/70 text-[10px] uppercase font-bold italic">Get trailer alerts & release dates</p>
+                    </div>
+                </div>
+                <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-xl hover:scale-105 transition-all shadow-lg text-center text-xs uppercase tracking-widest">Join Group</a>
+            </div>
+        </div>
+
+        <div id="RecentlyAddedbox" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8 bg-[#1a1a1a] px-4 border-x border-b rounded-b-2xl border-white/5 shadow-2xl">
+            {% for trailer in videos.items %}
+                <div class="group relative flex flex-col bg-[#222] rounded-xl overflow-hidden border border-white/5 hover:border-[#830506]/50 transition-all duration-500 cursor-pointer"
+                onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
+                    
+                    <div class="w-full aspect-video relative overflow-hidden">
+                        <img 
                             src="{{ trailer.image }}"
-                            alt="{{trailer.name}} Poster"
-                            class="absolute inset-0 w-full h-full object-cover"
-                            >
-                            <div class="absolute z-30 bg-black flex left-4 bottom-4 text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                                <p class="text-white ml-1">Trailers</p>
+                            alt="{{trailer.name}}"
+                            class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        >
+                        
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                             <div class="bg-[#830506] h-12 w-12 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(131,5,6,0.6)]">
+                                 <i class="fa-solid fa-play text-white ml-1"></i>
+                             </div>
+                        </div>
+
+                        <div class="absolute top-3 left-3 z-30 bg-black/80 backdrop-blur-md border border-white/10 text-white rounded-lg px-2 py-1 flex items-center gap-1.5 shadow-xl">
+                            <i class="fa-solid fa-film text-[#830506] text-[10px]"></i>
+                            <span class="text-[9px] font-black uppercase tracking-widest">Trailer</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex flex-col flex-grow">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-1 text-[9px] text-gray-500 font-black uppercase tracking-tighter">
+                                <i class="fas fa-calendar-alt text-[#830506]"></i>
+                                <span>{{trailer.date_added.strftime('%b %d, %Y')}}</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[9px] text-gray-500 font-black">
+                                <i class="fas fa-comment"></i>
+                                <span>{{ trailer.total_comment }}</span>
                             </div>
                         </div>
-                        
-                        <!-- Content container -->
-                        <div class="flex flex-col justify-between flex-grow">
-                            <!-- Info -->
-                            <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm dark:text-gray-400">
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <p class="truncate">{{trailer.date_added.strftime('%b %d, %Y')}}</p>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-comment"></i>
-                                    <p>{{ trailer.total_comment }}</p>
-                                </div>
-                                
-                            </div>
 
-                            <!-- Title -->
-                            <div id="recentBoxtitle" class="text-black text-center p-2.5 font-semibold text-sm md:text-base dark:text-white">
-                            <h3 class="line-clamp-2 leading-snug">{{ trailer.name }}</h3>
-                            </div>
+                        <h3 class="text-white line-clamp-2 font-bold text-sm leading-snug group-hover:text-[#830506] transition-colors mb-3">
+                            {{ trailer.name }}
+                        </h3>
 
-                            <div id="trailerBoxtype" class="w-fit rounded-md mx-auto mb-2 text-black text-center p-1 font-semibold text-sm md:text-base">
-                            <h3>RD: {{ trailer.release_date.strftime('%b %d, %Y') if trailer.release_date else 'N/A' }}</h3>
+                        <div class="mt-auto pt-3 border-t border-white/5">
+                            <p class="text-[#830506] text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                                <span class="text-gray-500">Released:</span>
+                                {{ trailer.release_date.strftime('%Y') if trailer.release_date else 'TBA' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-center py-12">
+            {% include 'pagnation.html'%}
+        </div>
+    </section>
+
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 xl:w-1/4 gap-8"> 
+        <div class="w-full rounded-2xl overflow-hidden shadow-2xl">
+            {% include 'ads/sidebar.html' %}
+        </div>         
+
+        <section id="Trailers" class="flex flex-col w-full bg-[#1a1a1a] rounded-2xl shadow-2xl border border-white/5 overflow-hidden">
+            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-4 shadow-sm">
+                <h2 class="font-black text-white text-xs flex items-center gap-2 italic uppercase tracking-widest">
+                    <i class="fa-solid fa-fire-flame-curved"></i> Trending Previews
+                </h2>
+            </div>
+
+            <div class="flex flex-col p-4 gap-4">
+                {% for trailer in trending_trailers %}
+                    <div class="group flex flex-row items-center gap-3 bg-[#222] hover:bg-[#282828] rounded-xl overflow-hidden h-20 transition-all cursor-pointer border border-white/5" 
+                        onclick="window.location.href='{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}'">
+
+                        <div class="flex-shrink-0 w-24 h-full relative">
+                            <img src="{{ trailer.image }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+                        </div>
+
+                        <div class="flex flex-col justify-center pr-2 overflow-hidden">
+                            <h3 class="text-gray-200 line-clamp-2 font-black text-[10px] leading-tight group-hover:text-[#830506] transition-colors uppercase tracking-tight">
+                                {{ trailer.name }}
+                            </h3>
+                            <div class="flex items-center gap-1 mt-1 text-[9px] text-gray-500 font-bold italic">
+                                <i class="fas fa-play-circle text-[#830506]"></i>
+                                <span>{{ trailer.date_added.strftime('%Y') }}</span>
                             </div>
                         </div>
                     </div>
                 {% endfor %}
-                
-                
-            </div>
-            <div class="flex justify-center gap-2 pt-3">
-                {% include 'pagnation.html'%}
             </div>
         </section>
-        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6"> 
-            <div class="w-full">
-                {% include 'ads/sidebar.html' %}
-            </div>         
-
-            <section id="Trailers" class="flex flex-col w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-3 shadow-sm">
-                    <h2 class="font-extrabold text-white text-base flex items-center gap-2 italic uppercase">
-                        <i class="fa-solid fa-circle-play"></i> Trailers
-                    </h2>
-                </div>
-
-                <div class="flex flex-col p-2 gap-2">
-                    {% for trailer in trending_trailers %}
-                        <div class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200" 
-                            onclick="window.location.href='{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}'">
-                            
-                            <div class="flex-shrink-0 w-24 h-full overflow-hidden">
-                                <div style="background-image: url('{{ trailer.image }}');"
-                                    class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col justify-center px-3 overflow-hidden">
-                                <h3 class="text-gray-900 line-clamp-2 font-bold text-xs leading-tight group-hover:text-[#830506] transition-colors">
-                                    {{ trailer.name }}
-                                </h3>
-                                <div class="flex items-center gap-1 mt-1 text-[10px] text-gray-500 font-semibold italic">
-                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
-                                    <span>{{ trailer.date_added.strftime('%b %d, %Y') }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <div class="p-2 border-t border-gray-50">
-                    <a href="{{ url_for('main.trailer') }}" class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
-                        View All Trailers <i class="fa-solid fa-circle-arrow-right text-lg"></i>
-                    </a>
-                </div>
-            </section>
-        </section>
-
-    </section>
-
-
-        
-
+    </aside>
+</section>
 {% endblock %}
