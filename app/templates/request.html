@@ -43,13 +43,6 @@
                             <i class="fa-solid fa-info-circle mr-1"></i> Note: Cinema releases are only posted once digital (OTT) versions are available.
                         </p>
                     </div>
-
-                    <div class="bg-gray-100 p-4 rounded-xl border border-gray-200">
-                        <p class="text-gray-900 text-sm font-black uppercase tracking-widest">
-                            <i class="fa-solid fa-magnifying-glass mr-1 text-[#830506]"></i> Important:
-                        </p>
-                        <p class="text-gray-500 text-sm mt-1">Search the site before requesting; many movies are already available!</p>
-                    </div>
                 </div>
 
                 <button id="open-request-btn" class="w-full md:w-fit group flex items-center justify-center gap-4 px-10 py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95">
@@ -91,22 +84,58 @@
                                   class="w-full p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 font-medium"></textarea>
                     </div>
 
-                    <button type="submit" class="w-full py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-[0.2em] rounded-full shadow-xl shadow-[#830506]/20 transition-all transform active:scale-95">
+                    <button type="submit" id="requestSubmitBtn" class="w-full py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-[0.2em] rounded-full shadow-xl shadow-[#830506]/20 transition-all transform active:scale-95">
                         Submit Request
                     </button>
                 </form>
             </div>
 
-            <div class="mt-12 pt-8 border-t border-gray-100 text-center">
-                <div class="inline-block bg-[#830506] text-white font-black px-6 py-2 rounded-t-lg text-xs tracking-widest uppercase">
-                    Discussion
+            <div class="mt-16">
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="bg-[#830506] w-2 h-8 rounded-full"></span>
+                    <h3 class="text-xl font-black text-gray-900 uppercase tracking-tighter italic">Recent Request Status</h3>
                 </div>
-                <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-inner">
-                    <p class="text-gray-400 font-bold text-sm italic">
-                        "Comments are disabled for requests to maintain speed. We will notify you via email once your request is processed."
-                    </p>
+                
+                <div class="overflow-x-auto rounded-xl border border-gray-100 shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                                <th class="px-4 py-4">Movie / Series</th>
+                                <th class="px-4 py-4">Status</th>
+                                <th class="px-4 py-4 text-right">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm font-bold text-gray-700">
+                            {% for req in recent_requests %}
+                            <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <span class="block text-gray-900">{{ req.movie_name }}</span>
+                                    <span class="text-[10px] text-gray-400 font-medium uppercase tracking-tight">Requested by {{ req.name[:3] }}***</span>
+                                </td>
+                                <td class="px-4 py-4">
+                                    {% if req.status == 'Completed' %}
+                                        <span class="px-3 py-1 bg-green-100 text-green-600 rounded-full text-[10px] uppercase font-black"><i class="fa-solid fa-check-double mr-1"></i> Ready</span>
+                                    {% elif req.status == 'Rejected' %}
+                                        <span class="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[10px] uppercase font-black"><i class="fa-solid fa-circle-xmark mr-1"></i> Unavailable</span>
+                                    {% else %}
+                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-600 rounded-full text-[10px] uppercase font-black animate-pulse"><i class="fa-solid fa-clock mr-1"></i> Processing</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 text-right text-gray-400 text-xs font-medium uppercase tracking-widest">
+                                    {{ req.date_added.strftime('%b %d') }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="px-4 py-10 text-center text-gray-400 italic">No recent requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                <p class="text-[10px] text-center text-gray-400 mt-4 font-bold uppercase tracking-[0.2em]">Table updates every 24 hours</p>
             </div>
+
         </div>
     </section>
 
@@ -117,9 +146,17 @@
     </aside>
 </section>
 
-<div id="request-notification" class="fixed bottom-10 right-10 z-[10000] bg-green-600 text-white px-8 py-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] font-black uppercase text-xs tracking-widest flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-500">
-    <i class="fa-solid fa-circle-check text-xl"></i>
-    <span>Request Submitted Successfully!</span>
+<div id="request-notification" class="fixed bottom-10 right-4 left-4 md:left-auto md:right-10 z-[10000] bg-white border-l-8 border-green-500 px-6 py-5 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col gap-1 transform translate-y-32 opacity-0 transition-all duration-500 max-w-sm">
+    <div class="flex items-center gap-3">
+        <div class="bg-green-100 p-2 rounded-full"><i class="fa-solid fa-check text-green-600"></i></div>
+        <div class="flex flex-col">
+            <span class="text-gray-900 font-black uppercase text-[11px] tracking-widest leading-none mb-1">Success</span>
+            <span id="notif-message" class="text-gray-600 font-bold text-sm leading-tight">Request Submitted Successfully!</span>
+        </div>
+    </div>
+    <div class="w-full bg-gray-100 h-1 mt-3 rounded-full overflow-hidden">
+        <div id="notif-progress" class="bg-green-500 h-full w-full"></div>
+    </div>
 </div>
 {% endblock %}
 
@@ -132,12 +169,12 @@
         const closeBtn = document.getElementById('close-request-btn');
         const form = document.getElementById('movie-request-form');
         const notif = document.getElementById('request-notification');
+        const progressBar = document.getElementById('notif-progress');
 
-        // 1. Toggle Form Visibility
         openBtn.onclick = () => {
             instructions.classList.add('hidden');
             formContainer.classList.remove('hidden');
-            window.scrollTo({ top: 100, behavior: 'smooth' });
+            window.scrollTo({ top: formContainer.offsetTop - 100, behavior: 'smooth' });
         };
 
         closeBtn.onclick = () => {
@@ -145,13 +182,12 @@
             instructions.classList.remove('hidden');
         };
 
-        // 2. Handle Form Submission
         form.onsubmit = function(e) {
             e.preventDefault();
-
-            const submitBtn = form.querySelector('button[type="submit"]');
+            const submitBtn = document.getElementById('requestSubmitBtn');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...';
+            
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Processing...';
             submitBtn.disabled = true;
 
             const formData = new URLSearchParams(new FormData(form));
@@ -164,27 +200,30 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Show success notification
-                    notif.classList.remove('opacity-0', 'translate-y-20');
-                    notif.classList.add('opacity-1', 'translate-y-0');
-
-                    setTimeout(() => {
-                        notif.classList.add('opacity-0', 'translate-y-20');
-                        notif.classList.remove('opacity-1', 'translate-y-0');
-                    }, 4000);
-
-                    // Reset and Close
                     form.reset();
                     formContainer.classList.add('hidden');
                     instructions.classList.remove('hidden');
+
+                    document.getElementById('notif-message').innerText = data.message || "Your request is in the queue!";
+                    notif.classList.remove('opacity-0', 'translate-y-32');
+                    notif.classList.add('opacity-100', 'translate-y-0');
+
+                    // Progress bar animation
+                    progressBar.style.transition = 'none';
+                    progressBar.style.width = '100%';
+                    setTimeout(() => {
+                        progressBar.style.transition = 'width 4s linear';
+                        progressBar.style.width = '0%';
+                    }, 50);
+
+                    setTimeout(() => {
+                        notif.classList.add('opacity-0', 'translate-y-32');
+                    }, 4000);
                 } else {
-                    alert('Error: ' + (data.error || 'Submission failed'));
+                    alert('Error: ' + data.error);
                 }
             })
-            .catch(err => {
-                console.error(err);
-                alert('An error occurred. Please try again.');
-            })
+            .catch(err => alert('Submission Error. Please try again.'))
             .finally(() => {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
