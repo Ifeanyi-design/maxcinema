@@ -262,7 +262,7 @@ def dcma():
 
 @main_bp.route("/genre/<string:genre_type>")
 @main_bp.route("/genre/<string:genre_type>/page/<int:page>")
-def genre(genre_type, page):
+def genre(genre_type, page=1):
     per_page = 24
     genre = ""
     if genre_type == "Sci-Fi":
