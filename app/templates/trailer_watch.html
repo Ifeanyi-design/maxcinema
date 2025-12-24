@@ -59,9 +59,10 @@
                     <p class="text-xl font-black text-gray-900 dark:text-white italic">{{trailer.release_date.strftime("%B %d, %Y")}}</p>
                 </div>
                 <div class="flex gap-2">
-                    <button class="bg-[#830506] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">
+                    <button id="shareBtn" class="bg-[#830506] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all">
                         <i class="fa-solid fa-share-nodes mr-2"></i> Share
                     </button>
+
                 </div>
             </div>
 
@@ -184,4 +185,30 @@
         </section>
     </aside>
 </section>
+{% endblock %}
+
+{%block script%}
+    <script>
+document.getElementById('shareBtn').addEventListener('click', async () => {
+    const shareData = {
+        title: '{{ trailer.name }} | MaxCinema',
+        text: 'Check out the trailer for {{ trailer.name }} on MaxCinema!',
+        url: window.location.href,
+    };
+
+    try {
+        if (navigator.share) {
+            // Opens native mobile share menu
+            await navigator.share(shareData);
+        } else {
+            // Fallback for Desktop: Copy to clipboard
+            await navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+        }
+    } catch (err) {
+        console.log('Error sharing:', err);
+    }
+});
+</script>
+
 {% endblock %}
