@@ -102,7 +102,7 @@
                 {% if det == "movie" %}
                     <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" 
                     class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
+                        <div class="download-ad-trigger bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
                         <span class="text-sm md:text-base">Download Movie</span>
                     </a>
                 {% else %}
