@@ -73,52 +73,48 @@
                 {% include 'pagnation.html'%}
             </div>
         </section>
-        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
+        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6"> 
             <div class="w-full">
                 {% include 'ads/sidebar.html' %}
-            </div>
-            <section id="Trailers" class="my-2 md:my-5 flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
+            </div>         
+
+            <section id="Trailers" class="flex flex-col w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-3 shadow-sm">
+                    <h2 class="font-extrabold text-white text-base flex items-center gap-2 italic uppercase">
+                        <i class="fa-solid fa-circle-play"></i> Trailers
+                    </h2>
                 </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
+
+                <div class="flex flex-col p-2 gap-2">
                     {% for trailer in trending_trailers %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28 dark:border-gray-500" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{trailer.image}}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                        <div class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200" 
+                            onclick="window.location.href='{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}'">
+                            
+                            <div class="flex-shrink-0 w-24 h-full overflow-hidden">
+                                <div style="background-image: url('{{ trailer.image }}');"
+                                    class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
                                 </div>
                             </div>
 
-                            <div class="flex flex-col justify-center">
-                                <div class="flex items-center p-2.5 w-full">
-                                    <h3 class="text-black dark:text-white line-clamp-2 font-semibold text-sm md:text-base">
-                                        {{ trailer.name }}
-                                    </h3>
-                                </div>
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate"> {{ trailer.date_added.strftime('%b %d, %Y') }} </p>
-                                    </div>
+                            <div class="flex flex-col justify-center px-3 overflow-hidden">
+                                <h3 class="text-gray-900 line-clamp-2 font-bold text-xs leading-tight group-hover:text-[#830506] transition-colors">
+                                    {{ trailer.name }}
+                                </h3>
+                                <div class="flex items-center gap-1 mt-1 text-[10px] text-gray-500 font-semibold italic">
+                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
+                                    <span>{{ trailer.date_added.strftime('%b %d, %Y') }}</span>
                                 </div>
                             </div>
                         </div>
                     {% endfor %}
-                    
-                    
                 </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Trailers
+
+                <div class="p-2 border-t border-gray-50">
+                    <a href="{{ url_for('main.trailer') }}" class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
+                        View All Trailers <i class="fa-solid fa-circle-arrow-right text-lg"></i>
                     </a>
                 </div>
-
-
-            </section>            
+            </section>
         </section>
 
     </section>

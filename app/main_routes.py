@@ -2,7 +2,7 @@ from flask import Blueprint, make_response, render_template, abort, redirect, ur
 from flask_login import current_user, login_user, logout_user, login_required
 from sqlalchemy.sql import func
 from sqlalchemy.orm import joinedload, defer
-from sqlalchemy import or_, text
+from sqlalchemy import or_, text, desc
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -152,7 +152,9 @@ def index(page=1):
     series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-
+    top_rated_movies = AllVideo.query.filter(AllVideo.num_votes > 0)\
+                                  .order_by(desc(AllVideo.rating))\
+                                  .limit(10).all()
 
     data = AllVideo.query.order_by(func.random()).limit(24).all()
     videos = AllVideo.query.order_by(AllVideo.date_added.desc()).all()
@@ -194,6 +196,7 @@ def index(page=1):
                               trending_movie=movie_trend,
                                 items=items, per_page=per_page,
                                   page=page, total_pages=recent_paginated.pages,
+                                  top_rated_movies=top_rated_movies,
                                   videos=recent_paginated, index=index, trending_trailers=trending_trailers)
 
 @main_bp.route("/featured/<int:page>")

@@ -30,7 +30,7 @@
                     </button>
                 </li>
 
-                <li id="SearchBtn" class="flex items-center justify-center p-0 m-0 search cursor-pointer">
+                <li id="SearchBtn" class="flex items-center justify-center p-0 m-0 md:ml-4 search cursor-pointer">
                     <i class="fa-solid fa-magnifying-glass text-[#830506]"></i>
                 </li>
             </ul>
@@ -49,7 +49,7 @@
             </form>
 
 
-            <div id="genreMenu" class="pointer-events-none bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
+            <div id="genreMenu" class="pointer-events-none bg-white hidden absolute top-full right-0 mr-0 max-h-[65vh] md:w-[50vw] lg:w-[40vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>

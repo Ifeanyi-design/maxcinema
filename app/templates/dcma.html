@@ -1,64 +1,80 @@
 {% extends "base.html" %}
 
 {% block content %}
+<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-4 lg:w-[95%] xl:w-[90%] my-8">
+    
+    <section id="DMCASection" class="flex flex-col lg:w-2/3 xl:w-3/4 bg-white dark:bg-[#111111] rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        
+        <div class="w-full bg-[#830506] flex flex-col items-center justify-center px-4 py-6 text-center">
+            <i class="fa-solid fa-scale-balanced text-white text-3xl mb-2"></i>
+            <h1 class="font-black text-white text-2xl md:text-3xl uppercase tracking-tighter">DMCA Takedown Policy</h1>
+            <p class="text-white/80 text-xs mt-2 font-bold uppercase tracking-widest">Digital Millennium Copyright Act Compliance</p>
+        </div>
 
+        <div class="w-full border-b border-gray-100 dark:border-gray-800">
+            <img src="https://i.imgur.com/KLN2bPo.png" alt="DMCA Banner" class="w-full aspect-[3/1] object-cover opacity-90">
+        </div>
 
-    <section id="Merger" class="flex flex-col lg:flex-row gap-3 mx-2 xl:mx-0 my-2">
-        <section id="RecentlyAdded" class="my-2 lg:my-5 flex flex-col lg:w-5/6 mb-10">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">DCMA Takedown</h2>
-            </div>
-            <div class="w-full border border-red-800 text-center items-center pt-2">
-                <div class="w-full relative mx-auto">
-                    <img 
-                    src="https://i.imgur.com/KLN2bPo.png"
-                    alt="DCMA Banner Image"
-                    class="w-full aspect-[2/1] object-cover shadow-lg"
-                    >
-                </div>
-            </div>
-            <div class="w-full text-black text-xl py-3">
-                <p class="text-xl">
-                    While we comply with the DMCA, the <b>movies, trailers, videos, songs and posters/images</b> posted on <b>NaijaPrey</b> are mainly for promotional purpose only. <br><br>
-
-                    NaijaPrey is in compliance with the <b>Digital Millennium Copyright Act (“DMCA”)</b>. It is our policy to respond to any infringement notices and take appropriate actions under the Digital Millennium Copyright Act (“DMCA”) and other applicable intellectual property laws. <br><br>
-
-                    If your copyrighted material has been uploaded on NaijaPrey or if hyperlinks to your copyrighted material are returned through our search engine and you want this material removed, you must provide a written communication that details the information listed in the following section. <br><br>
-
-                    Please be aware that <b class="text-red-800">you will be liable for damages (including costs and attorneys’ fees) if you misrepresent information</b> listed on our site that is infringing on your copyrights. We suggest that you first contact an attorney for legal assistance on this matter. <br><br>
-
-                    The following elements must be included in your copyright infringement claim: <br><br>
-
-                    <ul class="decorate text-lg">
-                        <li>Provide evidence of the authorized person to act on behalf of the owner of an exclusive right that is allegedly infringed.</li>
-                        <li>Provide sufficient contact information so that we may contact you.</li>
-                        <li>You must also include a valid email address.</li>
-                        <li>You must identify in sufficient detail the copyrighted work claimed to have been infringed and including at least one search term under which the material appears in NaijaPrey search results.</li>
-                        <li>A statement that the complaining party has a good faith belief that use of the material in the manner complained of is not authorized by the copyright owner, its agent, or the law.</li>
-                        <li> A statement that the information in the notification is accurate, and under penalty of perjury, that the complaining party is authorized to act on behalf of the owner of an exclusive right that is allegedly infringed.</li>
-                        <li>Must be signed by the authorized person to act on behalf of the owner of an exclusive right that is allegedly being infringed.</li>
-                        <li>Send the infringement notice to us by mailing us via; contact@naijaprey.com
-                    </li>
-                    </ul>  <br>                        
-                   
-                    <b>Please allow us 48 hours to get back to you.</b> <br><br>
-
-                    Note that emailing your complaint to other parties such as our Internet Service Provider will not expedite your request and may result in a delayed response due to the complaint not being filed properly. <br><br>
-
-                    By using our website, you hereby consent to our disclaimer and agree to its terms and conditions. <br><br>
-
-                    <i>Last Updated: 28 August, 2024</i>
+        <div class="p-6 md:p-10 text-gray-800 dark:text-gray-300 leading-relaxed">
+            
+            <div class="mb-8 p-4 bg-gray-50 dark:bg-white/5 border-l-4 border-[#830506] rounded-r-md">
+                <p class="text-sm md:text-base font-medium">
+                    While we comply with the DMCA, the <b>movies, trailers, videos, and posters</b> posted on <b>MaxCinema</b> are intended for promotional purposes only.
                 </p>
             </div>
-            
-            
-        </section>
 
+            <p class="mb-6">
+                MaxCinema is in compliance with the <b>Digital Millennium Copyright Act (“DMCA”)</b>. It is our policy to respond to any infringement notices and take appropriate actions under the DMCA and other applicable intellectual property laws.
+            </p>
 
-        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
-            {% include "sidebar_trending.html" %}
-        </section>
+            <p class="mb-6">
+                If your copyrighted material has been uploaded on MaxCinema or if hyperlinks to your copyrighted material are returned through our search engine and you want this material removed, you must provide a written communication that details the information listed in the following section.
+            </p>
+
+            <div class="mb-8 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-lg">
+                <p class="text-red-800 dark:text-red-400 text-sm font-bold">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+                    PLEASE BE AWARE: You will be liable for damages (including costs and attorneys’ fees) if you misrepresent information listed on our site that is infringing on your copyrights.
+                </p>
+            </div>
+
+            <h2 class="text-[#830506] font-black text-xl uppercase mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-list-check"></i> Required Elements
+            </h2>
+
+            <ul class="space-y-4 mb-8">
+                {% set requirements = [
+                    "Evidence of the authorized person to act on behalf of the owner of the exclusive right.",
+                    "Sufficient contact information (Phone, Address, and Valid Email).",
+                    "Identification of the copyrighted work claimed to have been infringed with search terms.",
+                    "A statement of 'Good Faith Belief' that the use is not authorized by the owner or the law.",
+                    "A statement that the notification is accurate under penalty of perjury.",
+                    "The physical or electronic signature of the authorized person."
+                ] %}
+                
+                {% for item in requirements %}
+                <li class="flex items-start gap-3">
+                    <i class="fa-solid fa-circle-check text-green-600 mt-1"></i>
+                    <span class="text-sm md:text-base">{{ item }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <div class="bg-gray-100 dark:bg-white/5 p-6 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 text-center">
+                <p class="font-bold mb-2">Send all infringement notices to:</p>
+                <a href="mailto:contact@maxcinema.com" class="text-[#830506] text-xl font-black hover:underline">contact@maxcinema.com</a>
+                <p class="text-xs mt-3 font-bold text-gray-500 uppercase italic">Please allow up to 48 hours for a response.</p>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-500">
+                <p class="mb-2">By using our website, you hereby consent to our disclaimer and agree to its terms and conditions.</p>
+                <p><i>Last Updated: 28 August, 2024</i></p>
+            </div>
+        </div>
     </section>
 
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 xl:w-1/4 gap-6">
+        {% include "sidebar_trending.html" %}
+    </aside>
+</section>
 {% endblock %}

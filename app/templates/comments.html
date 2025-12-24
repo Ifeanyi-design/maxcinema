@@ -1,26 +1,39 @@
-<div class="flex flex-col bg-gray-100 gap-2 border-l-2 border-gray-300">
-    <div class="flex items-center gap-3 p-2">
-        <img src="https://www.w3schools.com/howto/img_avatar.png" alt="User Profile"
-        class="w-14 h-14 rounded-full object-cover">
+<div class="flex flex-col bg-white border-l-4 border-gray-200 hover:border-[#830506] transition-colors mb-4 rounded-r-lg shadow-sm">
+    <div class="flex items-center gap-3 p-3">
+        <div class="relative">
+            <img src="https://ui-avatars.com/api/?name={{ comment.name }}&background=830506&color=fff" 
+                 alt="User Profile"
+                 class="w-12 h-12 rounded-full object-cover border-2 border-gray-100 shadow-sm">
+            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+        </div>
         <div>
-            <p class="font-semibold text-lg">{{ comment.name }}</p>
-            <p class="text-[12px] text-gray-700">{{ comment.date_added.strftime('%b %d, %Y') }} At {{ comment.date_added.strftime('%H:%M') }}</p>
+            <p class="font-bold text-gray-900 leading-tight">{{ comment.name }}</p>
+            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                {{ comment.date_added.strftime('%b %d, %Y') }} • {{ comment.date_added.strftime('%I:%M %p') }}
+            </p>
         </div>
     </div>
-    <p class="px-6 py-2 font-medium">{{ comment.text }}</p>
-    <button data-id="{{ comment.id }}" data-video="{{ video.id }}" class="reply-btn px-6 py-3 font-bold flex w-[8vw] items-center gap-1 text-sm text-red-600 hover:text-black cursor-pointer">
-        <i class="fa-solid fa-reply"></i>
-            Reply
-    </button>
-    <hr class="my-4 border-gray-300">
 
-    <!-- Replies -->
-    <div class="replies" style="margin-left: 20px;">
+    <div class="px-4 md:px-6 pb-2">
+        <p class="text-gray-700 leading-relaxed font-medium text-sm md:text-base italic">
+            "{{ comment.text }}"
+        </p>
+    </div>
+
+    <div class="px-4 pb-3">
+        <button data-id="{{ comment.id }}" data-video="{{ video.id }}" 
+                class="reply-btn flex items-center gap-2 text-xs font-black text-[#830506] hover:text-black transition-colors uppercase tracking-tighter cursor-pointer">
+            <i class="fa-solid fa-reply-all"></i>
+            Reply to {{ comment.name.split(' ')[0] }}
+        </button>
+    </div>
+
+    {% if comment.replies %}
+    <div class="replies-container ml-4 md:ml-8 border-l border-gray-100 mt-2 bg-gray-50/50 rounded-bl-lg">
         {% for reply in comment.replies %}
             {% set comment = reply %}
             {% include 'comments.html' %}
         {% endfor %}
-        
     </div>
-    
+    {% endif %}
 </div>

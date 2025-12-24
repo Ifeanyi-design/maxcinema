@@ -25,7 +25,7 @@
 
             </ul>
 
-            <div id="genreMenu" class="pointer-events-none dark:bg-black bg-white hidden absolute top-full right-0 mr-0 max-h-[60vh] md:w-[50vw] lg:w-[30vw] p-2 mt-6 rounded-lg shadow-xl border-2">
+            <div id="genreMenu" class="pointer-events-none dark:bg-black bg-white hidden absolute top-full right-0 mr-0 max-h-[65vh] md:w-[50vw] lg:w-[40vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
                     <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
@@ -70,7 +70,7 @@
             </div>
 
 
-        <div id="MobilegenreMenu" class="py-3 md:hidden dark:border-[#830506] bg-white dark:bg-[#0a0a0a] flex flex-col absolute top-full w-screen right-0 mr-0 max-h-[60vh] p-2 shadow-xl border-2">
+        <div id="MobilegenreMenu" class="py-3 md:hidden dark:border-[#830506] bg-white dark:bg-[#0a0a0a] flex flex-col absolute top-full w-screen left-1/2 -translate-x-1/2 max-h-[60vh] p-2 shadow-xl border-2">
             <ul id="MobilegenreNav" class="flex flex-row overflow-x-auto scrollbar-hide items-center text-center rounded-lg w-full font-semibold uppercase snap-x snap-mandatory scroll-smooth">
                 <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2">Action</a></li>
                 <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>

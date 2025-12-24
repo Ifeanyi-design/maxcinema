@@ -1,132 +1,49 @@
 <div class="w-full">
     {% include 'ads/sidebar.html' %}
 </div>
-<section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
-    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-        <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-        <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
-    </div>
-    <div class="flex flex-col mt-2 gap-1 md:py-2">
-        {% for movie in trending_movie %}
-            <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28">
-                <!-- Image -->
-                <div class="flex-shrink-0 w-1/3 h-full">
-                    <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
-                        class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                    </div>
-                </div>
+{% set categories = [
+                {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},
+                {'id': 'TrendingSeries', 'title': 'Trending Series', 'icon': 'fa-fire', 'data': trending_series, 'type': 'series'},
+                {'id': 'Trailers', 'title': 'New Trailers', 'icon': 'fa-play-circle', 'data': trending_trailers, 'type': 'trailer'}
+            ] %}
 
-                <!-- Title / Text -->
-                <div class="flex flex-col justify-center">
-                    <div class="flex items-center p-2.5 w-full">
-                        <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                            {{ movie.name }}
-                        </h3>
+            {% for cat in categories %}
+                <section id="{{ cat.id }}" class="flex flex-col w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-2">
+                        <h2 class="font-bold text-white text-sm md:text-base uppercase flex items-center gap-2 tracking-wide">
+                            <i class="fa-solid {{ cat.icon }}"></i> {{ cat.title }}
+                        </h2>
                     </div>
-                    <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                        <div class="flex items-center space-x-1">
-                            <i class="fas fa-calendar-alt"></i>
-                            <p class="truncate"> {{ movie.updated_at.strftime('%b %d, %Y') }} </p>
+
+                    <div class="flex flex-col p-2 gap-2">
+                        {% for item in cat.data %}
+                        <div onclick="window.location.href='{% if cat.type == 'trailer' %}{{ url_for('main.detail', det='trailer_watch', name=item.slug, id=item.id) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season='1', episode='1') }}{% endif %}'" 
+                            class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 md:h-24 lg:h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200">
+                            
+                            <div class="flex-shrink-0 w-20 h-full overflow-hidden">
+                                <div style="background-image: url('{{ item.image }}');"
+                                    class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col justify-center px-3 overflow-hidden">
+                                <h3 class="text-gray-900 text-xs md:text-sm font-bold line-clamp-2 leading-tight group-hover:text-[#830506] transition-colors">
+                                    {{ item.name }}
+                                </h3>
+                                <div class="flex items-center gap-2 mt-1 text-[10px] text-gray-500 font-semibold italic">
+                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
+                                    <span>{{ (item.updated_at or item.date_added).strftime('%b %d, %Y') }}</span>
+                                </div>
+                            </div>
                         </div>
+                        {% endfor %}
                     </div>
-                </div>
-            </div>
-        {% endfor %}
 
-    </div>
-    <div class="flex justify-end font-semibold text-sm md:text-base">
-        <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
-            <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-            View All Movies
-        </a>
-    </div>
-
-
-</section>
-
-
-<section id="TrendingSeries" class="flex flex-col w-full">
-    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-        <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-        <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
-    </div>
-    <div class="flex flex-col mt-2 gap-1 md:py-2">
-        {% for series in trending_series %}
-            <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28">
-                <!-- Image -->
-                <div class="flex-shrink-0 w-1/3 h-full">
-                     <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
-                        class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
+                    <div class="p-2 border-t border-gray-50">
+                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
+                        class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
+                            View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i>
+                        </a>
                     </div>
-                </div>
-
-                <!-- Title / Text -->
-                <div class="flex flex-col justify-center">
-                    <div class="flex items-center p-2.5 w-full">
-                        <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                            {{ series.name }}
-                        </h3>
-                    </div>
-                    <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                        <div class="flex items-center space-x-1">
-                            <i class="fas fa-calendar-alt"></i>
-                            <p class="truncate"> {{ series.updated_at.strftime('%b %d, %Y') }} </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-                    
-    </div>
-    <div class="flex justify-end font-semibold text-sm md:text-base">
-        <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
-            <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-            View All Series
-        </a>
-    </div>
-
-
-</section>
-
-<section id="Trailers" class="flex flex-col w-full">
-    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-        <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-        <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
-    </div>
-    <div class="flex flex-col mt-2 gap-1 md:py-2">
-        {% for trailer in trending_trailers %}
-            <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                <!-- Image -->
-                <div class="flex-shrink-0 w-1/3 h-full">
-                    <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
-                        class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                    </div>
-                </div>
-
-                <!-- Title / Text -->
-                <div class="flex flex-col justify-center">
-                    <div class="flex items-center p-2.5 w-full">
-                        <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                            {{ trailer.name }}
-                        </h3>
-                    </div>
-                    <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                        <div class="flex items-center space-x-1">
-                            <i class="fas fa-calendar-alt"></i>
-                            <p class="truncate"> {{ trailer.date_added.strftime('%b %d, %Y') }} </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-                    
-    </div>
-    <div class="flex justify-end font-semibold text-sm md:text-base">
-        <a href="{{ url_for('main.trailer') }}" class="viewAll">
-            <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-            View All Trailers
-        </a>
-    </div>
-
-
-</section>
+                </section>
+            {% endfor %}

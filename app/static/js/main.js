@@ -382,78 +382,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentRating = 0;
 
-    // Update stars visually, can handle half stars
-    function updateStars(rating, isUser=false) {
+    function updateStars(rating, isUser = false) {
+        const targetRating = parseFloat(rating);
         stars.forEach(star => {
-            const val = Number(star.dataset.value);
+            const starValue = parseFloat(star.getAttribute('data-value'));
             star.classList.remove('full', 'half');
 
-            if (isUser) {
-                // User clicks: only full stars
-                if (val <= rating) star.classList.add('full');
+            if (isUser || currentRating > 0) {
+                // If there's a user rating, fill all stars up to that point
+                if (starValue <= targetRating) star.classList.add('full');
             } else {
-                // Average rating: support halves
-                if (val <= Math.floor(rating)) {
+                // Average rating logic
+                if (starValue <= Math.floor(targetRating)) {
                     star.classList.add('full');
-                } else if (val - 0.5 <= rating) {
+                } else if (starValue - 0.5 <= targetRating) {
                     star.classList.add('half');
                 }
             }
         });
     }
 
-    function updateRatingUI(data) {
-        if (ratingValueDisplay) {
-            ratingValueDisplay.textContent = `${data.average_rating.toFixed(1)} / 5 (${data.num_votes} votes)`;
-        }
-        if (averageRatingDisplay) {
-            averageRatingDisplay.textContent = data.average_rating.toFixed(1);
-            const votesEl = averageRatingDisplay.nextElementSibling;
-            if (votesEl) votesEl.textContent = `(${data.num_votes} votes)`;
-        }
+    // --- STEP 1: Immediate Load from LocalStorage ---
+    const savedRating = localStorage.getItem(storageKey);
+    if (savedRating) {
+        currentRating = parseFloat(savedRating);
+        updateStars(currentRating, true);
+        if (ratingValueDisplay) ratingValueDisplay.textContent = "Your rating saved";
     }
 
+    // --- STEP 2: Fetch Server Data ---
+    fetch(`/rate/${videoId}`, { method: 'GET' })
+        .then(res => res.json())
+        .then(data => {
+            // Update Numbers
+            if (averageRatingDisplay) averageRatingDisplay.textContent = data.average_rating.toFixed(1);
+            
+            // Only update icons if user HAS NOT rated yet
+            if (!savedRating) {
+                updateStars(data.average_rating, false);
+            }
+        })
+        .catch(err => console.error('Fetch error:', err));
+
+    // --- STEP 3: Click Listeners ---
     stars.forEach(star => {
-        const val = Number(star.dataset.value);
-
-        // Hover preview (user rating)
+        const val = star.getAttribute('data-value');
+        
         star.addEventListener('mouseenter', () => updateStars(val, true));
-        star.addEventListener('mouseleave', () => updateStars(currentRating, true));
+        star.addEventListener('mouseleave', () => updateStars(currentRating || 0, currentRating > 0));
 
-        // Click to set rating
         star.addEventListener('click', () => {
             fetch(`/rate/${videoId}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({rating: val})
+                body: JSON.stringify({rating: parseFloat(val)})
             })
             .then(res => res.json())
             .then(data => {
-                currentRating = val;
-                updateStars(currentRating, true);  // full stars for user
-                updateRatingUI(data);
-
-                // Save user's rating in localStorage
+                currentRating = parseFloat(val);
                 localStorage.setItem(storageKey, val);
-            })
-            .catch(err => console.error('Rating error:', err));
+                updateStars(currentRating, true);
+                if (averageRatingDisplay) averageRatingDisplay.textContent = data.average_rating.toFixed(1);
+            });
         });
     });
-
-    // Initialize stars: localStorage > backend average
-    const savedRating = localStorage.getItem(storageKey);
-
-    fetch(`/rate/${videoId}`, { method: 'GET' })
-        .then(res => res.json())
-        .then(data => {
-            if (savedRating) {
-                currentRating = Number(savedRating);
-                updateStars(currentRating, true);
-            } else {
-                currentRating = 0; // user hasn't rated yet
-                updateStars(data.average_rating, false); // show average with half stars
-            }
-            updateRatingUI(data);
-        })
-        .catch(err => console.error('Fetch rating error:', err));
 });

@@ -3,440 +3,220 @@
 {% block social_tags %}
     <meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
     <meta property="og:description" content="{{ video.description[:150] }}..."> 
-
-    {% if video.image %}
-        <meta property="og:image" content="{{ video.image }}">
-    {% else %}
-        <meta property="og:image" content="https://www.w3schools.com/howto/img_avatar.png">
-    {% endif %}
-
+    <meta property="og:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:type" content="video.movie">
     <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 
 {% block content %}
+<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto px-2 md:px-4 lg:w-[95%] xl:w-[90%] my-4 md:my-8 mt-20 md:mt-24">
+    
+    <section id="MovieDetails" class="flex flex-col lg:w-2/3 xl:w-3/4 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        
+        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-4 md:py-6 shadow-md">
+            <h1 class="font-black text-white text-lg md:text-3xl uppercase tracking-tighter text-center leading-tight">
+                {{ video.name }} {% if video.year_produced %}({{ video.year_produced }}){% endif %}
+            </h1>
+        </div>
 
-
-    <section id="Merger" class="flex flex-col lg:flex-row gap-3 xl:mx-0 my-2">
-        <section id="MovieDetails" class="my-2 lg:my-5 flex flex-col lg:w-5/6">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">{{ video.name }} ({{ video.year_produced }})</h2>
+        <div class="flex flex-wrap items-center justify-center md:justify-between px-4 py-2 md:py-3 bg-gray-50 border-b border-gray-100 text-[10px] md:text-[11px] font-bold text-gray-500 uppercase tracking-widest gap-2 md:gap-4">
+            <div class="flex items-center gap-3 md:gap-4">
+                <span><i class="fa-solid fa-calendar-days text-[#830506] mr-1"></i> {{ video.date_added.strftime('%b %d, %Y') }}</span>
+                <span><i class="fa-solid fa-folder-open text-[#830506] mr-1"></i> {{ video.type }}</span>
+                <span><i class="fa-solid fa-comment text-[#830506] mr-1"></i> {{ num_comment }}</span>
             </div>
-            <div class="text-sm flex-shrink-0 w-full border border-[#830506] flex items-center justify-center gap-1 px-4 py-1 text-center">
-                <span class="text-[#830506] flex text-center justify-center items-center p-1"><i class="fa-solid fas fa-clock pe-4"></i>{{ video.date_added.strftime('%b %d, %Y') }} <i class="fa-solid fa-folder-open pe-5 ps-2"></i>{{ video.type | title }} <i class="fas fa-comment ps-3"></i><p class="ps-3">0</p></span>
-                <span class="bg-[#830506] w-[3px] h-[18px]"></span>
-                <div class="flex text-[8px] lg:text-[12px] p-1 justify-center items-center">
-                    {% set rating = video.rating | float %}
-                        <div class="stars-container">
-                            {% for i in range(1, 6) %}
-                                {% set fraction = rating - (i - 1) %}
-                                {% if fraction >= 1 %}
-                                    <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                {% elif fraction > 0 %}
-                                    <span class="moviestar partial">
-                                        <i class="fas fa-star base" aria-hidden="true"></i>
-                                        <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                        <i class="fas fa-star fill" aria-hidden="true"></i>
-                                        </span>
-                                    </span>
-                                {% else %}
-                                    <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                {% endif %}
-                            {% endfor %}
+            <div class="flex items-center bg-white border border-gray-200 rounded-full px-3 md:px-4 py-1 shadow-sm">
+                <i class="fas fa-star text-yellow-400 mr-2 text-[10px]"></i>
+                <span class="text-[#830506] text-xs md:text-sm">{{ video.rating | round(1) }} / 5</span>
+            </div>
+        </div>
+
+        <div class="p-3 md:p-8">
+            <div class="flex flex-col md:flex-row gap-6 mb-6">
+                <div class="w-full md:w-2/5 lg:w-1/3 flex-shrink-0">
+                    <img src="{{ video.image }}" alt="{{ video.name }}" class="w-full rounded-xl shadow-xl border-2 md:border-4 border-white object-cover aspect-[2/3] max-h-[400px] md:max-h-none mx-auto">
+                </div>
+                <div class="w-full md:w-3/5 lg:w-2/3">
+                    <h2 class="text-[#830506] font-black text-lg md:text-xl uppercase mb-3 border-l-4 border-[#830506] pl-3 italic">Synopsis</h2>
+                    <p class="text-gray-700 leading-relaxed font-medium italic text-base md:text-lg">"{{ video.description }}"</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner mb-8">
+                {% if video.type == 'series' %}
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Current Watch</span> <span class="text-gray-900 font-bold bg-white px-2 py-1 rounded shadow-sm border border-gray-100">S{{ season }} E{{ episode }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Title</span> <span class="text-gray-900 font-bold bg-white px-2 py-1 rounded shadow-sm border border-gray-100">{{ current_episode.name }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Series Status</span> <span class="text-gray-900 font-bold">{% if current_season.completed %} Completed {% else %} Ongoing {% endif %}</span></div>
+                {% endif %}
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Release Date</span> <span class="text-gray-900 font-bold">{{ video.released_date or 'N/A' }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Duration</span> <span class="text-gray-900 font-bold">{% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{{ video.star_cast }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Language / Subtitles</span> <span class="text-gray-900 font-bold">{{ video.language or 'English' }} / {{ video.subtitles or 'None' }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{{ video.source or 'HD' }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
+            </div>
+
+            <div class="w-full rounded-xl md:rounded-3xl overflow-hidden shadow-2xl bg-black aspect-video mb-10 border-2 md:border-4 border-gray-900">
+                {% if video.trailer_url %}
+                    <iframe src="{{ video.trailer_url | safe }}?rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-900">
+                        <h2 class="text-white/20 font-black italic text-2xl md:text-5xl uppercase">No Preview</h2>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="w-full my-6">
+                <p class="text-[8px] text-gray-400 mb-2 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
+                <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
+                    {% include 'ads/banner.html' %}
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-4 mb-12">
+                {% if det == "movie" %}
+                    <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" 
+                       class="w-full md:w-auto group flex items-center justify-center gap-4 px-10 py-4 md:py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl md:rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 download-ad-trigger">
+                        <i class="fas fa-cloud-download-alt text-xl md:text-2xl group-hover:animate-bounce"></i> 
+                        <span class="text-base md:text-lg">Download Full Movie</span>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('main.download_dispatcher', type=video.type, id=current_episode.id, season=season, episode=episode) }}" 
+                       class="w-full md:w-auto group flex items-center justify-center gap-4 px-10 py-4 md:py-5 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl md:rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 text-center download-ad-trigger">
+                        <i class="fas fa-file-download text-xl md:text-2xl"></i>
+                        <span class="text-base md:text-lg">Download S{{season}} E{{episode}}</span>
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if video.type == 'series' %}
+            <div class="mb-12 space-y-8">
+                <div>
+                    <h3 class="text-gray-900 font-black uppercase text-xs md:text-sm mb-3 tracking-widest border-b pb-2 border-gray-100">Select Season</h3>
+                    <div class="grid grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {% for s in seasons %}
+                            <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=s.season_number, episode=episode) }}" 
+                               class="py-3 text-center rounded-lg font-black text-[10px] md:text-xs uppercase border-2 transition-all {% if s.season_number == current_season.season_number %} bg-[#830506] border-[#830506] text-white shadow-lg {% else %} border-gray-100 text-gray-400 hover:border-[#830506] hover:text-[#830506] {% endif %}">
+                                Season {{ s.season_number }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-gray-900 font-black uppercase text-xs md:text-sm mb-3 tracking-widest border-b pb-2 border-gray-100">Select Episode</h3>
+                    <div class="grid grid-cols-4 min-[400px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-1.5 md:gap-2">
+                        {% for ep in current_season.episodes %}
+                            <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=ep.episode_number) }}" 
+                               class="py-2 md:py-3 text-center rounded-lg font-black text-[10px] md:text-xs uppercase border-2 transition-all {% if episode|int == ep.episode_number|int %} border-[#830506] text-[#830506] bg-[#830506]/5 shadow-sm {% else %} border-gray-100 text-gray-400 hover:border-[#830506] hover:text-[#830506] {% endif %}">
+                                {{ ep.episode_number }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div id="ratingContainer" class="bg-[#111111] p-6 md:p-10 rounded-3xl text-center shadow-2xl mb-12">
+                <p class="text-gray-400 font-black uppercase text-[10px] tracking-[0.4em] mb-4">Rate This Video</p>
+                <div id="starRating" data-video-id="{{ video.id }}" class="flex items-center justify-center gap-2 text-3xl md:text-5xl mb-4">
+                    {% for i in range(1,6) %}
+                    <button class="star text-gray-700 hover:text-yellow-400 transition-all duration-300 transform hover:scale-125" data-value="{{ i }}"><i class="fas fa-star"></i></button>
+                    {% endfor %}
+                </div>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 text-white font-bold">
+                    <div class="flex items-center gap-2">
+                        <span id="averageRating" class="text-xl md:text-3xl text-yellow-400">{{ video.rating }}</span>
+                        <span class="text-gray-500">/ 5</span>
+                    </div>
+                    <span class="hidden md:block text-gray-700">|</span>
+                    <span class="text-[10px] md:text-xs uppercase text-gray-400">({{ video.num_votes }} Global Votes)</span>
+                </div>
+                <p id="ratingValue" class="text-[10px] text-[#830506] mt-4 font-black uppercase tracking-widest">Tap stars to vote</p>
+            </div>
+
+            <div id="telegramCta" class="mb-12">
+                <div class="flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl shadow-lg gap-4" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-white/20 p-3 rounded-full"><i class="fa-brands fa-telegram-plane text-white text-2xl"></i></div>
+                        <div class="text-center md:text-left">
+                            <p class="text-white font-black text-sm md:text-base">Join MaxCinema Telegram</p>
+                            <p class="text-white/80 text-[10px] md:text-xs font-bold uppercase italic">Get new release notifications</p>
                         </div>
-                    <p class="text-[#830506] ml-1">{{rating | round(1)}}/5</p>
+                    </div>
+                    <a href="#" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-full hover:bg-gray-100 transition-colors shadow-md text-center text-xs uppercase">Join Now</a>
                 </div>
             </div>
-            
-            <div class="overflow-hidden">
-                <div class="w-full relative mx-auto">
-                    <img 
-                    src="{{ video.image }}"
-                    alt="{{ video.name }} ({{ video.year_produced }})"
-                    class="w-full aspect-[2/2.6] object-cover shadow-lg"
-                    >
+
+            <div class="mt-12">
+                <div class="w-full bg-[#830506] py-3 text-center rounded-t-xl">
+                    <h2 class="font-black text-white uppercase text-xs md:text-sm tracking-widest">Recommended Content</h2>
                 </div>
-                <p class="text-black pt-7">
-                    {{ video.description }}
-                </p>
-                <h3 class="text-black font-bold my-5">{{ video.name }} ({{ video.year_produced }})</h3>
+                <div id="relatedList" class="grid grid-cols-2 min-[450px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 p-3 md:p-4 border-x border-b rounded-b-xl border-gray-100 bg-gray-50/30">
+                    {% for suggest in suggested %}
+                    <a href="{{ url_for('main.detail', det=suggest.type, name=suggest.name, id=suggest.id, season=1 if suggest.type == 'series' else none, episode=1 if suggest.type == 'series' else none) }}" class="group block bg-white rounded-lg md:rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
+                        <div class="relative aspect-[2/2.5] overflow-hidden">
+                            <img src="{{ suggest.image }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <i class="fas fa-play text-white text-2xl"></i>
+                            </div>
+                        </div>
+                        <div class="p-2 md:p-3">
+                            <p class="text-[10px] md:text-xs font-black text-gray-900 line-clamp-1 group-hover:text-[#830506]">{{ suggest.name }}</p>
+                            <p class="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase mt-1">{{ suggest.type }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="w-full my-8">
+                {% include 'ads/banner.html' %}
+            </div>
+
+            <div class="mt-16">
+                <div class="w-full bg-[#830506] text-white font-black p-4 text-center rounded-t-2xl uppercase tracking-tighter text-lg shadow-md">
+                    <i class="fa-solid fa-comments mr-2"></i> {{ num_comment }} Conversation{{ 's' if num_comment != 1 else '' }}
+                </div>
+                <div id="comments-container" class="bg-gray-50/50 p-3 md:p-4 border-x border-gray-100 space-y-4">
+                    {% if comments %}
+                        {% for comment in comments %}
+                            {% include 'comments.html' %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="py-10 text-center">
+                            <p class="text-gray-400 font-black uppercase text-xs tracking-widest italic">Be the first to share your thoughts!</p>
+                        </div>
+                    {% endif %}
+                </div>
                 
-                <div class="flex flex-col text-black gap-7">
-                    {% if video.type == 'series' %}
-                        <div>
-                            <span class="font-bold">
-                                Title:</span> {{ current_episode.name}}
+                <div class="bg-white p-4 md:p-8 rounded-b-2xl border border-gray-100 shadow-xl">
+                    <h4 class="font-black text-gray-900 uppercase text-lg md:text-xl mb-6 tracking-tighter italic border-b-2 border-[#830506] inline-block">Leave a Reply</h4>
+                    <form id="main-comment-form" class="flex flex-col gap-6" data-video-id="{{ video.id }}">
+                        <textarea name="text" placeholder="Write your comment..." class="w-full p-4 md:p-5 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 md:h-40 font-medium text-gray-700"></textarea>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                            <input type="text" name="name" placeholder="Full Name" class="w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
+                            <input type="email" name="email" placeholder="Email Address" class="w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
                         </div>
-                        <div>
-                            <span class="font-bold">
-                                Episode Number:</span> {{ current_episode.episode_number }}
-                        </div>
-                    {% endif %}
-                    <div>
-                        <span class="font-bold">
-                            Genre:</span> 
-                            {% for genre in video.genres %}
-                                {{ genre.name }}{% if not loop.last %}, {% endif %}
-                            {% endfor %}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Stars:</span> {{ video.star_cast }}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Release Date:</span> {% if video.released_date %} {{ video.released_date }} {% else %} None {% endif %}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Country:</span> {% if video.country %} {{ video.country }} {% else %} None {% endif %}
-                    </div>
-                    <div class="flex text-center items-center">
-                        <span class="font-bold">
-                            Ratings:</span> 
-                            <div class="flex text-[8px] lg:text-[12px] p-1 items-center">
-                                {% set rating = video.rating | float %}
-                                <div class="stars-container">
-                                    {% for i in range(1, 6) %}
-                                        {% set fraction = rating - (i - 1) %}
-                                        {% if fraction >= 1 %}
-                                        <span class="moviestar full"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% elif fraction > 0 %}
-                                        <span class="moviestar partial">
-                                            <i class="fas fa-star base" aria-hidden="true"></i>
-                                            <span class="fill-wrap" style="width: {{ (fraction * 100)|round(2) }}%;">
-                                            <i class="fas fa-star fill" aria-hidden="true"></i>
-                                            </span>
-                                        </span>
-                                        {% else %}
-                                        <span class="moviestar"><i class="fas fa-star" aria-hidden="true"></i></span>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                                <p class="text-[#830506] ml-1 text-xl">{{ rating | round(1) }}/5</p>
-                            </div> <span>({{ video.num_votes }} votes)</span>
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Language:</span> {% if video.language %} {{ video.language }} {% else %} None {% endif %}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Subtitles:</span> {% if video.subtitles %} {{ video.subtitles }} {% else %} None {% endif %}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Source:</span> {% if video.source %} {{ video.source }} {% else %} None {% endif %}
-                    </div>
-                    <div>
-                        <span class="font-bold">
-                            Runtime:</span> {% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}
-                    </div>
-                    {% if video.type == 'series' %}
-                        <div>
-                            <span class="font-bold">
-                                Episodes:</span> - {% if current_season.completed%} (Completed) {% else %} (ongoing) {% endif %}
-                        </div>
-                    {% endif %}
-
-                    
-                    <div class="w-full mt-4">
-                        {% if video.trailer_url %}
-                            <div class="aspect-video w-full rounded-lg overflow-hidden shadow-lg">
-                                <iframe src="{{ video.trailer_url | safe }}?rel=0&modestbranding=1&controls=1&showinfo=0" class="w-full h-full" title="{{ video.name }} Trailer" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-
-                                </iframe>
-                            </div>
-                        {% else %}
-                            <div class="aspect-video w-full rounded-lg overflow-hidden shadow-lg flex justify-center items-center bg-gray-600 h-full">
-                                <h2 class="font-bold text-white text-7xl">NO TRAILER</h2>
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="w-full my-6">
-                        <p class="text-xs text-gray-500 mb-1 text-center">SPONSORED</p>
-                        {% include 'ads/banner.html' %}
-                    </div>
-
-                    {% if det == "movie" %}
-                        <div class="flex gap-4 mt-4 font-semibold items-center justify-center">
-                            <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white download-ad-trigger">
-                                <i class="fas fa-download"></i>
-                                Download Now</a>
-                        </div>
-                    {% elif det== "series" %}                        
-                        <div class="flex gap-4 mt-4 font-semibold items-center justify-center">
-                            <a href="{{ url_for('main.download_dispatcher', type=video.type, id=current_episode.id, season=season, episode=episode) }}" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white download-ad-trigger">
-                                <i class="fas fa-download"></i> 
-                                Download</a>
-                        </div>
-                    {% endif %}
-
-                    {% if det == "series" %}
-                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
-                            {% for season in seasons %}
-                                <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season.season_number, episode=episode) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center rounded-lg transition {% if season == current_season %}bg-red-600 hover:text-white hover:bg-red-700 text-white {% else %} border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700  {%endif%}">
-                                    <span>Season {{ season.season_number }}</span>
-                                    <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
-                                </a>  
-                            {% endfor %}                          
-                        </div>
-                        
-                        <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1 lg:gap-2 mt-4 font-semibold items-center justify-center">
-                            {% for episodes in current_season.episodes %}
-                                <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=episodes.episode_number) }}" class="flex items-center justify-center w-full px-2 lg:px-3 py-3 text-center transition rounded-lg {% if episode == episodes.episode_number %}border-2 border-red-700 text-red-700 hover:text-white hover:bg-red-700 {% else %}  bg-red-600 hover:text-white hover:bg-red-700 text-white {%endif%}">
-                                    <span>Episode {{ episodes.episode_number }}</span>
-                                    <i class="fa-solid fa-arrow-right text-sm p-0"></i>    
-                                </a>
-                            {% endfor %}
-                                                    
-                        </div>
-                    {% endif %}
-
-                    <!-- Rating UI -->
-                    <div id="ratingContainer" class="mt-4 flex flex-col w-full justify-center items-center border border-[#830506] gap-2">
-                        <p class="font-semibold">What would you rate this?</p>
-                        <div id="starRating" data-video-id="{{ video.id }}" class="flex items-center gap-2 text-4xl" role="radiogroup" aria-label="Rate this movie">
-                            {% for i in range(1,6) %}
-                            <button class="star p-1 text-gray-300 hover:text-yellow-400" data-value="{{ i }}" aria-label="{{ i }} star" role="radio" aria-checked="false"><i class="fas fa-star"></i></button>
-                            {% endfor %}
-                            <span id="ratingValue" class="ml-3 text-sm text-black text-center">Not rated</span>
-                        </div>
-
-                        <!-- Show average rating and breakdown -->
-                        <p>Average Rating: <span id="averageRating">{{ video.rating }}</span> ({{ video.num_votes }} votes)</p>
-                    </div>
-
-                    <!-- Telegram CTA box -->
-                    <div id="telegramCta" class="mt-4">
-                        <div class="flex items-center justify-between p-4 rounded-lg shadow-md" style="background-color:#0088cc;">
-                            <div class="flex items-center gap-3">
-                                <i class="fa-brands fa-telegram-plane text-white text-2xl" aria-hidden="true"></i>
-                                <div>
-                                    <p class="text-white font-semibold">Join our Telegram group</p>
-                                    <p class="text-white text-sm opacity-90">Get updates, trailers and new releases</p>
-                                </div>
-                            </div>
-                            <a href="#" id="telegramJoinBtn" class="inline-block bg-white text-[#0088cc] font-semibold px-4 py-2 rounded-md hover:opacity-95">JOIN OUR TELEGRAM GROUP</a>
-                        </div>
-                    </div>
-
-                    <!-- Related Movies / You may like -->
-                    <section id="relatedMovies" class="mt-6 w-full">
-                        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                            <h2 class="font-bold text-white text-[100%] md:text-[110%]">You may Also like</h2>
-                        </div>
-                        <!-- responsive grid: 2 cols xs, up to 6 cols on large screens -->
-                        <div id="relatedList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-3">
-                            <!-- Six static placeholder cards. JS will update .card-img and .card-title. -->
-                            {% if det == "movie" %}
-                                {% for suggest in suggested %}
-                                    <a href="{{url_for('main.detail', det=suggest.type, name=suggest.name, id=suggest.id)}}" class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1 related-card">
-                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
-                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
-                                        </div>
-                                    
-                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
-                                    </a>
-                                {% endfor %}
-                            {% else %}                            
-                                {% for suggest in suggested %}
-                                    <a href='{{ url_for("main.detail", det=suggest.type, name=suggest.name, id=suggest.id, season="1", episode="1") }}' class="related-card block rounded overflow-hidden shadow-sm bg-white hover:shadow-lg transition-transform transform hover:-translate-y-1">
-                                        <div class="card-img w-full aspect-[2/2.3] bg-center bg-cover flex items-center justify-center" style="background-color:#e5e7eb; background-image: url(' {{ suggest.image }} ');">
-                                            <div class="no-data text-gray-400 text-xs hidden">No data</div>
-                                        </div>
-                                    
-                                        <div class="card-title p-2 text-sm font-semibold text-black line-clamp-2">{{ suggest.name }}</div>
-                                    </a>
-                                {% endfor %}
-                            {% endif %}
-                            
-                        </div>
-                    </section>
-
-                    <section class="w-full">
-                        <div class="w-full bg-[#830506] text-white font-medium p-3 text-center">{{ num_comment }} COMMENT{{ 'S' if num_comment != 1 else '' }}</div>
-                        <div id="comments-container" class="bg-gray-100 px-2">
-                            {% if comments %}
-                                {% for comment in comments %}
-                                    {% include 'comments.html' %}
-                                {% endfor %}
-                            {% else %}
-                                <h2 class="text-black font-bold">No Comments here</h2>
-                            {% endif %}
-                        </div>
-                        <span class="font-bold"><p class="pt-3 text-2xl">Leave a Reply</p></span>
-                        <div id="comment-notification">Comment posted!</div>
-
-                        <form id="main-comment-form" class="mt-4 flex flex-col gap-5", data-video-id="{{ video.id }}">
-                            <div>
-                                <legend>Comment</legend>
-                                <textarea name="text" id="" class="w-full bg-gray-200 rounded-md h-[20vh] p-2"></textarea>
-                            </div>
-                            <div>
-                                <legend class="required">Name</legend>
-                                <input type="text" name="name" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                            </div>
-                            <div>
-                                <legend class="required">Email</legend>
-                                <input type="email" name="email" class="w-full bg-gray-200 rounded-md h-[7vh] p-2" required>
-                            </div>
-                            <button type="submit" class="py-2 w-40 bg-red-600 rounded-lg hover:bg-red-700 hover:text-white transition text-white">POST COMMENT</button>
-                        </form>
-                    </section>
+                        <button type="submit" class="w-full md:w-fit px-12 py-4 bg-[#830506] text-white font-black uppercase rounded-full hover:bg-black transition-all shadow-lg self-end flex items-center justify-center gap-2">
+                            Post <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
-        </section>
-
-
-        <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
-            <div class="md:hidden lg:flex w-full">
-                {% include 'ads/sidebar.html' %}
-            </div>
-            <div class="hidden md:flex lg:hidden">
-                <div class="w-full">
-                    {% include 'ads/sidebar.html' %}
-                </div>
-                <div class="w-full">
-                    {% include 'ads/sidebar.html' %}
-                </div>
-            </div>
-            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for movie in trending_movie %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det=movie.type, name=movie.name, id=movie.id) }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ movie.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex flex-col justify-center">
-                                <div class="flex items-center p-2.5 w-full">
-                                    <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                        {{ movie.name }}
-                                    </h3>
-                                </div>
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate"> {{ movie.updated_at.strftime('%b %d, %Y') }} </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Movies
-                    </a>
-                </div>
-
-
-            </section>
-
-
-            <section id="TrendingSeries" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for series in trending_series %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det=series.type, name=series.name, id=series.id, season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ series.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            
-                            <div class="flex flex-col justify-center">
-                                <div class="flex items-center p-2.5 w-full">
-                                    <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                        {{ series.name }}
-                                    </h3>
-                                </div>
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate"> {{ series.updated_at.strftime('%b %d, %Y') }} </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Series
-                    </a>
-                </div>
-
-
-            </section>
-
-            <section id="Trailers" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for trailer in trending_trailers %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-[200px] lg:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}'">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('{{ trailer.image }}'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex flex-col justify-center">
-                                <div class="flex items-center p-2.5 w-full">
-                                    <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                        {{ trailer.name }}
-                                    </h3>
-                                </div>
-                                <div id="recentBoxinfo" class="flex justify-between px-2 py-1 text-[#830506] text-sm">
-                                    <div class="flex items-center space-x-1">
-                                        <i class="fas fa-calendar-alt"></i>
-                                        <p class="truncate"> {{ trailer.date_added.strftime('%b %d, %Y') }} </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Trailers
-                    </a>
-                </div>
-
-
-            </section>
-        </section>
+        </div>
     </section>
 
+    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 xl:w-1/4 gap-8">
+        <div class="sticky top-24 space-y-8">
+            <div class="w-full bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-[8px] text-gray-300 mb-1 font-black text-center uppercase">ADVERTISEMENT</p>
+                {% include 'ads/sidebar.html' %}
+            </div>
+            {% include "sidebar_trending.html" %}
+            <div class="w-full">{% include 'ads/sidebar.html' %}</div>
+        </div>
+    </aside>
+</section>
 {% endblock %}

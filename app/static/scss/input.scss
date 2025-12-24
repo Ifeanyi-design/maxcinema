@@ -553,3 +553,27 @@ iframe {
     max-width: 100%;
     display: block;
 }
+
+
+
+/* Ensure icons have a smooth transition */
+.star i {
+    transition: color 0.2s ease-in-out;
+}
+
+/* This forces every star with the 'full' class to be yellow, no matter what */
+#starRating .star.full i {
+    color: #fbbf24 !important; 
+}
+
+/* This handles the half stars for the average rating */
+#starRating .star.half i {
+    background: linear-gradient(90deg, #fbbf24 50%, #d1d5db 50%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+/* Optional: This makes the stars grow slightly when they are 'full' */
+.star.full {
+    transform: scale(1.1);
+}
