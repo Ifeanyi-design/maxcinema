@@ -280,7 +280,7 @@ def genre(genre_type, page=1):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     
-    return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers,g=True)
+    return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, is_genre=True)
 
 @main_bp.route("/<det>/<name>/<int:id>")
 @main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
