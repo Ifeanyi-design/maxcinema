@@ -721,6 +721,7 @@ def navbar(nav, page=1):
     dark = False
     videos = ""
     per_page = 24
+    recent_requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).limit(10).all()
     series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
@@ -768,7 +769,8 @@ def navbar(nav, page=1):
     if nav == "all_series":
         videos = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
     
-    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers)
+    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers,
+recent_requests=recent_requests)
 
 
 @main_bp.route('/rate/<int:video_id>', methods=['POST'])
