@@ -1,53 +1,53 @@
-    {% if index == True %}
-        {% if videos.has_prev %}
-            <a href="{{ url_for('main.index', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-left"></i>
+{% if index == True %}
+    {% if videos.has_prev %}
+        <a href="{{ url_for('main.index', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-left"></i>
+        </a>
+    {% endif %}
+
+    {% if videos.pages <= 6 %}
+        {% for p in range(1, videos.pages + 1) %}
+            <a href="{{ url_for('main.index', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                {{p}}
             </a>
+        {% endfor %}
+    {% else %}
+        <a href="{{ url_for('main.index', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            1
+        </a>
+
+        {% if videos.page > 3 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
         {% endif %}
 
-        {% if videos.pages <= 6 %}
-            {% for p in range(1, videos.pages + 1) %}
-                <a href="{{ url_for('main.index', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+        {% for p in range(videos.page-1, videos.page+2) %}
+            {% if 1 < p < videos.pages %}
+                <a href="{{ url_for('main.index', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
                     {{p}}
                 </a>
-            {%endfor%}
-        {% else %}
-            <a href="{{ url_for('main.index', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                1
-            </a>
-
-            {% if videos.page > 3 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
             {% endif %}
+        {% endfor %}
 
-            {% for p in range(videos.page-1, videos.page+2) %}
-                {% if 1 < p < videos.pages %}
-                    <a href="{{ url_for('main.index', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                        {{p}}
-                    </a>
-                {% endif %}
-            {% endfor %}
-
-            {% if videos.page < videos.pages -2 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            <a href="{{ url_for('main.index', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                {{ videos.pages }}
-            </a>
-        {% endif %}                
-
-        {% if videos.has_next %}
-            <a href="{{ url_for('main.index', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-right"></i>
-            </a>
+        {% if videos.page < videos.pages -2 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
         {% endif %}
 
-    {% elif is_genre == True %}
+        <a href="{{ url_for('main.index', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            {{ videos.pages }}
+        </a>
+    {% endif %}                
+
+    {% if videos.has_next %}
+        <a href="{{ url_for('main.index', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+
+{% elif is_genre == True %}
     {% if videos.has_prev %}
         <a href="{{ url_for('main.genre', genre_type=genre_type, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
             <i class="fa-solid fas fa-angle-double-left"></i>
@@ -95,199 +95,198 @@
             <i class="fa-solid fas fa-angle-double-right"></i>
         </a>
     {% endif %}
-{% endif %}
 
-    {% elif trailers == True %}
-        {% if videos.has_prev %}
-            <a href="{{ url_for('main.trailer', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-left"></i>
-            </a>
-        {% endif %}
-
-        {% if videos.pages <= 6 %}
-            {% for p in range(1, videos.pages + 1) %}
-                <a href="{{ url_for('main.trailer', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                    {{p}}
-                </a>
-            {%endfor%}
-        {% else %}
-            <a href="{{ url_for('main.trailer', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                1
-            </a>
-
-            {% if videos.page > 3 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            {% for p in range(videos.page-1, videos.page+2) %}
-                {% if 1 < p < videos.pages %}
-                    <a href="{{ url_for('main.trailer', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                        {{p}}
-                    </a>
-                {% endif %}
-            {% endfor %}
-
-            {% if videos.page < videos.pages -2 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            <a href="{{ url_for('main.trailer', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                {{ videos.pages }}
-            </a>
-        {% endif %}                
-
-        {% if videos.has_next %}
-            <a href="{{ url_for('main.trailer', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-right"></i>
-            </a>
-        {% endif %}
-
-    {% elif searches == True %}
-        {% if videos.has_prev %}
-            <a href="{{ url_for('main.search_result', search=query, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-left"></i>
-            </a>
-        {% endif %}
-
-        {% if videos.pages <= 6 %}
-            {% for p in range(1, videos.pages + 1) %}
-                <a href="{{ url_for('main.search_result', search=query, page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                    {{p}}
-                </a>
-            {%endfor%}
-        {% else %}
-            <a href="{{ url_for('main.search_result', search=query, page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                1
-            </a>
-
-            {% if videos.page > 3 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            {% for p in range(videos.page-1, videos.page+2) %}
-                {% if 1 < p < videos.pages %}
-                    <a href="{{ url_for('main.search_result', search=query, page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                        {{p}}
-                    </a>
-                {% endif %}
-            {% endfor %}
-
-            {% if videos.page < videos.pages -2 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            <a href="{{ url_for('main.search_result', search=query, page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                {{ videos.pages }}
-            </a>
-        {% endif %}                
-
-        {% if videos.has_next %}
-            <a href="{{ url_for('main.search_result', search=query, page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-right"></i>
-            </a>
-        {% endif %}
-    {% elif feature == True %}
-            {% if videos.has_prev %}
-            <a href="{{ url_for('main.featured', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-left"></i>
-            </a>
-        {% endif %}
-
-        {% if videos.pages <= 6 %}
-            {% for p in range(1, videos.pages + 1) %}
-                <a href="{{ url_for('main.featured', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                    {{p}}
-                </a>
-            {%endfor%}
-        {% else %}
-            <a href="{{ url_for('main.featured', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                1
-            </a>
-
-            {% if videos.page > 3 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            {% for p in range(videos.page-1, videos.page+2) %}
-                {% if 1 < p < videos.pages %}
-                    <a href="{{ url_for('main.featured', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                        {{p}}
-                    </a>
-                {% endif %}
-            {% endfor %}
-
-            {% if videos.page < videos.pages -2 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            <a href="{{ url_for('main.featured', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                {{ videos.pages }}
-            </a>
-        {% endif %}                
-
-        {% if videos.has_next %}
-            <a href="{{ url_for('main.featured', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-right"></i>
-            </a>
-        {% endif %}
-    {% else %}
-        {% if videos.has_prev %}
-            <a href="{{ url_for('main.navbar', nav=nav, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-left"></i>
-            </a>
-        {% endif %}
-
-        {% if videos.pages <= 6 %}
-            {% for p in range(1, videos.pages + 1) %}
-                <a href="{{ url_for('main.navbar', nav=nav, page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                    {{p}}
-                </a>
-            {%endfor%}
-        {% else %}
-            <a href="{{ url_for('main.navbar', nav=nav, page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                1
-            </a>
-
-            {% if videos.page > 3 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            {% for p in range(videos.page-1, videos.page+2) %}
-                {% if 1 < p < videos.pages %}
-                    <a href="{{ url_for('main.navbar', nav=nav, page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                        {{p}}
-                    </a>
-                {% endif %}
-            {% endfor %}
-
-            {% if videos.page < videos.pages -2 %}
-                <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                    ...
-                </span>
-            {% endif %}
-
-            <a href="{{ url_for('main.navbar', nav=nav, page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
-                {{ videos.pages }}
-            </a>
-        {% endif %}      
-        
-        {% if videos.has_next %}
-            <a href="{{ url_for('main.navbar', nav=nav, page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
-                <i class="fa-solid fas fa-angle-double-right"></i>
-            </a>
-        {% endif %}
+{% elif trailers == True %}
+    {% if videos.has_prev %}
+        <a href="{{ url_for('main.trailer', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-left"></i>
+        </a>
     {% endif %}
+
+    {% if videos.pages <= 6 %}
+        {% for p in range(1, videos.pages + 1) %}
+            <a href="{{ url_for('main.trailer', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                {{p}}
+            </a>
+        {%endfor%}
+    {% else %}
+        <a href="{{ url_for('main.trailer', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            1
+        </a>
+
+        {% if videos.page > 3 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        {% for p in range(videos.page-1, videos.page+2) %}
+            {% if 1 < p < videos.pages %}
+                <a href="{{ url_for('main.trailer', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                    {{p}}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if videos.page < videos.pages -2 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        <a href="{{ url_for('main.trailer', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            {{ videos.pages }}
+        </a>
+    {% endif %}                
+
+    {% if videos.has_next %}
+        <a href="{{ url_for('main.trailer', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+
+{% elif searches == True %}
+    {% if videos.has_prev %}
+        <a href="{{ url_for('main.search_result', search=query, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-left"></i>
+        </a>
+    {% endif %}
+
+    {% if videos.pages <= 6 %}
+        {% for p in range(1, videos.pages + 1) %}
+            <a href="{{ url_for('main.search_result', search=query, page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                {{p}}
+            </a>
+        {%endfor%}
+    {% else %}
+        <a href="{{ url_for('main.search_result', search=query, page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            1
+        </a>
+
+        {% if videos.page > 3 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        {% for p in range(videos.page-1, videos.page+2) %}
+            {% if 1 < p < videos.pages %}
+                <a href="{{ url_for('main.search_result', search=query, page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                    {{p}}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if videos.page < videos.pages -2 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        <a href="{{ url_for('main.search_result', search=query, page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            {{ videos.pages }}
+        </a>
+    {% endif %}                
+
+    {% if videos.has_next %}
+        <a href="{{ url_for('main.search_result', search=query, page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+{% elif feature == True %}
+    {% if videos.has_prev %}
+        <a href="{{ url_for('main.featured', page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-left"></i>
+        </a>
+    {% endif %}
+
+    {% if videos.pages <= 6 %}
+        {% for p in range(1, videos.pages + 1) %}
+            <a href="{{ url_for('main.featured', page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                {{p}}
+            </a>
+        {%endfor%}
+    {% else %}
+        <a href="{{ url_for('main.featured', page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            1
+        </a>
+
+        {% if videos.page > 3 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        {% for p in range(videos.page-1, videos.page+2) %}
+            {% if 1 < p < videos.pages %}
+                <a href="{{ url_for('main.featured', page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                    {{p}}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if videos.page < videos.pages -2 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        <a href="{{ url_for('main.featured', page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            {{ videos.pages }}
+        </a>
+    {% endif %}                
+
+    {% if videos.has_next %}
+        <a href="{{ url_for('main.featured', page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+{% else %}
+    {% if videos.has_prev %}
+        <a href="{{ url_for('main.navbar', nav=nav, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-left"></i>
+        </a>
+    {% endif %}
+
+    {% if videos.pages <= 6 %}
+        {% for p in range(1, videos.pages + 1) %}
+            <a href="{{ url_for('main.navbar', nav=nav, page=p) }}" class="text-black text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                {{p}}
+            </a>
+        {%endfor%}
+    {% else %}
+        <a href="{{ url_for('main.navbar', nav=nav, page=1) }}" class="text-center {% if videos.page == 1 %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            1
+        </a>
+
+        {% if videos.page > 3 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        {% for p in range(videos.page-1, videos.page+2) %}
+            {% if 1 < p < videos.pages %}
+                <a href="{{ url_for('main.navbar', nav=nav, page=p) }}" class="text-center {% if videos.page == p %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+                    {{p}}
+                </a>
+            {% endif %}
+        {% endfor %}
+
+        {% if videos.page < videos.pages -2 %}
+            <span class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+                ...
+            </span>
+        {% endif %}
+
+        <a href="{{ url_for('main.navbar', nav=nav, page=videos.pages) }}" class="text-center border rounded-sm transition duration-300 ease-in-out {% if videos.page == videos.pages %}border-red-700 text-white hover:text-white bg-gradient-to-r from-red-500 to-pink-500 opacity-90 border transition duration-300 ease-in-out rounded-s{% else %}text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90{% endif %} py-2 px-4 md:py-3 md:px-5">
+            {{ videos.pages }}
+        </a>
+    {% endif %}      
+
+    {% if videos.has_next %}
+        <a href="{{ url_for('main.navbar', nav=nav, page=videos.next_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
+            <i class="fa-solid fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
+{% endif %}
