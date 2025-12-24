@@ -47,7 +47,7 @@
             </a>
         {% endif %}
 
-    {% elif genre %}
+    {% elif g == True %}
     {% if videos.has_prev %}
         <a href="{{ url_for('main.genre', genre_type=genre_type, page=videos.prev_num) }}" class="text-center text-black border transition duration-300 ease-in-out border-red-700 rounded-sm hover:text-white bg-red-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:opacity-90 py-2 px-4 md:py-3 md:px-5">
             <i class="fa-solid fas fa-angle-double-left"></i>
