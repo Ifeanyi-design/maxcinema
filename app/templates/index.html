@@ -32,7 +32,7 @@
         <div id="featurecontain" class="flex overflow-x-auto gap-4 md:gap-6 w-full scroll-smooth snap-x scrollbar-hide pb-2">
             {% for featured in features %}
                 <a href="{{url_for('main.detail', det=featured.type, name=featured.name, id=featured.id)}}" 
-                   class="relative group flex flex-col flex-none w-[150px] md:w-[200px] snap-start overflow-hidden bg-white rounded-xl hover:-translate-y-1 transition-transform duration-300">
+                   class="download-ad-trigger relative group flex flex-col flex-none w-[150px] md:w-[200px] snap-start overflow-hidden bg-white rounded-xl hover:-translate-y-1 transition-transform duration-300">
                     
                     <div class="absolute top-2 left-2 z-40 bg-white/90 backdrop-blur-md text-gray-900 border border-gray-200 rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm">
                         <i class="fas fa-star text-yellow-500 text-[10px]"></i>
