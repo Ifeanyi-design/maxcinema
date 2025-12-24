@@ -53,6 +53,27 @@
             </div>
         </div>
     </div>
+
+
+    <div id="cookie-banner" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md bg-white border-l-4 border-[#830506] shadow-2xl p-5 rounded-r-xl z-[9999] transition-all duration-500 ease-in-out transform translate-y-[200%]">
+    <div class="flex items-start gap-4">
+        <div class="flex-grow">
+            <h4 class="text-gray-900 font-black uppercase text-xs tracking-widest mb-1 text-left">Cookie Policy</h4>
+            <p class="text-gray-500 text-[11px] md:text-xs leading-relaxed text-left">
+                We use cookies to enhance your experience. By continuing to visit MaxCinema, you agree to our   
+                <a href="{{ url_for('main.privacy') }}" class="text-[#830506] underline font-bold">Privacy Policy</a>.
+            </p>
+            <div class="mt-4 flex gap-3">
+                <button id="accept-cookies" class="bg-[#830506] text-white text-[10px] font-black uppercase px-6 py-2 rounded-full hover:bg-black transition-all cursor-pointer">
+                    Accept
+                </button>
+                <button id="close-banner" class="text-gray-400 hover:text-gray-600 text-[10px] font-black uppercase cursor-pointer">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+  </div>
     
 
 </footer>
