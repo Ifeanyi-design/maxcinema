@@ -17,6 +17,5 @@ RUN chmod -R 777 /code
 # Tell Hugging Face we are listening on 7860
 EXPOSE 7860
 
-# Start Gunicorn on Port 7860 (The HF Standard)
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "run:app"]
-# Use
+# Start Gunicorn on Port 7860 with a 10-minute timeout
+CMD ["gunicorn", "-b", "0.0.0.0:7860", "--timeout", "600", "run:app"]
