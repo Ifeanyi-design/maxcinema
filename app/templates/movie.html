@@ -81,15 +81,26 @@
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
             </div>
 
-            {% if video.trailer_url or (video.type == 'series' and current_season and current_season.trailer_url) %}
-        <div class="mb-10">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
-            <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video">
-                <iframe src="{% if video.type == 'series' and current_season and current_season.trailer_url %}{{current_season.trailer_url | safe or video.trailer_url | safe}}{% else %}{{ video.trailer_url | safe }}{%endif%}?rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-            </div>
-        </div>
-        {% endif %}
+            {% set trailer_src = video.trailer_url %}
+            {% if video.type == 'series' and current_season and current_season.trailer_url %}
+                {% set trailer_src = current_season.trailer_url %}
+            {% endif %}
 
+            {% if trailer_src %}
+            <div class="mb-10">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
+                <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video relative group">
+                    <iframe 
+                        src="{{ trailer_src.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') | safe }}?rel=0&modestbranding=1" 
+                        class="w-full h-full" 
+                        frameborder="0" 
+                        allowfullscreen
+                        loading="lazy" 
+                        title="Trailer">
+                    </iframe>
+                </div>
+            </div>
+            {% endif %}
             <div class="w-full my-6">
                 <p class="text-[8px] text-gray-400 mb-2 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
