@@ -75,17 +75,17 @@
                 {% endif %}
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Release Date</span> <span class="text-gray-900 font-bold">{%  if current_episode.released_date and video.type == "series"%}{{current_episode.released_date or 'N/A'}}{% else %}{{ video.released_date or 'N/A' }} {% endif %}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Duration</span> <span class="text-gray-900 font-bold">{% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{{ video.star_cast }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{% if current_season.cast and video.type == "series"%}{{ current_season.cast or video.star_cast}}{%else%}{{ video.star_cast }}{%endif%}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Language / Subtitles</span> <span class="text-gray-900 font-bold">{{ video.language or 'English' }} / {{ video.subtitles or 'None' }}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{{ video.source or 'HD' }}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
             </div>
 
-            {% if video.trailer_url %}
+            {% if video.trailer_url or current_season.trailer_url%}
         <div class="mb-10">
             <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
             <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video">
-                <iframe src="{{ video.trailer_url | safe }}?rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                <iframe src="{% if current_season.trailer_url and video.type = "series"%}{{current_season.trailer_url | safe or video.trailer_url | safe}}{% else %}{{ video.trailer_url | safe }}{%endif%}?rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
             </div>
         </div>
         {% endif %}
