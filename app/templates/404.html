@@ -40,20 +40,23 @@
 
                     <div class="mt-10 w-full max-w-md">
                         <p class="text-gray-500 text-sm mb-2 uppercase tracking-widest font-semibold">Try searching instead</p>
-                        <form action="{{ url_for('main.search_result') }}" method="get" class="relative">
+                        
+                        <form action="{{ url_for('main.search_result') }}" method="get" class="relative" id="desktopSearch" autocomplete="off">
                             <input id="SearchInput" type="text" name="search" placeholder="Search for movies..." 
-                                   class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600" method="GET" onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')">
+                                   class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600"
+                                   onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')">
+                            
                             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
 
-                            <div id="desktopSuggestions" class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-xl rounded-b-md z-50 hidden max-h-[60vh] overflow-y-auto">
-                            </div>
+                            <div id="desktopSuggestions" class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 shadow-xl rounded-md z-50 hidden max-h-[60vh] overflow-y-auto text-left">
+                                </div>
                         </form>
                     </div>
 
                 </div>
             </div>
 
-            </section>
+        </section>
 
         <section id="TrendingCol" class="hidden lg:flex flex-col w-full lg:w-1/4 gap-6">
             {% include "sidebar_trending.html" %}
@@ -61,5 +64,73 @@
 
     </section>
 </div>
+
+<script>
+    let searchTimeout = null;
+
+    function fetchSuggestions(inputId, resultBoxId) {
+        const input = document.getElementById(inputId);
+        const box = document.getElementById(resultBoxId);
+        const query = input.value.trim();
+
+        // 1. Clear timer (debouncing)
+        clearTimeout(searchTimeout);
+
+        // 2. If empty, hide box
+        if (query.length < 2) {
+            box.innerHTML = "";
+            box.classList.add('hidden');
+            return;
+        }
+
+        // 3. Wait 300ms then fetch
+        searchTimeout = setTimeout(() => {
+            fetch(`/live_search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    box.innerHTML = ""; // Clear old results
+
+                    if (data.length > 0) {
+                        box.classList.remove('hidden'); // Show box
+
+                        data.forEach(movie => {
+                            // Create the link container
+                            const link = document.createElement('a');
+                            link.href = movie.url;
+                            link.className = "flex items-center p-3 hover:bg-gray-100 border-b border-gray-100 transition duration-150";
+
+                            // Inject HTML (Image + Title + Year)
+                            // Note: Added fallback icon if image is missing
+                            let imgHtml = movie.image 
+                                ? `<img src="${movie.image}" alt="${movie.name}" class="w-10 h-14 object-cover rounded shadow-sm mr-3">`
+                                : `<div class="w-10 h-14 bg-gray-200 rounded flex items-center justify-center mr-3"><i class="fa-solid fa-film text-gray-400"></i></div>`;
+
+                            link.innerHTML = `
+                                ${imgHtml}
+                                <div class="flex flex-col text-left">
+                                    <span class="text-sm font-bold text-gray-800 leading-tight line-clamp-1">${movie.name}</span>
+                                    <span class="text-xs text-gray-500 mt-1">${movie.year}</span>
+                                </div>
+                            `;
+                            box.appendChild(link);
+                        });
+                    } else {
+                        box.classList.add('hidden'); // Hide if no matches
+                    }
+                })
+                .catch(err => console.error("Live Search Error:", err));
+        }, 300);
+    }
+
+    // Close search box when clicking outside
+    document.addEventListener('click', function(e) {
+        const desktopBox = document.getElementById('desktopSuggestions');
+        
+        // If click is NOT inside desktop search form, hide results
+        if (document.getElementById('desktopSearch') && !document.getElementById('desktopSearch').contains(e.target)) {
+            if(desktopBox) desktopBox.classList.add('hidden');
+        }
+    });
+</script>
 
 {% endblock %}
