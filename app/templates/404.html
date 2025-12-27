@@ -8,7 +8,7 @@
         
         <section id="ErrorContent" class="w-full lg:w-3/4 flex flex-col gap-5">
             
-            <div class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl relative">
+            <div class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl relative" style="overflow: visible;">
                 
                 <div class="w-full bg-gradient-to-r from-[#830506] to-[#500202] px-6 py-4 flex items-center gap-3 shadow-md">
                     <i class="fa-solid fa-triangle-exclamation text-white text-2xl animate-pulse"></i>
@@ -48,7 +48,8 @@
                             
                             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
 
-                            <div id="desktopSuggestions" class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 shadow-xl rounded-md z-50 hidden max-h-[60vh] overflow-y-auto text-left">
+                            <div id="desktopSuggestions" class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 shadow-xl rounded-md hidden text-left" style="z-index: 9999; max-height: 60vh; overflow-y: auto;">
+
                                 </div>
                         </form>
                     </div>
