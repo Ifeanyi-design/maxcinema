@@ -1222,3 +1222,19 @@ def ping():
         
 
     # app.run(debug=True, host="0.0.0.0", port=5000)
+
+
+
+# In main/views.py (At the very bottom)
+
+from flask import abort
+
+# 1. Force a 500 Error (Crash Test)
+@main_bp.route('/test-500')
+def test_500():
+    abort(500)
+
+# 2. Force a 403 Error (Forbidden Test)
+@main_bp.route('/test-403')
+def test_403():
+    abort(403)
