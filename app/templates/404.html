@@ -41,15 +41,15 @@
                     <div class="mt-10 w-full max-w-md">
                         <p class="text-gray-500 text-sm mb-2 uppercase tracking-widest font-semibold">Try searching instead</p>
                         
-                        <form action="{{ url_for('main.search_result') }}" method="get" class="relative" id="desktopSearch" autocomplete="off">
+                        <form action="{{ url_for('main.search_result') }}" method="get" class="relative" id="ErrorSearchForm" autocomplete="off">
                             
-                            <input id="SearchInput" type="text" name="search" placeholder="Search for movies..." 
+                            <input id="ErrorSearchInput" type="text" name="search" placeholder="Search for movies..." 
                                    class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600"
-                                   onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')">
+                                   onkeyup="fetchSuggestions('ErrorSearchInput', 'ErrorSuggestions')">
                             
                             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
 
-                            <div id="desktopSuggestions" class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 shadow-xl rounded-md hidden text-left" 
+                            <div id="ErrorSuggestions" class="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200 shadow-xl rounded-md hidden text-left" 
                                  style="z-index: 9999; max-height: 60vh; overflow-y: auto;">
                                 </div>
                         </form>
@@ -66,5 +66,17 @@
 
     </section>
 </div>
+
+<script>
+    document.addEventListener('click', function(e) {
+        const errorBox = document.getElementById('ErrorSuggestions');
+        const errorInput = document.getElementById('ErrorSearchInput');
+        
+        // If click is outside the Error Search Input and Box, hide it
+        if (errorBox && errorInput && !errorInput.contains(e.target) && !errorBox.contains(e.target)) {
+            errorBox.classList.add('hidden');
+        }
+    });
+</script>
 
 {% endblock %}
