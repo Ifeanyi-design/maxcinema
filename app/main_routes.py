@@ -148,16 +148,16 @@ safe_populate = safe_populate_bulk
 @main_bp.route('/<int:page>')
 def index(page=1):
     per_page = 24
-    features = AllVideo.query.filter_by(featured=True).order_by(AllVideo.updated_at.desc()).limit(8).all()
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.updated_at.desc()).limit(8).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    top_rated_movies = AllVideo.query.filter(AllVideo.num_votes > 0)\
+    top_rated_movies = AllVideo.query.filter(AllVideo.num_votes > 0, AllVideo.active == True)\
                                   .order_by(desc(AllVideo.rating))\
                                   .limit(10).all()
 
-    data = AllVideo.query.order_by(func.random()).limit(24).all()
-    videos = AllVideo.query.order_by(AllVideo.date_added.desc()).all()
+    data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
+    videos = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).all()
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
                                        .paginate(page=page, per_page=per_page, error_out=False)
@@ -204,10 +204,10 @@ def index(page=1):
 def featured(page=1):
     per_page = 24
     feature = True
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    featured_videos = AllVideo.query.filter_by(featured=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    featured_videos = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
     return render_template("featured.html", trending_series=series_trend, trending_movie=movie_trend, videos=featured_videos, feature=feature, trending_trailers=trending_trailers)
 
 @main_bp.route("/search_result")
@@ -241,22 +241,22 @@ def search_result(page=1):
 
 @main_bp.route("/contact_us")
 def contact_us():
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     return render_template("contact_us.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/privacy_policy")
 def privacy():
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     return render_template("privacy_policy.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/dcma")
 def dcma():
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
@@ -268,16 +268,16 @@ def genre(genre_type, page=1):
     if genre_type == "Sci-Fi":
         genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == "Science Fiction").paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres).filter(Genre.name == "Science Fiction", AllVideo.active == True).paginate(page=page, per_page=per_page)
         )
     else:
         genre = Genre.query.filter_by(name=genre_type).first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == genre_type).paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres).filter(Genre.name == genre_type, AllVideo.active == True).paginate(page=page, per_page=per_page)
         )
 
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     
     return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, is_genre=True)
@@ -296,17 +296,17 @@ def detail(det, name, id, season=1, episode=1):
 
 @main_bp.route("/download/<det>/<name>/<int:id>")
 def movie_details(det, name, id):
-    movie = AllVideo.query.get_or_404(id)
+    movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
     num_comment = Comment.query.filter_by(
         video_id=movie.id,
         parent_id=None
     ).count()
     comments = Comment.query.filter_by(video_id=movie.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in movie.genres]
-    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.active == True).distinct().limit(6).all()
 
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
@@ -317,14 +317,14 @@ def movie_details(det, name, id):
     if len(suggested) < 6:
         more_needed = 6 - len(suggested)
 
-    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested])).order_by(func.random()).limit(more_needed).all()
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
     return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
     print(id)
-    series = AllVideo.query.get_or_404(id)
+    series = AllVideo.query.filter_by(id=id, active=True).first_or_404()
 
     # 2. Ensure it is a series
     if not series.series:
@@ -351,12 +351,11 @@ def series_details(det, name, season, episode, id):
         parent_id=None
     ).count()
     comments = Comment.query.filter_by(video_id=series.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in series.genres]
-    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series").distinct().limit(6).all()
-
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series", AllVideo.active == True).distinct().limit(6).all()
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
                      .filter(Rating.video_id==series.id, Rating.rating==i)
@@ -366,7 +365,7 @@ def series_details(det, name, season, episode, id):
     if len(suggested) < 6:
         more_needed = 6 - len(suggested)
 
-    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested])).order_by(func.random()).limit(more_needed).all()
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
     return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
@@ -376,7 +375,7 @@ def download_dispatcher(type, id, season=None, episode=None):
 
     # --- Fetch video ---
     if type == "movie":
-        video = AllVideo.query.get_or_404(id)
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
     elif type == "series":
         video = Episode.query.get_or_404(id)
     else:
@@ -477,7 +476,7 @@ def movie_start_download(type, name, id, season=None, episode=None):
     
     # --- 1. Fetch Video ---
     if type == "movie":
-        video = AllVideo.query.get_or_404(id)
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
         clean_name = video.name
     else:
         video = Episode.query.get_or_404(id)
@@ -606,15 +605,16 @@ def watch_trailer(det="trailer_watch", name=None):
 
 @main_bp.route("/trending/<type>")
 def trending(type):
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").limit(10).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").limit(10).all()
-    trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action").order_by(AllVideo.date_added.desc()).limit(10).all()
-    trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation").order_by(AllVideo.date_added.desc()).limit(10).all()
-    trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction").order_by(AllVideo.date_added.desc()).limit(10).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
+    trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
     old_but_gold = AllVideo.query.filter(
         AllVideo.type == "movie",
         AllVideo.year_produced <= 2020,
-        AllVideo.rating >= 4  # or views >= 10000
+        AllVideo.rating >= 4,
+        AllVideo.active == True
     ).order_by(AllVideo.rating.desc()).limit(10).all()
         
 
@@ -627,7 +627,8 @@ def trending(type):
 
                     # Series: few seasons (you could store num_seasons on AllVideo if you want)
                     (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
-                )
+                ),
+                AllVideo.active == True
             )
             .order_by(AllVideo.views.desc())  # popular first
             .limit(10)
@@ -652,7 +653,7 @@ def movie_stream_download(type, name, id, season=None, episode=None):
     
 
     if type == "movie":
-        video = AllVideo.query.get_or_404(id)
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
     else:
         video = Episode.query.get_or_404(id)
 
@@ -674,10 +675,10 @@ def movie_stream_download(type, name, id, season=None, episode=None):
 
 @main_bp.route("/watch_movie/<type>/<name>/<int:id>")
 def movie_download(type, name, id):
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    movie = AllVideo.query.get_or_404(id)
+    movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
 
     # Get the best available quality
 
@@ -687,7 +688,7 @@ def movie_download(type, name, id):
 
     more_needed = max(0, 6 - len(suggested))
     if more_needed:
-        extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]))\
+        extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True)\
             .order_by(func.random()).limit(more_needed).all()
         suggested.extend(extra)
     return render_template("stream.html", video=movie, suggested=suggested, id=id, type=type, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
@@ -699,8 +700,8 @@ def series_download(type, name, id, season, episode):
     
 
     # Trending lists
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     qualities = ep.video_qualities or {}
     return render_template(
@@ -722,8 +723,8 @@ def navbar(nav, page=1):
     videos = ""
     per_page = 24
     recent_requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).limit(10).all()
-    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     trending_action = ""
     trending_animation = ""
@@ -736,15 +737,16 @@ def navbar(nav, page=1):
         trailers = True
         videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
     if nav=="trending":
-        series_trend = AllVideo.query.filter_by(trending=True, type="series").limit(10).all()
-        movie_trend = AllVideo.query.filter_by(trending=True, type="movie").limit(10).all()
-        trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action").order_by(AllVideo.date_added.desc()).limit(10).all()
-        trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation").order_by(AllVideo.date_added.desc()).limit(10).all()
-        trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction").order_by(AllVideo.date_added.desc()).limit(10).all()
+        series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
+        movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
+        trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
         old_but_gold = AllVideo.query.filter(
             AllVideo.type == "movie",
             AllVideo.year_produced <= 2020,
-            AllVideo.rating >= 4  # or views >= 10000
+            AllVideo.rating >= 4,
+            AllVideo.active == True
         ).order_by(AllVideo.rating.desc()).limit(10).all()
         
 
@@ -757,7 +759,8 @@ def navbar(nav, page=1):
 
                         # Series: few seasons (you could store num_seasons on AllVideo if you want)
                         (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
-                    )
+                    ),
+                    AllVideo.active == True
                 )
                 .order_by(AllVideo.views.desc())  # popular first
                 .limit(10)
@@ -765,10 +768,10 @@ def navbar(nav, page=1):
         )
 
     if nav == "all_movie":
-        videos = AllVideo.query.filter_by(type="movie").order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        videos = AllVideo.query.filter_by(type="movie", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
     if nav == "all_series":
-        videos = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
-    
+        videos = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
     return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers,
 recent_requests=recent_requests)
 
@@ -939,9 +942,9 @@ def sitemap():
 
     # 2. Fetch Data (Limit to recent 2000 to keep it fast)
     # If you have < 2000 movies, .limit() does nothing, which is fine.
-    movies = AllVideo.query.filter_by(type='movie').order_by(AllVideo.date_added.desc()).limit(2000).all()
-    series_list = AllVideo.query.filter_by(type='series').order_by(AllVideo.date_added.desc()).limit(1000).all()
-    trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
+    movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
+    series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(1000).all()
+    trailers = Trailer.query.filter_by(active=True).order_by(Trailer.date_added.desc()).limit(500).all()
 
     # 3. Render Template
     xml_content = render_template(
@@ -961,14 +964,13 @@ def sitemap():
 @main_bp.route("/sitemap")
 def sitemap_page():
     # 1. Fetch Movies
-    movies = AllVideo.query.filter_by(type="movie").order_by(AllVideo.date_added.desc()).all()
+    movies = AllVideo.query.filter_by(type="movie", active=True).order_by(AllVideo.date_added.desc()).all()
 
     # 2. Fetch Series (This returns a list of AllVideo objects)
-    series_list = AllVideo.query.filter_by(type="series").order_by(AllVideo.date_added.desc()).all()
+    series_list = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).all()
 
     # 3. Fetch Trailers
-    trailers = Trailer.query.order_by(Trailer.date_added.desc()).all()
-
+    trailers = Trailer.query.filter_by(active=True).order_by(Trailer.date_added.desc()).all()
     return render_template("sitemap.html",
                            movies=movies,
                            series_list=series_list,
