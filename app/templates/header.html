@@ -35,12 +35,12 @@
                 </li>
             </ul>
 
-                        <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
+            <form action="{{ url_for('main.search_result', page=1) }}" id="desktopSearch" class="absolute hidden flex-row bg-white top-full right-0 mt-4 md:w-[40vw] p-3 rounded-md border border-gray-300 shadow-lg ">
                 <input id="SearchInput" name="search" type="text"
                 placeholder="Search Movies..."
                 class="w-full p-3 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-400 text-black" 
                 method="GET"
-                onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')"> <button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
+                onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')"><button class="flex items-center justify-center px-2 bg-[#830506] rounded-e-md">
                     <i class="fa-solid fa-magnifying-glass text-white"></i>
                 </button>
                 

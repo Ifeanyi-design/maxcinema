@@ -41,9 +41,12 @@
                     <div class="mt-10 w-full max-w-md">
                         <p class="text-gray-500 text-sm mb-2 uppercase tracking-widest font-semibold">Try searching instead</p>
                         <form action="{{ url_for('main.search_result') }}" method="get" class="relative">
-                            <input type="text" name="search" placeholder="Search for movies..." 
-                                   class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600">
+                            <input id="SearchInput" type="text" name="search" placeholder="Search for movies..." 
+                                   class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600" method="GET" onkeyup="fetchSuggestions('SearchInput', 'desktopSuggestions')">
                             <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+
+                            <div id="desktopSuggestions" class="absolute left-0 top-full w-full bg-white border border-gray-200 shadow-xl rounded-b-md z-50 hidden max-h-[60vh] overflow-y-auto">
+                            </div>
                         </form>
                     </div>
 
