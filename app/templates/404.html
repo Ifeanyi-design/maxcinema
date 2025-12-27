@@ -1,133 +1,62 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<div class="container mx-auto px-2 md:px-4 py-6">
     
-
-
-    <section id="Merger" class="flex flex-col md:flex-row gap-3 mx-5 my-2">
-        <section id="RecentlyAdded" class="my-2 md:my-5 flex flex-col md:w-5/6 mb-10">
-            <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3 text-center">
-                <i class="fa-solid fa-bolt" style="vertical-align: middle; font-size: large;"></i>
-                <h2 class="font-bold text-white text-[100%] md:text-[130%]">404: Page Not Found</h2>
-            </div>
-            <div class="w-full border border-red-800 text-center items-center py-8">
-                <i style="font-size:8rem;color:darkred;" class="fa-solid fa-triangle-exclamation"></i>
-                <p class="text-center text-[#830506] font-bold text-2xl mt-5">The page you are looking for cannot be found or has been deleted!</p>
-            </div>
+    <section id="Merger" class="flex flex-col lg:flex-row gap-6">
+        
+        <section id="ErrorContent" class="w-full lg:w-3/4 flex flex-col gap-5">
             
-            
+            <div class="w-full bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl overflow-hidden relative">
+                
+                <div class="w-full bg-gradient-to-r from-[#830506] to-[#500202] px-6 py-4 flex items-center gap-3 shadow-md">
+                    <i class="fa-solid fa-triangle-exclamation text-white text-2xl animate-pulse"></i>
+                    <h2 class="font-bold text-white text-xl md:text-2xl tracking-wide uppercase">404: Scene Missing</h2>
+                </div>
+
+                <div class="flex flex-col items-center justify-center text-center py-16 px-6">
+                    
+                    <div class="relative mb-6">
+                        <i class="fa-solid fa-film text-9xl text-[#2a2a2a]"></i>
+                        <i class="fa-solid fa-ghost text-6xl text-[#830506] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></i>
+                    </div>
+
+                    <h1 class="text-4xl md:text-5xl font-black text-white mb-4">Page Not Found</h1>
+                    
+                    <p class="text-gray-400 text-lg max-w-lg mb-8 leading-relaxed">
+                        We searched the entire studio, but the movie or series you are looking for has been deleted or moved.
+                    </p>
+
+                    <div class="flex flex-wrap justify-center gap-4 w-full">
+                        <a href="{{ url_for('main.index') }}" class="px-8 py-3 bg-[#830506] hover:bg-red-700 text-white font-bold rounded-full transition transform hover:scale-105 shadow-lg shadow-red-900/20">
+                            <i class="fa-solid fa-house mr-2"></i> Go Home
+                        </a>
+                        
+                        <button onclick="history.back()" class="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-full transition hover:text-gray-200">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Go Back
+                        </button>
+                    </div>
+
+                    <div class="mt-10 w-full max-w-md">
+                        <p class="text-gray-500 text-sm mb-2 uppercase tracking-widest font-semibold">Try searching instead</p>
+                        <form action="{{ url_for('main.search_result') }}" method="get" class="relative">
+                            <input type="text" name="search" placeholder="Search for movies..." 
+                                   class="w-full bg-black/40 border border-gray-700 text-white rounded-lg py-3 px-5 pl-11 focus:outline-none focus:border-[#830506] focus:ring-1 focus:ring-[#830506] transition placeholder-gray-600">
+                            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            </section>
+
+        <section id="TrendingCol" class="hidden lg:flex flex-col w-full lg:w-1/4 gap-6">
+            {% include "sidebar_trending.html" %}
         </section>
 
-
-        <section id="TrendingCol" class="hidden md:flex flex-col md:w-1/3 gap-6">
-            <section id="TrendingMovies" class="my-2 md:my-5 flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Movies</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for i in range(5) %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det="movie", name="Strangerthings", id="1") }}'" class="flex flex-row boxescard trendingBox trending-movies rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('../static/images/T-shirt Social Media Graphic - Mojahidul Islam.jpeg'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    Black Phone 2 (2025) — Long titles will now truncate without shrinking the image
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='movie') }}#MoviesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Movies
-                    </a>
-                </div>
-
-
-            </section>
-
-
-            <section id="TrendingSeries" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fa-fire" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trending Series</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for i in range(5) %}
-                        <div onclick="window.location.href='{{ url_for("main.detail", det="series", name="Strangerthings", id="1", season="1", episode="1") }}'" class="flex flex-row boxescard trendingBox trending-series rounded-sm overflow-hidden h-24 md:h-28">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('../static/images/T-shirt Social Media Graphic - Mojahidul Islam.jpeg'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    Black Phone 2 (2025) — Long titles will now truncate without shrinking the image
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trending', type='series') }}#SeriesTrendingSection" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Series
-                    </a>
-                </div>
-
-
-            </section>
-
-
-            <section id="Trailers" class="flex flex-col w-full">
-                <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-1 md:py-3">
-                    <i class="fa-solid fas fa-play-circle" style="vertical-align: middle; font-size: large;"></i>
-                    <h2 class="font-bold text-white text-[100%] md:text-[130%] flex-shrink-0">Trailers</h2>
-                </div>
-                <div class="flex flex-col mt-2 gap-1 md:py-2">
-                    {% for i in range(5) %}
-                        <div class="flex flex-row boxescard trailers trendingBox rounded-sm overflow-hidden h-24 md:h-28" onclick="window.location.href='{{ url_for("main.detail", det="trailer_watch", name="Stange", id="1") }}'">
-                            <!-- Image -->
-                            <div class="flex-shrink-0 w-1/3 h-full">
-                                <div style="background: url('../static/images/T-shirt Social Media Graphic - Mojahidul Islam.jpeg'); background-position: center; background-size: cover;"
-                                    class="w-full h-full bg-center bg-cover rounded-l-sm usedbg">
-                                </div>
-                            </div>
-
-                            <!-- Title / Text -->
-                            <div class="flex items-center p-2.5 w-2/3">
-                                <h3 class="text-black line-clamp-2 font-semibold text-sm md:text-base">
-                                    Black Phone 2 (2025) — Long titles will now truncate without shrinking the image
-                                </h3>
-                            </div>
-                        </div>
-                    {% endfor %}
-                    
-                </div>
-                <div class="flex justify-end font-semibold text-sm md:text-base">
-                    <a href="{{ url_for('main.trailer') }}" class="viewAll">
-                        <i class="fa-solid fas fa-arrow-alt-circle-right" style="vertical-align: middle; font-size: large;"></i>
-                        View All Trailers
-                    </a>
-                </div>
-
-
-            </section>
-        </section>
     </section>
+</div>
 
 {% endblock %}

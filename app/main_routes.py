@@ -36,6 +36,28 @@ main_bp = Blueprint("main", __name__)
 # def load_user(user_id):
 #     return User.query.get(int(user_id))
 
+@main_bp.app_errorhandler(404)
+def page_not_found(e):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("404.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 404
+
+@main_bp.app_errorhandler(500)
+def internal_server_error(e):
+    # This happens if your server crashes (like the "Delete Series" bug earlier)
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template('500.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 500
+
+@main_bp.app_errorhandler(403)
+def access_forbidden(e):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template('403.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 403
+
 def ping_search_engines():
     sitemap_url = "https://yourdomain.com/static/sitemap.xml"
     try:
@@ -171,11 +193,23 @@ def index(page=1):
 
     # Load all Video/Episode objects in one query each
     if video_ids:
-        videos = {v.all_video_id: v for v in Movie.query.filter(Movie.all_video_id.in_(video_ids)).all()}
+        videos = {
+            v.all_video_id: v for v in Movie.query
+            .join(AllVideo)
+            .filter(Movie.all_video_id.in_(video_ids), AllVideo.active == True)
+            .all()
+        }
     else:
         videos = {}
-    episodes = {e.id: e for e in Episode.query.filter(Episode.id.in_(episode_ids)).all()} if episode_ids else {}
-    print(len(videos))
+    if episode_ids:
+        episodes = {
+            e.id: e for e in Episode.query
+            .join(Season).join(Series).join(AllVideo)
+            .filter(Episode.id.in_(episode_ids), AllVideo.active == True)
+            .all()
+        }
+    else:
+        episodes = {}
     # Prepare items for display
     items = []
     series_name = []
@@ -188,7 +222,7 @@ def index(page=1):
                 items.append(v)
         elif r.episode_id:
             e = episodes.get(r.episode_id)
-            if e.season.series.all_video.name not in series_name:
+            if e and e.season.series.all_video.name not in series_name:
                 series_name.append(e.season.series.all_video.name)
                 items.append(e)
     return render_template('index.html', features=features, data=data,
@@ -944,7 +978,7 @@ def sitemap():
     # If you have < 2000 movies, .limit() does nothing, which is fine.
     movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
     series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(1000).all()
-    trailers = Trailer.query.filter_by(active=True).order_by(Trailer.date_added.desc()).limit(500).all()
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
 
     # 3. Render Template
     xml_content = render_template(
