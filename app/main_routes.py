@@ -298,23 +298,77 @@ def dcma():
 @main_bp.route("/genre/<string:genre_type>/page/<int:page>")
 def genre(genre_type, page=1):
     per_page = 24
-    genre = ""
-    if genre_type == "Sci-Fi":
+    
+    # 1. Define Region Mapping
+    # Maps the Button Name -> The keyword to search in your 'country' column
+    region_map = {
+        'Hollywood': 'United States',      # Searches for 'USA' or 'United States'
+        'Nollywood': 'Nigeria',
+        'Korean': 'Korea',       # Searches for 'South Korea' or 'Korea'
+        'Indian': 'India',
+        'Chinese': 'China'
+    }
+
+    if genre_type == 'Hollywood':
+        # Special check for Hollywood to catch BOTH "USA" and "United States"
+        videos = AllVideo.query.filter(
+            or_(AllVideo.country.ilike('%USA%'), AllVideo.country.ilike('%United States%')),
+            AllVideo.active == True
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        
+        # Create the mock genre for the title
+        class MockGenre:
+             def __init__(self, name): self.name = name
+        genre = MockGenre(name=genre_type)
+    
+    # 2. Check if the user clicked a Region
+    if genre_type in region_map:
+        search_country = region_map[genre_type]
+        
+        # Filter by COUNTRY, not Genre
+        videos = AllVideo.query.filter(
+            AllVideo.country.ilike(f'%{search_country}%'), 
+            AllVideo.active == True
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
+        # Create a fake genre object so your template doesn't crash if it uses {{ genre.name }}
+        class MockGenre:
+            def __init__(self, name):
+                self.name = name
+        genre = MockGenre(name=genre_type)
+
+    # 3. Handle Special "Sci-Fi" case
+    elif genre_type == "Sci-Fi":
         genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == "Science Fiction", AllVideo.active == True).paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres)
+            .filter(Genre.name == "Science Fiction", AllVideo.active == True)
+            .paginate(page=page, per_page=per_page)
         )
+
+    # 4. Standard Genres (Action, Comedy, etc.)
     else:
         genre = Genre.query.filter_by(name=genre_type).first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == genre_type, AllVideo.active == True).paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres)
+            .filter(Genre.name == genre_type, AllVideo.active == True)
+            .paginate(page=page, per_page=per_page)
         )
 
+    # --- Sidebar Data (Unchanged) ---
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     
-    return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, is_genre=True)
+    return render_template("genre.html", 
+                           genre_type=genre_type, 
+                           genre=genre, 
+                           videos=videos, 
+                           trending_series=series_trend, 
+                           trending_movie=movie_trend, 
+                           trending_trailers=trending_trailers, 
+                           is_genre=True)
+
 
 @main_bp.route("/<det>/<name>/<int:id>")
 @main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
