@@ -313,7 +313,7 @@ def genre(genre_type, page=1):
         # Special check for Hollywood to catch BOTH "USA" and "United States"
         videos = AllVideo.query.filter(
             or_(AllVideo.country.ilike('%USA%'), AllVideo.country.ilike('%United States%')),
-            AllVideo.active == True, Allvideo.type == "movie"
+            AllVideo.active == True, AllVideo.type == "movie"
         ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
         
         # Create the mock genre for the title
@@ -328,7 +328,7 @@ def genre(genre_type, page=1):
         # Filter by COUNTRY, not Genre
         videos = AllVideo.query.filter(
             AllVideo.country.ilike(f'%{search_country}%'), 
-            AllVideo.active == True, Allvideo.type == "movie"
+            AllVideo.active == True, AllVideo.type == "movie"
         ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
 
         # Create a fake genre object so your template doesn't crash if it uses {{ genre.name }}
@@ -341,7 +341,7 @@ def genre(genre_type, page=1):
         # Adjust the year (2000, 2010) to whatever you consider "Old"
         videos = AllVideo.query.filter(
             AllVideo.year_produced < 2010, 
-            AllVideo.active == True, Allvideo.type == "movie"
+            AllVideo.active == True, AllVideo.type == "movie"
         ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
 
         class MockGenre:
@@ -353,7 +353,7 @@ def genre(genre_type, page=1):
         genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
         videos = (
             AllVideo.query.join(AllVideo.genres)
-            .filter(Genre.name == "Science Fiction", AllVideo.active == True, Allvideo.type == "movie")
+            .filter(Genre.name == "Science Fiction", AllVideo.active == True, AllVideo.type == "movie")
             .paginate(page=page, per_page=per_page)
         )
 
@@ -362,7 +362,7 @@ def genre(genre_type, page=1):
         genre = Genre.query.filter_by(name=genre_type).first_or_404()
         videos = (
             AllVideo.query.join(AllVideo.genres)
-            .filter(Genre.name == genre_type, AllVideo.active == True, Allvideo.type == "movie")
+            .filter(Genre.name == genre_type, AllVideo.active == True, AllVideo.type == "movie")
             .paginate(page=page, per_page=per_page)
         )
 
