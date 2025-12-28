@@ -1287,16 +1287,3 @@ def ping():
         
 
     # app.run(debug=True, host="0.0.0.0", port=5000)
-
-
-
-# In main/views.py (At the very bottom)
-
-from flask import abort
-
-# 1. Force a 500 Error (Crash Test)
-@main_bp.route('/test-500')
-def test_500():
-    a = Genre(name="Anime")
-    db.session.add(a)
-    db.session.commit()
