@@ -1,5 +1,5 @@
 # listeners.py
-from sqlalchemy import event
+from sqlalchemy import event, text
 from datetime import datetime
 from slugify import slugify
 from .models import Trailer, db, RecentItem, AllVideo, Episode, Series, Movie
@@ -92,13 +92,19 @@ def recent_video_update(mapper, connection, target):
 # =======================================================
 @event.listens_for(Episode, "after_insert")
 def recent_episode_insert(mapper, connection, target):
-    # Use ORM relationships to get series_id
-    # Note: For Episodes, we must rely on relationships being populated. 
-    # If this fails, we might need a separate query, but usually OK for Child->Parent access
-    series_id = target.season.series.id if target.season and target.season.series else None
+    # 1. Get the Series ID directly from the DB using the Season ID
+    # We use a raw SQL query because 'target.season' might not be loaded yet
+    sql = text("SELECT series_id FROM season WHERE id = :sid")
+    result = connection.execute(sql, {"sid": target.season_id}).fetchone()
     
-    delete_old_recent(connection, series_id=series_id)
+    # Extract the ID safely
+    series_id = result[0] if result else None
+    
+    # 2. Delete old recent items for this series
+    if series_id:
+        delete_old_recent(connection, series_id=series_id)
 
+    # 3. Insert the new recent item
     insert_recent(
         connection,
         video_id=None,
@@ -112,9 +118,14 @@ def recent_episode_insert(mapper, connection, target):
 # =======================================================
 @event.listens_for(Episode, "after_update")
 def recent_episode_update(mapper, connection, target):
-    series_id = target.season.series.id if target.season and target.season.series else None
+    # Same logic as insert
+    sql = text("SELECT series_id FROM season WHERE id = :sid")
+    result = connection.execute(sql, {"sid": target.season_id}).fetchone()
+    
+    series_id = result[0] if result else None
 
-    delete_old_recent(connection, series_id=series_id)
+    if series_id:
+        delete_old_recent(connection, series_id=series_id)
 
     insert_recent(
         connection,
@@ -123,6 +134,7 @@ def recent_episode_update(mapper, connection, target):
         type="series",
         series_id=series_id
     )
+
 
 @event.listens_for(AllVideo, "before_insert")
 def generate_slug(mapper, connection, target):
