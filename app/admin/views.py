@@ -584,22 +584,48 @@ def view_episodes(name, ns, prev, season_id):
 def add_episode(season_id, prev):
     season = Season.query.get_or_404(season_id)
     form = EpisodeForm()
+    
+    # Load storage servers
     form.storage_server_id.choices = [(s.id, s.name) for s in StorageServer.query.filter_by(active=True).all()]
+
     if form.validate_on_submit():
-        if not Episode.query.filter_by(season_id=season.id, episode_number=form.episode_number.data):
+        # --- FIX IS HERE: Added .first() ---
+        existing_episode = Episode.query.filter_by(
+            season_id=season.id, 
+            episode_number=form.episode_number.data
+        ).first()
+
+        if not existing_episode:
             new_episode = Episode()
             form.populate_obj(new_episode)
             new_episode.season_id = season.id
+            
             db.session.add(new_episode)
             db.session.commit()
-            season.num_episodes = int(Episode.query.filter_by(season_id=season.id).count())
+            
+            # Update Season Episode Count
+            season.num_episodes = Episode.query.filter_by(season_id=season.id).count()
+            
+            # Update Series Total Episode Count (Sum of all seasons)
             video = Series.query.get_or_404(season.series.id)
-            video.num_episodes = int(Episode.query.filter_by(season_id=season.id).count())
+            
+            # Note: You were setting series total to equal this specific season's count. 
+            # Ideally, it should be the total of all episodes in the series:
+            total_eps = 0
+            for s in video.seasons:
+                total_eps += len(s.episodes)
+            video.num_episodes = total_eps
+            
             db.session.commit()
-            return redirect(url_for('admin.view_series_specific',prev=prev, name=video.all_video.slug, id=video.all_video.id))
+            
+            flash(f"Episode {new_episode.episode_number} created successfully!", "success")
+            return redirect(url_for('admin.view_series_specific', prev=prev, name=video.all_video.slug, id=video.all_video.id))
         else:
+            # Add a message so you know why it failed
+            flash(f"Episode {form.episode_number.data} already exists in this season!", "error")
             video = Series.query.get_or_404(season.series.id)
-            return redirect(url_for('admin.view_series_specific',prev=prev, name=video.all_video.slug, id=video.all_video.id))
+            return redirect(url_for('admin.view_series_specific', prev=prev, name=video.all_video.slug, id=video.all_video.id))
+            
     return render_template('admin/add_episode.html', prev=prev, form=form, season=season, action="Create")
 
 
