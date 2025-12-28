@@ -322,7 +322,7 @@ def genre(genre_type, page=1):
         genre = MockGenre(name=genre_type)
     
     # 2. Check if the user clicked a Region
-    if genre_type in region_map:
+    elif genre_type in region_map:
         search_country = region_map[genre_type]
         
         # Filter by COUNTRY, not Genre
@@ -336,6 +336,17 @@ def genre(genre_type, page=1):
             def __init__(self, name):
                 self.name = name
         genre = MockGenre(name=genre_type)
+
+    elif genre_type == "Old":
+        # Adjust the year (2000, 2010) to whatever you consider "Old"
+        videos = AllVideo.query.filter(
+            AllVideo.year_produced < 2010, 
+            AllVideo.active == True
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
+        class MockGenre:
+            def __init__(self, name): self.name = name
+        genre = MockGenre(name="Classic Movies")
 
     # 3. Handle Special "Sci-Fi" case
     elif genre_type == "Sci-Fi":
