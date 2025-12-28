@@ -79,6 +79,16 @@
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Language / Subtitles</span> <span class="text-gray-900 font-bold">{{ video.language or 'English' }} / {{ video.subtitles or 'None' }}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{% if video.type == "series" and current_episode %}{{current_episode.source or 'HD'}}{%else%}{{ video.source or 'HD' }}{%endif%}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
+                <div class="text-sm">
+                    <span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Genres</span> 
+                    <span class="text-gray-900 font-bold">
+                        {% for g in video.genres %}
+                            <a href="{{ url_for('main.genre', genre_type=g.name) }}" class="hover:text-[#830506] transition-colors">{{ g.name }}</a>{{ ", " if not loop.last }}
+                        {% else %}
+                            N/A
+                        {% endfor %}
+                    </span>
+                </div>
             </div>
 
             {% set trailer_src = video.trailer_url %}
