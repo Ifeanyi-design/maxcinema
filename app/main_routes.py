@@ -349,7 +349,15 @@ def genre(genre_type, page=1):
         genre = MockGenre(name="Classic Movies")
 
     # 3. Handle Special "Sci-Fi" case
-    elif genre_type == "Sci-Fi":
+    elif genre_type == "Anime":
+        genre = Genre.query.filter_by(name="Anime").first_or_404()
+        videos = (
+            AllVideo.query.join(AllVideo.genres)
+            .filter(Genre.name == "Animation", AllVideo.active == True, AllVideo.type == "movie", AllVideo.country == "Japan")
+            .paginate(page=page, per_page=per_page)
+        )
+
+        elif genre_type == "Sci-Fi":
         genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
         videos = (
             AllVideo.query.join(AllVideo.genres)
