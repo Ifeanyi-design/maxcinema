@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block title %}
+Download {{ video.title }} ({{ video.release_year }}) Full Movie Free MP4 | MaxCinema
+{% endblock %}
+
 {% block social_tags %}
     <meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
     <meta property="og:description" content="{{ video.description[:150] }}..."> 
