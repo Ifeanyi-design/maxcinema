@@ -170,7 +170,7 @@ safe_populate = safe_populate_bulk
 @main_bp.route('/<int:page>')
 def index(page=1):
     per_page = 24
-    features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.updated_at.desc()).limit(8).all()
+    features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).limit(8).all()
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
