@@ -849,7 +849,8 @@ def navbar(nav, page=1):
     old_but_gold = ""
     get_started_items = ""
     trailers = False
-    if nav=="trailers":
+    if nav=="trailers" or nav=="all_trailers":
+        nav="trailers"
         dark = True
         trailers = True
         videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
