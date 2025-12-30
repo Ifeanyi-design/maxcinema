@@ -882,7 +882,6 @@ def delete_storage_server(server_id):
 
 @admin_bp.route('/requests')
 @login_required
-@admin_required
 def view_requests():
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
@@ -898,7 +897,6 @@ def view_requests():
 # 2. UPDATE STATUS (Filled/Rejected/Pending)
 @admin_bp.route('/request/status/<int:id>/<string:status>')
 @login_required
-@admin_required
 def update_request_status(id, status):
     req = MovieRequest.query.get_or_404(id)
     
@@ -913,7 +911,6 @@ def update_request_status(id, status):
 # 3. DELETE REQUEST
 @admin_bp.route('/request/delete/<int:id>')
 @login_required
-@admin_required
 def delete_request(id):
     req = MovieRequest.query.get_or_404(id)
     db.session.delete(req)
