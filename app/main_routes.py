@@ -1076,6 +1076,8 @@ def sitemap():
     # 4. Return as correct XML type
     response = make_response(xml_content)
     response.headers["Content-Type"] = "application/xml"
+
+    response.headers["X-Robots-Tag"] = "noindex"
     return response
 
 @main_bp.route("/sitemap")
