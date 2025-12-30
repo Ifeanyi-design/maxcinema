@@ -5,12 +5,18 @@ Download {{ video.title }} ({{ video.release_year }}) Full Movie Free MP4 | MaxC
 {% endblock %}
 
 {% block social_tags %}
-    <meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
-    <meta property="og:description" content="{{ video.description[:150] }}..."> 
+    <meta property="og:title" content="Download {{ video.name }} ({{ video.release_year }}) - Free MP4">
+    <meta property="og:description" content="Download full movie in 480p/720p/1080p. {{ video.description[:100] }}... Click to watch and download now on MaxCinema."> 
     <meta property="og:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:type" content="video.movie">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MaxCinema">
+
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Download {{ video.name }} - MaxCinema">
+    <meta name="twitter:description" content="Download full movie in HD. Link active.">
+    <meta name="twitter:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
+
 {% endblock %}
 
 {% block content %}
