@@ -298,23 +298,106 @@ def dcma():
 @main_bp.route("/genre/<string:genre_type>/page/<int:page>")
 def genre(genre_type, page=1):
     per_page = 24
-    genre = ""
-    if genre_type == "Sci-Fi":
+    
+    # 1. Define Region Mapping
+    # Maps the Button Name -> The keyword to search in your 'country' column
+    region_map = {
+        'Hollywood': 'United States',      # Searches for 'USA' or 'United States'
+        'Nollywood': 'Nigeria',
+        'Korean': 'Korea',       # Searches for 'South Korea' or 'Korea'
+        'Indian': 'India',
+        'Chinese': 'China'
+    }
+
+    if genre_type == 'Hollywood':
+        # Special check for Hollywood to catch BOTH "USA" and "United States"
+        videos = AllVideo.query.filter(
+            or_(AllVideo.country.ilike('%USA%'), AllVideo.country.ilike('%United States%')),
+            AllVideo.active == True, AllVideo.type == "movie"
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        
+        # Create the mock genre for the title
+        class MockGenre:
+             def __init__(self, name): self.name = name
+        genre = MockGenre(name=genre_type)
+    
+    # 2. Check if the user clicked a Region
+    elif genre_type in region_map:
+        search_country = region_map[genre_type]
+        
+        # Filter by COUNTRY, not Genre
+        videos = AllVideo.query.filter(
+            AllVideo.country.ilike(f'%{search_country}%'), 
+            AllVideo.active == True, AllVideo.type == "movie"
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
+        # Create a fake genre object so your template doesn't crash if it uses {{ genre.name }}
+        class MockGenre:
+            def __init__(self, name):
+                self.name = name
+        genre = MockGenre(name=genre_type)
+
+    elif genre_type == "Old":
+        # Adjust the year (2000, 2010) to whatever you consider "Old"
+        videos = AllVideo.query.filter(
+            AllVideo.year_produced < 2010, 
+            AllVideo.active == True, AllVideo.type == "movie"
+        ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
+        class MockGenre:
+            def __init__(self, name): self.name = name
+        genre = MockGenre(name="Classic Movies")
+
+    # 3. Handle Special "Sci-Fi" case
+    elif genre_type == "Anime":
+        # USE MOCK GENRE (Safer)
+        # This prevents a 404 error if "Anime" isn't strictly in your genres table
+        class MockGenre:
+            def __init__(self, name): self.name = name
+        genre = MockGenre(name="Anime")
+
+        videos = (
+            AllVideo.query.join(AllVideo.genres)
+            .filter(
+                Genre.name == "Animation",   # Looks for 'Animation'
+                AllVideo.country == "Japan", # AND 'Japan'
+                AllVideo.active == True, 
+                AllVideo.type == "movie"
+            )
+            .order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        )
+
+    elif genre_type == "Sci-Fi":
         genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == "Science Fiction", AllVideo.active == True).paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres)
+            .filter(Genre.name == "Science Fiction", AllVideo.active == True, AllVideo.type == "movie")
+            .paginate(page=page, per_page=per_page)
         )
+
+    # 4. Standard Genres (Action, Comedy, etc.)
     else:
         genre = Genre.query.filter_by(name=genre_type).first_or_404()
         videos = (
-            AllVideo.query.join(AllVideo.genres).filter(Genre.name == genre_type, AllVideo.active == True).paginate(page=page, per_page=per_page)
+            AllVideo.query.join(AllVideo.genres)
+            .filter(Genre.name == genre_type, AllVideo.active == True, AllVideo.type == "movie")
+            .paginate(page=page, per_page=per_page)
         )
 
+    # --- Sidebar Data (Unchanged) ---
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     
-    return render_template("genre.html", genre_type=genre_type, genre=genre, videos=videos, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, is_genre=True)
+    return render_template("genre.html", 
+                           genre_type=genre_type, 
+                           genre=genre, 
+                           videos=videos, 
+                           trending_series=series_trend, 
+                           trending_movie=movie_trend, 
+                           trending_trailers=trending_trailers, 
+                           is_genre=True)
+
 
 @main_bp.route("/<det>/<name>/<int:id>")
 @main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
@@ -766,7 +849,8 @@ def navbar(nav, page=1):
     old_but_gold = ""
     get_started_items = ""
     trailers = False
-    if nav=="trailers":
+    if nav=="trailers" or nav=="all_trailers":
+        nav="trailers"
         dark = True
         trailers = True
         videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
@@ -993,6 +1077,8 @@ def sitemap():
     # 4. Return as correct XML type
     response = make_response(xml_content)
     response.headers["Content-Type"] = "application/xml"
+
+    response.headers["X-Robots-Tag"] = "noindex"
     return response
 
 @main_bp.route("/sitemap")
@@ -1222,19 +1308,3 @@ def ping():
         
 
     # app.run(debug=True, host="0.0.0.0", port=5000)
-
-
-
-# In main/views.py (At the very bottom)
-
-from flask import abort
-
-# 1. Force a 500 Error (Crash Test)
-@main_bp.route('/test-500')
-def test_500():
-    abort(500)
-
-# 2. Force a 403 Error (Forbidden Test)
-@main_bp.route('/test-403')
-def test_403():
-    abort(403)

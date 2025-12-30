@@ -1,12 +1,22 @@
 {% extends "base.html" %}
 
+{% block title %}
+Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | MaxCinema
+{% endblock %}
+
 {% block social_tags %}
-    <meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
-    <meta property="og:description" content="{{ video.description[:150] }}..."> 
+    <meta property="og:title" content="Download {{ video.name }} ({{ video.year_produced }}) - Free MP4">
+    <meta property="og:description" content="Download full movie in 480p/720p/1080p. {{ video.description[:100] }}... Click to watch and download now on MaxCinema."> 
     <meta property="og:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:type" content="video.movie">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MaxCinema">
+
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Download {{ video.name }} - MaxCinema">
+    <meta name="twitter:description" content="Download full movie in HD. Link active.">
+    <meta name="twitter:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
+
 {% endblock %}
 
 {% block content %}
@@ -21,7 +31,7 @@
             
             <div class="relative z-10 flex flex-col items-center text-center">
                 <h1 class="font-black text-white text-2xl md:text-4xl uppercase tracking-tighter leading-tight drop-shadow-md">
-                    {{ video.name }}
+                    Download {{ video.name }} ({{video.year_produced }})
                 </h1>
                 {% if video.year_produced %}
                     <span class="inline-block mt-2 px-3 py-1 bg-black/20 rounded-full text-white/90 text-xs font-bold border border-white/10">
@@ -59,11 +69,11 @@
         <div class="p-3 md:p-8">
             <div class="flex flex-col md:flex-row gap-6 mb-6">
                 <div class="w-full md:w-2/5 lg:w-1/3 flex-shrink-0">
-                    <img src="{{ video.image }}" alt="{{ video.name }}" class="w-full rounded-xl shadow-xl border-2 md:border-4 border-white object-cover aspect-[2/3] max-h-[400px] md:max-h-none mx-auto">
+                    <img src="{% if video.type == 'series' and current_season %}{{ current_season.image or video.image}}{% else %}{{ video.image }}{%endif%}" alt="Download {{ video.name }}" class="w-full rounded-xl shadow-xl border-2 md:border-4 border-white object-cover aspect-[2/3] max-h-[400px] md:max-h-none mx-auto">
                 </div>
                 <div class="w-full md:w-3/5 lg:w-2/3">
                     <h2 class="text-[#830506] font-black text-lg md:text-xl uppercase mb-3 border-l-4 border-[#830506] pl-3 italic">Synopsis</h2>
-                    <p class="text-gray-700 leading-relaxed font-medium italic text-base md:text-lg">"{{ video.description }}"</p>
+                    <p class="text-gray-700 leading-relaxed font-medium italic text-base md:text-lg">"{% if video.type == 'series' and current_season %}{{ current_season.description or video.description}}{% else %}{{ video.description }}{% endif %}"</p>
                 </div>
             </div>
 
@@ -73,23 +83,44 @@
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Title</span> <span class="text-gray-900 font-bold bg-white px-2 py-1 rounded shadow-sm border border-gray-100">{{ current_episode.name }}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Series Status</span> <span class="text-gray-900 font-bold">{% if current_season.completed %} Completed {% else %} Ongoing {% endif %}</span></div>
                 {% endif %}
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Release Date</span> <span class="text-gray-900 font-bold">{{ video.released_date or 'N/A' }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Release Date</span> <span class="text-gray-900 font-bold">{% if video.type == "series" and current_episode %}{{current_episode.released_date or 'N/A'}}{% else %}{{ video.released_date or 'N/A' }} {% endif %}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Duration</span> <span class="text-gray-900 font-bold">{% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{{ video.star_cast }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{% if video.type == "series" and current_season %}{{ current_season.cast or video.star_cast}}{%else%}{{ video.star_cast }}{%endif%}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Language / Subtitles</span> <span class="text-gray-900 font-bold">{{ video.language or 'English' }} / {{ video.subtitles or 'None' }}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{{ video.source or 'HD' }}</span></div>
+                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{% if video.type == "series" and current_episode %}{{current_episode.source or 'HD'}}{%else%}{{ video.source or 'HD' }}{%endif%}</span></div>
                 <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
+                <div class="text-sm">
+                    <span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Genres</span> 
+                    <span class="text-gray-900 font-bold">
+                        {% for g in video.genres %}
+                            <a href="{{ url_for('main.genre', genre_type=g.name) }}" class="hover:text-[#830506] transition-colors">{{ g.name }}</a>{{ ", " if not loop.last }}
+                        {% else %}
+                            N/A
+                        {% endfor %}
+                    </span>
+                </div>
             </div>
 
-            {% if video.trailer_url %}
-        <div class="mb-10">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
-            <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video">
-                <iframe src="{{ video.trailer_url | safe }}?rel=0&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-            </div>
-        </div>
-        {% endif %}
+            {% set trailer_src = video.trailer_url %}
+            {% if video.type == 'series' and current_season and current_season.trailer_url %}
+                {% set trailer_src = current_season.trailer_url %}
+            {% endif %}
 
+            {% if trailer_src %}
+            <div class="mb-10">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
+                <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video relative group">
+                    <iframe 
+                        src="{{ trailer_src.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') | safe }}?rel=0&modestbranding=1" 
+                        class="w-full h-full" 
+                        frameborder="0" 
+                        allowfullscreen
+                        loading="lazy" 
+                        title="Trailer">
+                    </iframe>
+                </div>
+            </div>
+            {% endif %}
             <div class="w-full my-6">
                 <p class="text-[8px] text-gray-400 mb-2 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">

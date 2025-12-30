@@ -79,7 +79,7 @@
         </div>
 
         <div class="md:hidden w-full border-x border-b border-gray-100 bg-gray-50 p-2 flex items-center justify-center gap-2 shadow-inner">
-            {% for nav_item in ['MOVIES', 'SERIES', 'TRAILERS', 'TRENDING'] %}
+            {% for nav_item in ['MOVIE', 'SERIES', 'TRAILERS', 'TRENDING'] %}
                 <a href="{{ url_for('main.navbar', nav='all_' ~ nav_item|lower if nav_item != 'TRENDING' else 'trending') }}" 
                    class="flex-1 text-center text-[10px] font-black bg-white border border-gray-200 text-gray-500 py-2 rounded-lg hover:bg-[#830506] hover:text-white hover:border-[#830506] transition-all shadow-sm uppercase tracking-wide">
                    {{ nav_item }}
