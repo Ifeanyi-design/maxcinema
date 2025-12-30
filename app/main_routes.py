@@ -436,8 +436,24 @@ def movie_details(det, name, id):
 
     extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
-    AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
-    db.session.commit()
+    
+    try:
+        # 1. Safety Valve: Clear any pending/accidental changes so we don't save garbage
+        db.session.rollback()
+
+        # 2. Atomic Update: Increase view count directly in DB
+        # This is fast and DOES NOT trigger the 'updated_at' timestamp change
+        AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
+
+        # 3. Save only this specific change
+        db.session.commit()
+        
+    except Exception as e:
+        # If the view count fails for some reason, just ignore it.
+        # Don't crash the whole page just because a counter failed.
+        db.session.rollback()
+        print(f"Error updating view count: {e}")
+
     return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
@@ -486,8 +502,24 @@ def series_details(det, name, season, episode, id):
 
     extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
-    AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
-    db.session.commit()
+    
+    try:
+        # 1. Safety Valve: Clear any pending/accidental changes so we don't save garbage
+        db.session.rollback()
+
+        # 2. Atomic Update: Increase view count directly in DB
+        # This is fast and DOES NOT trigger the 'updated_at' timestamp change
+        AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
+
+        # 3. Save only this specific change
+        db.session.commit()
+        
+    except Exception as e:
+        # If the view count fails for some reason, just ignore it.
+        # Don't crash the whole page just because a counter failed.
+        db.session.rollback()
+        print(f"Error updating view count: {e}")
+
     return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/download/<type>/<int:id>")
