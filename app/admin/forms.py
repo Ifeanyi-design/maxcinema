@@ -25,7 +25,7 @@ class AllVideoForm(FlaskForm):
     source = StringField("Source URL", validators=[Optional()])
     image = StringField("Image Poster", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])
-    trailer_link = StringField("Trailer URL", validators=[Optional()])
+    trailer_url = StringField("Trailer URL", validators=[Optional()])
 
     # Checkbox fields
     featured = BooleanField("Featured")

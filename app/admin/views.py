@@ -140,7 +140,7 @@ def edit_video(video_id, prev):
         video.download_link = form.download_link.data
         video.image = form.image.data
         video.type = form.type.data
-        video.trailer_url = form.trailer_link.data
+        video.trailer_url = form.trailer_url.data
 
         # Update booleans
         video.featured = form.featured.data
@@ -246,7 +246,7 @@ def add_movie(prev):
             source=form.source.data,
             released_date=form.released_date.data,
             download_link=form.download_link.data,
-            trailer_url=form.trailer_link.data,
+            trailer_url=form.trailer_url.data,
             image=form.image.data,
             type=form.type.data,
             featured=form.featured.data,
@@ -310,7 +310,7 @@ def add_series(prev):
             star_cast=form.star_cast.data,
             source=form.source.data,
             download_link=form.download_link.data,
-            trailer_url=form.trailer_link.data,
+            trailer_url=form.trailer_url.data,
             released_date=form.released_date.data,
             image=form.image.data,
             type=form.type.data,
@@ -338,7 +338,7 @@ def add_series(prev):
 
         db.session.commit()
         flash(f"{video.type.capitalize()} '{video.name}' added successfully!", "success")
-        video = AllVideo.query.filter_by(slug=form.slug.data).first()
+        video = AllVideo.query.filter_by(slug=slug).first()
         return redirect(url_for("admin.view_series_specific", prev="series", name=video.slug, id=video.id))
 
     return render_template("admin/add_series.html", form=form, prev=prev)
