@@ -140,7 +140,7 @@ class Season(db.Model):
     
     
     series = db.relationship('Series', back_populates='seasons')
-    episodes = db.relationship('Episode', back_populates='season', cascade="all, delete-orphan")
+    episodes = db.relationship('Episode', back_populates='season', cascade="all, delete-orphan", order_by="Episode.episode_number")
 
 # Episode table
 class Episode(db.Model):
