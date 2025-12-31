@@ -180,7 +180,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     <i class="fa-solid fa-list-ol text-[#830506]"></i> Select Episode
                 </h3>
                 <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-                    {% for ep in current_season.episodes %}
+                    {% for ep in current_season.episodes |sort(attribute='episode_number') %}
                         <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=ep.episode_number) }}" 
                            class="flex flex-col items-center justify-center py-2 rounded-lg border transition-all group
                            {% if episode|int == ep.episode_number|int %} 
