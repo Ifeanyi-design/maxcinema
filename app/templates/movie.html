@@ -93,7 +93,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     <span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Genres</span> 
                     <span class="text-gray-900 font-bold">
                         {% for g in video.genres %}
-                            <a href="{{ url_for('main.genre', genre_type=g.name) }}" class="hover:text-[#830506] transition-colors">{{ g.name }}</a>{{ ", " if not loop.last }}
+                            <a href="{{ url_for('main.genre', contain='all', genre_type=g.name) }}" class="hover:text-[#830506] transition-colors">{{ g.name }}</a>{{ ", " if not loop.last }}
                         {% else %}
                             N/A
                         {% endfor %}

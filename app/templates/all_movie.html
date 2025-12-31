@@ -22,7 +22,7 @@
                 </a>
                 
                 {% for genre in ['Action', 'Adventure', 'Anime', 'Animation', 'Crime', 'Comedy', 'Chinese', 'Drama', 'Fantasy', 'Hollywood', 'Horror', 'Mystery', 'Nollywood', 'Old', 'Sci-Fi', 'Indian', 'Korean'] %}
-                <a href="{{ url_for('main.genre', page='1', genre_type=genre) }}" 
+                <a href="{{ url_for('main.genre', page='1', contain='movie', genre_type=genre) }}" 
                    class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-600 rounded-md font-bold text-[10px] uppercase hover:bg-[#830506] hover:text-white hover:border-[#830506] transition-colors">
                     {{ genre }}
                 </a>
