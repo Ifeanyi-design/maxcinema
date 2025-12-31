@@ -402,6 +402,9 @@ def genre(genre_type, page=1):
 @main_bp.route("/<det>/<name>/<int:id>")
 @main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
 def detail(det, name, id, season=1, episode=1):
+    video = AllVideo.query.get(id)
+    if video and video.slug:
+        name = video.slug
     
     if det == "movie":
         return redirect(url_for("main.movie_details", det=det, name=name, id=id))
