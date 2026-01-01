@@ -36,26 +36,39 @@ class ContentImporter:
         except: return "0m"
 
     def _get_cast(self, obj):
-        # Safely tries to find cast in different API locations
-        credits = getattr(obj, 'credits', None)
-        if not credits: return ""
-        # Credits is usually a dict, accessed via ['cast']
-        cast_list = credits.get('cast', []) if isinstance(credits, dict) else getattr(credits, 'cast', [])
-        names = [c['name'] for c in cast_list[:5]]
+        """Fixed: Uses dot notation (c.name) instead of dict (c['name'])"""
+        if not hasattr(obj, 'credits'): return ""
+        credits = obj.credits
+        
+        # Check if cast exists
+        cast_list = []
+        if hasattr(credits, 'cast'):
+            cast_list = credits.cast
+        
+        # Extract names using dot notation
+        names = []
+        for c in cast_list[:5]:
+            if hasattr(c, 'name'):
+                names.append(c.name)
+                
         return ", ".join(names)
 
     def link_genres(self, tmdb_genres):
+        """Fixed: Uses dot notation for genres"""
         genre_objs = []
         for g in tmdb_genres:
-            # TMDB returns genres as dicts {'id': 1, 'name': 'Action'}
-            g_name = g['name'] if isinstance(g, dict) else g.name
+            # Prefer object access (g.name), fallback to dict if needed
+            g_name = getattr(g, 'name', None)
+            if not g_name and isinstance(g, dict):
+                g_name = g.get('name')
             
-            db_genre = Genre.query.filter_by(name=g_name).first()
-            if not db_genre:
-                db_genre = Genre(name=g_name)
-                db.session.add(db_genre)
-                db.session.commit()
-            genre_objs.append(db_genre)
+            if g_name:
+                db_genre = Genre.query.filter_by(name=g_name).first()
+                if not db_genre:
+                    db_genre = Genre(name=g_name)
+                    db.session.add(db_genre)
+                    db.session.commit()
+                genre_objs.append(db_genre)
         return genre_objs
 
     # --- MAIN FUNCTIONS ---
@@ -69,6 +82,11 @@ class ContentImporter:
         # 2. Check Exists
         if AllVideo.query.filter_by(name=m.title).first():
             return f"Movie '{m.title}' already exists."
+
+        # Extract Country safely
+        country_name = ""
+        if hasattr(m, 'production_countries') and m.production_countries:
+            country_name = m.production_countries[0].name
 
         # 3. Create Master Video
         video = AllVideo(
@@ -84,8 +102,8 @@ class ContentImporter:
             # Extra Fields
             star_cast=self._get_cast(m),
             length=self._get_runtime(getattr(m, 'runtime', 0)),
-            country=m.production_countries[0]['name'] if m.production_countries else "",
-            language=m.original_language
+            country=country_name,
+            language=getattr(m, 'original_language', 'en')
         )
         
         # Add Genres
@@ -112,6 +130,16 @@ class ContentImporter:
         video = AllVideo.query.filter_by(name=s.name).first()
         series_entry = None
 
+        # Extract Country safely
+        country_name = ""
+        if hasattr(s, 'production_countries') and s.production_countries:
+            country_name = s.production_countries[0].name
+
+        # Extract Runtime safely
+        run_time = 45
+        if hasattr(s, 'episode_run_time') and s.episode_run_time:
+            run_time = s.episode_run_time[0]
+
         if not video:
             # Create NEW Series
             video = AllVideo(
@@ -124,9 +152,9 @@ class ContentImporter:
                 rating=s.vote_average,
                 active=True,
                 star_cast=self._get_cast(s),
-                length=self._get_runtime(s.episode_run_time[0] if s.episode_run_time else 45),
-                country=s.production_countries[0]['name'] if s.production_countries else "",
-                language=s.original_language
+                length=self._get_runtime(run_time),
+                country=country_name,
+                language=getattr(s, 'original_language', 'en')
             )
             video.genres = self.link_genres(s.genres)
             db.session.add(video)
@@ -144,24 +172,19 @@ class ContentImporter:
                 db.session.commit()
 
         # 3. Determine Seasons to Add
-        # If user entered "5", we make a list [5]. If empty, we get all seasons > 0.
         target_seasons = []
         if season_input:
-            # User input: "1, 2" or "5"
             target_seasons = [int(x) for x in str(season_input).split(',') if x.strip().isdigit()]
         else:
-            # Auto-detect all seasons
             target_seasons = [seas.season_number for seas in s.seasons if seas.season_number > 0]
 
         # 4. Loop Seasons
         for seas_num in target_seasons:
-            # Fetch Season Details
             try:
                 tmdb_season = self.season_api.details(tmdb_id, seas_num)
             except:
-                continue # Skip if not found
+                continue 
 
-            # Check DB
             db_season = Season.query.filter_by(series_id=series_entry.id, season_number=seas_num).first()
             if not db_season:
                 db_season = Season(
@@ -173,12 +196,11 @@ class ContentImporter:
                     num_episodes=0
                 )
                 db.session.add(db_season)
-                db.session.commit() # Save immediately
+                db.session.commit() 
 
-            # 5. Handle Episodes (THE FIX YOU REQUESTED)
+            # 5. Handle Episodes
             all_eps = tmdb_season.episodes
             
-            # Parse Range: "1-8"
             start_ep, end_ep = 0, 9999
             if episode_input and episode_input.lower() != "all":
                 try:
@@ -186,14 +208,12 @@ class ContentImporter:
                     start_ep = int(parts[0])
                     end_ep = int(parts[1])
                 except:
-                    pass # If fail, default to all
+                    pass 
 
             for ep in all_eps:
-                # Check Range
                 if not (start_ep <= ep.episode_number <= end_ep):
                     continue
 
-                # Check Exists
                 if Episode.query.filter_by(season_id=db_season.id, episode_number=ep.episode_number).first():
                     continue
 
@@ -210,13 +230,11 @@ class ContentImporter:
             
             db.session.commit()
             
-            # Update Count for Season
             db_season.num_episodes = Episode.query.filter_by(season_id=db_season.id).count()
             db.session.commit()
 
         # 6. Final Series Update
         series_entry.num_seasons = Season.query.filter_by(series_id=series_entry.id).count()
-        # Sum all episodes
         total = 0
         for s_obj in series_entry.seasons:
             total += s_obj.num_episodes
