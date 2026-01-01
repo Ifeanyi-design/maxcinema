@@ -36,53 +36,62 @@ class ContentImporter:
         except: return "0m"
 
     def _get_cast(self, obj):
-        """
-        FIXED: Access raw JSON to avoid 'getattr' crash on slicing.
-        The wrapper library sometimes fails on list slicing.
-        """
+        """Access raw JSON to avoid 'getattr' crash on slicing."""
         cast_list = []
-
-        # 1. Try to get raw list from _json (Safest)
         if hasattr(obj, '_json'):
             credits = obj._json.get('credits', {})
             if isinstance(credits, dict):
                 cast_list = credits.get('cast', [])
-
-        # 2. Fallback to attribute access
         elif hasattr(obj, 'credits'):
             credits = obj.credits
             if hasattr(credits, 'cast'):
                 cast_list = credits.cast
 
-        # 3. Ensure it is a list before slicing
-        if not isinstance(cast_list, list):
-            return ""
+        if not isinstance(cast_list, list): return ""
 
         names = []
         for c in cast_list[:5]:
-            # Handle if 'c' is dict (from _json) or object (from wrapper)
             name = c.get('name') if isinstance(c, dict) else getattr(c, 'name', None)
-            if name:
-                names.append(name)
+            if name: names.append(name)
 
         return ", ".join(names)
+
+    def _get_trailer(self, obj):
+        """
+        NEW: Hunts for a YouTube Trailer in the 'videos' results.
+        """
+        # 1. Get the list of videos (safely)
+        videos = []
+        if hasattr(obj, 'videos'):
+            v_data = obj.videos
+            # If it's a dict (from _json)
+            if isinstance(v_data, dict):
+                videos = v_data.get('results', [])
+            # If it's an object (from wrapper)
+            elif hasattr(v_data, 'results'):
+                videos = v_data.results
+        
+        # 2. Loop and find the first official Trailer on YouTube
+        for v in videos:
+            # Handle Dict vs Object
+            site = v.get('site') if isinstance(v, dict) else getattr(v, 'site', '')
+            type_ = v.get('type') if isinstance(v, dict) else getattr(v, 'type', '')
+            key = v.get('key') if isinstance(v, dict) else getattr(v, 'key', '')
+
+            if site == "YouTube" and type_ == "Trailer" and key:
+                return f"https://www.youtube.com/watch?v={key}"
+        
+        return None # No trailer found
 
     def link_genres(self, tmdb_genres):
         """Fixed: Uses raw access for genres to prevent crashes"""
         genre_objs = []
-        
-        # Ensure we have a list to iterate
         if not isinstance(tmdb_genres, list):
-             # Try to extract from _json if it's a wrapper
-             if hasattr(tmdb_genres, '_json'):
-                 tmdb_genres = tmdb_genres._json
-             else:
-                 return []
+             if hasattr(tmdb_genres, '_json'): tmdb_genres = tmdb_genres._json
+             else: return []
 
         for g in tmdb_genres:
-            # Handle both Dict and Object
             g_name = g.get('name') if isinstance(g, dict) else getattr(g, 'name', None)
-            
             if g_name:
                 db_genre = Genre.query.filter_by(name=g_name).first()
                 if not db_genre:
@@ -94,17 +103,15 @@ class ContentImporter:
 
     # --- MAIN FUNCTIONS ---
     def import_movie(self, tmdb_id):
-        # 1. Fetch Data
+        # 1. Fetch Data (Request credits AND videos)
         try:
-            m = self.movie_api.details(tmdb_id, append_to_response="credits")
+            m = self.movie_api.details(tmdb_id, append_to_response="credits,videos")
         except:
             return "Error: TMDB ID invalid."
 
-        # 2. Check Exists
         if AllVideo.query.filter_by(name=m.title).first():
             return f"Movie '{m.title}' already exists."
 
-        # Extract Country safely
         country_name = ""
         if hasattr(m, 'production_countries') and m.production_countries:
             c_obj = m.production_countries[0]
@@ -121,20 +128,18 @@ class ContentImporter:
             released_date=self._get_date(m.release_date),
             rating=m.vote_average,
             active=False,
-            # Extra Fields (Now Safe)
             star_cast=self._get_cast(m),
             length=self._get_runtime(getattr(m, 'runtime', 0)),
             country=country_name,
-            language=getattr(m, 'original_language', 'en')
+            language=getattr(m, 'original_language', 'en'),
+            trailer_url=self._get_trailer(m)  # <--- NEW TRAILER FETCH
         )
         
-        # Add Genres
         video.genres = self.link_genres(m.genres)
         
         db.session.add(video)
         db.session.commit() 
 
-        # 4. Create Movie Entry
         db_movie = DbMovie(all_video_id=video.id)
         db.session.add(db_movie)
         db.session.commit()
@@ -142,29 +147,24 @@ class ContentImporter:
         return f"Imported Movie: {m.title}"
 
     def import_series(self, tmdb_id, season_input=None, episode_input=None):
-        # 1. Fetch Series
         try:
-            s = self.tv_api.details(tmdb_id, append_to_response="credits")
+            s = self.tv_api.details(tmdb_id, append_to_response="credits,videos")
         except:
             return "Error: Series ID invalid."
 
-        # 2. Handle Master Video (Create or Get)
         video = AllVideo.query.filter_by(name=s.name).first()
         series_entry = None
 
-        # Extract Country safely
         country_name = ""
         if hasattr(s, 'production_countries') and s.production_countries:
             c_obj = s.production_countries[0]
             country_name = getattr(c_obj, 'name', None) or c_obj.get('name')
 
-        # Extract Runtime safely
         run_time = 45
         if hasattr(s, 'episode_run_time') and s.episode_run_time:
             run_time = s.episode_run_time[0]
 
         if not video:
-            # Create NEW Series
             video = AllVideo(
                 name=s.name,
                 slug=slugify(s.name),
@@ -177,7 +177,8 @@ class ContentImporter:
                 star_cast=self._get_cast(s),
                 length=self._get_runtime(run_time),
                 country=country_name,
-                language=getattr(s, 'original_language', 'en')
+                language=getattr(s, 'original_language', 'en'),
+                trailer_url=self._get_trailer(s) # <--- NEW TRAILER FETCH
             )
             video.genres = self.link_genres(s.genres)
             db.session.add(video)
@@ -187,21 +188,19 @@ class ContentImporter:
             db.session.add(series_entry)
             db.session.commit()
         else:
-            # Get Existing
             series_entry = video.series
             if not series_entry:
                 series_entry = Series(all_video_id=video.id, num_seasons=0, num_episodes=0)
                 db.session.add(series_entry)
                 db.session.commit()
 
-        # 3. Determine Seasons to Add
+        # Seasons/Episodes Logic
         target_seasons = []
         if season_input:
             target_seasons = [int(x) for x in str(season_input).split(',') if x.strip().isdigit()]
         else:
             target_seasons = [seas.season_number for seas in s.seasons if seas.season_number > 0]
 
-        # 4. Loop Seasons
         for seas_num in target_seasons:
             try:
                 tmdb_season = self.season_api.details(tmdb_id, seas_num)
@@ -221,9 +220,7 @@ class ContentImporter:
                 db.session.add(db_season)
                 db.session.commit() 
 
-            # 5. Handle Episodes
             all_eps = tmdb_season.episodes
-            
             start_ep, end_ep = 0, 9999
             if episode_input and episode_input.lower() != "all":
                 try:
@@ -234,11 +231,8 @@ class ContentImporter:
                     pass 
 
             for ep in all_eps:
-                if not (start_ep <= ep.episode_number <= end_ep):
-                    continue
-
-                if Episode.query.filter_by(season_id=db_season.id, episode_number=ep.episode_number).first():
-                    continue
+                if not (start_ep <= ep.episode_number <= end_ep): continue
+                if Episode.query.filter_by(season_id=db_season.id, episode_number=ep.episode_number).first(): continue
 
                 new_ep = Episode(
                     season_id=db_season.id,
@@ -252,11 +246,9 @@ class ContentImporter:
                 db.session.add(new_ep)
             
             db.session.commit()
-            
             db_season.num_episodes = Episode.query.filter_by(season_id=db_season.id).count()
             db.session.commit()
 
-        # 6. Final Series Update
         series_entry.num_seasons = Season.query.filter_by(series_id=series_entry.id).count()
         total = 0
         for s_obj in series_entry.seasons:
