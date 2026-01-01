@@ -929,30 +929,27 @@ def import_tmdb():
         tmdb_id = request.form.get('tmdb_id')
         ctype = request.form.get('type') # 'movie' or 'series'
         
+        # Instantiate your new class
         importer = ContentImporter()
-        
+
         try:
             if ctype == 'movie':
                 msg = importer.import_movie(tmdb_id)
                 flash(msg, 'success')
-            
+
             elif ctype == 'series':
-                # Parse Inputs
-                seasons_input = request.form.get('seasons') # e.g., "5" or "1,2"
-                ep_range = request.form.get('episodes') # "All" or "1-8"
-                
-                # Convert season input to list
-                if seasons_input:
-                    season_list = [int(x.strip()) for x in seasons_input.split(',')]
-                else:
-                    season_list = None # Will fetch ALL
-                
-                msg = importer.import_series(tmdb_id, season_list, ep_range)
+                # Get raw inputs (Strings)
+                seasons_input = request.form.get('seasons') # e.g., "5"
+                ep_range = request.form.get('episodes') # e.g., "1-8"
+
+                # Pass them DIRECTLY to the importer. 
+                # The importer handles the splitting and conversion logic.
+                msg = importer.import_series(tmdb_id, seasons_input, ep_range)
                 flash(msg, 'success')
 
         except Exception as e:
             flash(f"Error: {str(e)}", 'error')
-            
+
         return redirect(url_for('admin.import_tmdb'))
 
     return render_template('admin/import.html')
