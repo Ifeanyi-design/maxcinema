@@ -7,7 +7,7 @@ import os
 
 # CONFIGURATION
 tmdb = TMDb()
-tmdb.api_key = os.get('YOUR_TMDB_API_KEY')
+tmdb.api_key = os.environ.get('YOUR_TMDB_API_KEY')
 tmdb.language = 'en'
 
 class ContentImporter:
