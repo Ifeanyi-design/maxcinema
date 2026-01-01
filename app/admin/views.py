@@ -928,46 +928,41 @@ def delete_request(id):
 @admin_required
 def import_tmdb():
     if request.method == 'POST':
-        print("DEBUG: Form Submitted! Processing...") # <--- LOOK FOR THIS IN TERMINAL
-        
-        try:
-            # 1. Check Imports
-            print("DEBUG: Initializing Importer...")
-            from .utils import ContentImporter # Import here to catch errors instantly
-            importer = ContentImporter()
-            print("DEBUG: Importer Initialized.")
+        print("DEBUG: Form Submitted! Processing...") 
 
+        try:
+            # 1. Import inside the function to prevent circular errors
+            # Note: Ensure the dot (.) matches where the file actually is. 
+            # If utils.py is next to views.py, use .utils
+            from .utils import ContentImporter 
+            
+            importer = ContentImporter()
+            
             # 2. Get Data
             tmdb_id = request.form.get('tmdb_id')
             ctype = request.form.get('type')
-            print(f"DEBUG: Type={ctype}, ID={tmdb_id}")
-
+            
             msg = ""
             if ctype == 'movie':
                 msg = importer.import_movie(tmdb_id)
             
             elif ctype == 'series':
+                # Get the raw text (e.g., "1-8")
                 seasons_in = request.form.get('seasons')
                 ep_range = request.form.get('episodes')
-                print(f"DEBUG: Seasons={seasons_in}, Episodes={ep_range}")
                 
+                print(f"DEBUG: Processing Series {tmdb_id} | Seasons: {seasons_in} | Eps: {ep_range}")
+                
+                # Pass the raw text directly. The new utils.py handles the splitting.
                 msg = importer.import_series(tmdb_id, seasons_in, ep_range)
             
-            print(f"DEBUG: Success! Message: {msg}")
+            print(f"DEBUG: Success! {msg}")
             flash(msg, 'success')
 
-        except ImportError as e:
-            err = f"CRASH: Missing Library! Run 'pip install tmdbv3api'. Error: {e}"
-            print(err)
-            flash(err, 'error')
-            
         except Exception as e:
-            # This prints the EXACT line number that failed
             import traceback
-            traceback.print_exc() 
-            err = f"CRASH: {str(e)}"
-            print(err)
-            flash(err, 'error')
+            traceback.print_exc()
+            flash(f"Error: {str(e)}", 'error')
 
         return redirect(url_for('admin.import_tmdb'))
 
