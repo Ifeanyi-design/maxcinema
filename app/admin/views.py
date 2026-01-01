@@ -10,6 +10,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_login import login_required, current_user, login_user, logout_user
 
+from ..utils import ContentImporter # Import the class we just made
+
 
 
 
@@ -917,3 +919,38 @@ def delete_request(id):
     db.session.commit()
     flash('Request deleted', 'success')
     return redirect(url_for('admin.view_requests'))
+
+
+@admin_bp.route('/admin/import-tmdb', methods=['GET', 'POST'])
+def import_tmdb():
+    if request.method == 'POST':
+        tmdb_id = request.form.get('tmdb_id')
+        ctype = request.form.get('type') # 'movie' or 'series'
+        
+        importer = ContentImporter()
+        
+        try:
+            if ctype == 'movie':
+                msg = importer.import_movie(tmdb_id)
+                flash(msg, 'success')
+            
+            elif ctype == 'series':
+                # Parse Inputs
+                seasons_input = request.form.get('seasons') # e.g., "5" or "1,2"
+                ep_range = request.form.get('episodes') # "All" or "1-8"
+                
+                # Convert season input to list
+                if seasons_input:
+                    season_list = [int(x.strip()) for x in seasons_input.split(',')]
+                else:
+                    season_list = None # Will fetch ALL
+                
+                msg = importer.import_series(tmdb_id, season_list, ep_range)
+                flash(msg, 'success')
+
+        except Exception as e:
+            flash(f"Error: {str(e)}", 'error')
+            
+        return redirect(url_for('admin.import_tmdb'))
+
+    return render_template('admin/import.html')
