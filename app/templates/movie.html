@@ -122,13 +122,13 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
             </div>
             {% endif %}
             <div class="w-full my-6">
-                <p class="text-[8px] text-gray-400 mb-2 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
+                <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
                     {% include 'ads/banner.html' %}
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row gap-4 mb-12 p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
+            <div class="flex flex-col md:flex-row gap-4 mb-2 p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
             
                 {% if det == "movie" %}
                     <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" 
@@ -154,7 +154,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     <span>Share</span>
                 </button>
             </div>
-            <div class="text-sm text-red-600 mt-2 font-medium bg-red-50 p-2 rounded border border-red-200">
+            <div class="text-sm text-red-600 mt-2 mb-12 font-medium bg-red-50 p-2 rounded border border-red-200">
                 <span class="font-bold">NOTE:</span> If you are redirected to a betting/spam site, 
                 press <span class="font-bold">BACK</span> or <span class="font-bold">CLOSE TAB</span> 
                 immediately. The download will start on the 2nd or 3rd click.
