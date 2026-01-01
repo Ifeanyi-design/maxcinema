@@ -3,6 +3,13 @@
 {% block content %}
 <script src="https://cdn.tailwindcss.com"></script>
 
+<button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px] ml-2 flex items-center" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+    <svg class="w-5 h-5 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
+    </svg>
+    Dashboard
+</button>
+
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-6">
     <h2 class="text-2xl font-bold mb-6 text-gray-800">🎬 Auto-Import from TMDB</h2>
 
@@ -12,7 +19,7 @@
 
             <input type="hidden" name="type" value="movie">
             <input type="text" name="tmdb_id" placeholder="TMDB ID (e.g. 550)" 
-                   class="border border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                   class="border border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 text-blue-600 focus:ring-blue-500" required>
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition">
                 Fetch Movie
             </button>
@@ -21,7 +28,7 @@
 
     <div>
         <h3 class="text-lg font-semibold mb-2 text-green-600">Import Series</h3>
-        <form method="POST" class="flex flex-col gap-4">
+        <form method="POST" class="flex flex-col gap-4 text-green-600 md:grid md:grid-cols-2 md:gap-6">
             <input type="hidden" name="type" value="series">
 
             <div class="col-span-2">

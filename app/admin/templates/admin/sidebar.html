@@ -84,6 +84,13 @@
                         </div>
                     </div>
 
+                    <a href="{{ url_for('admin.import_tmdb') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.import_tmdb' %}text-yellow-400 font-semibold{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        Import Content
+                    </a>
+
                     <!-- Trailers -->
                     <a href="{{ url_for('admin.view_trailers') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_trailers','admin.add_trailer'] %}text-yellow-400 font-semibold{% endif %}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

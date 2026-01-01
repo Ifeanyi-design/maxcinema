@@ -1,6 +1,7 @@
 from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason, Episode as TMDBEpisode
 from slugify import slugify
 from datetime import datetime
+import traceback
 
 # ---------------------------------------------------------
 # FIX: Use 'app.models' to find the DB no matter where this file is
@@ -8,7 +9,6 @@ from datetime import datetime
 try:
     from app.models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre
 except ImportError:
-    # Fallback: Try going up one level (..models)
     from ..models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre
 
 # ⚙️ CONFIGURATION
@@ -23,75 +23,61 @@ class ContentImporter:
         self.season_api = TMDBSeason()
 
     # --- HELPERS ---
+    def _val(self, obj, key, default=None):
+        """Universal Helper: Gets value from Dict OR Object safely."""
+        if isinstance(obj, dict):
+            return obj.get(key, default)
+        return getattr(obj, key, default)
+
     def _get_date(self, date_str):
         if not date_str: return None
-        try: return datetime.strptime(date_str, '%Y-%m-%d').date()
+        try: return datetime.strptime(str(date_str), '%Y-%m-%d').date()
         except: return None
 
     def _get_runtime(self, mins):
-        if not mins: return "0m"
+        """Returns format: '100 min'"""
+        if not mins: return "0 min"
         try:
-            val = int(mins)
-            return f"{val // 60}h {val % 60}m"
-        except: return "0m"
+            return f"{int(mins)} min"
+        except: return "0 min"
 
     def _get_cast(self, obj):
-        """Access raw JSON to avoid 'getattr' crash on slicing."""
         cast_list = []
         if hasattr(obj, '_json'):
             credits = obj._json.get('credits', {})
-            if isinstance(credits, dict):
-                cast_list = credits.get('cast', [])
+            if isinstance(credits, dict): cast_list = credits.get('cast', [])
         elif hasattr(obj, 'credits'):
             credits = obj.credits
-            if hasattr(credits, 'cast'):
-                cast_list = credits.cast
+            if hasattr(credits, 'cast'): cast_list = credits.cast
 
         if not isinstance(cast_list, list): return ""
-
         names = []
         for c in cast_list[:5]:
-            name = c.get('name') if isinstance(c, dict) else getattr(c, 'name', None)
+            name = self._val(c, 'name')
             if name: names.append(name)
-
         return ", ".join(names)
 
     def _get_trailer(self, obj):
-        """
-        NEW: Hunts for a YouTube Trailer in the 'videos' results.
-        """
-        # 1. Get the list of videos (safely)
         videos = []
         if hasattr(obj, 'videos'):
             v_data = obj.videos
-            # If it's a dict (from _json)
-            if isinstance(v_data, dict):
-                videos = v_data.get('results', [])
-            # If it's an object (from wrapper)
-            elif hasattr(v_data, 'results'):
-                videos = v_data.results
+            if isinstance(v_data, dict): videos = v_data.get('results', [])
+            elif hasattr(v_data, 'results'): videos = v_data.results
         
-        # 2. Loop and find the first official Trailer on YouTube
         for v in videos:
-            # Handle Dict vs Object
-            site = v.get('site') if isinstance(v, dict) else getattr(v, 'site', '')
-            type_ = v.get('type') if isinstance(v, dict) else getattr(v, 'type', '')
-            key = v.get('key') if isinstance(v, dict) else getattr(v, 'key', '')
-
-            if site == "YouTube" and type_ == "Trailer" and key:
-                return f"https://www.youtube.com/watch?v={key}"
-        
-        return None # No trailer found
+            if self._val(v, 'site') == "YouTube" and self._val(v, 'type') == "Trailer":
+                key = self._val(v, 'key')
+                if key: return f"https://www.youtube.com/watch?v={key}"
+        return None
 
     def link_genres(self, tmdb_genres):
-        """Fixed: Uses raw access for genres to prevent crashes"""
         genre_objs = []
         if not isinstance(tmdb_genres, list):
              if hasattr(tmdb_genres, '_json'): tmdb_genres = tmdb_genres._json
              else: return []
 
         for g in tmdb_genres:
-            g_name = g.get('name') if isinstance(g, dict) else getattr(g, 'name', None)
+            g_name = self._val(g, 'name')
             if g_name:
                 db_genre = Genre.query.filter_by(name=g_name).first()
                 if not db_genre:
@@ -103,7 +89,6 @@ class ContentImporter:
 
     # --- MAIN FUNCTIONS ---
     def import_movie(self, tmdb_id):
-        # 1. Fetch Data (Request credits AND videos)
         try:
             m = self.movie_api.details(tmdb_id, append_to_response="credits,videos")
         except:
@@ -114,10 +99,8 @@ class ContentImporter:
 
         country_name = ""
         if hasattr(m, 'production_countries') and m.production_countries:
-            c_obj = m.production_countries[0]
-            country_name = getattr(c_obj, 'name', None) or c_obj.get('name')
+            country_name = self._val(m.production_countries[0], 'name')
 
-        # 3. Create Master Video
         video = AllVideo(
             name=m.title,
             slug=slugify(m.title),
@@ -132,24 +115,22 @@ class ContentImporter:
             length=self._get_runtime(getattr(m, 'runtime', 0)),
             country=country_name,
             language=getattr(m, 'original_language', 'en'),
-            trailer_url=self._get_trailer(m)  # <--- NEW TRAILER FETCH
+            trailer_url=self._get_trailer(m)
         )
-        
         video.genres = self.link_genres(m.genres)
-        
         db.session.add(video)
         db.session.commit() 
 
         db_movie = DbMovie(all_video_id=video.id)
         db.session.add(db_movie)
         db.session.commit()
-
         return f"Imported Movie: {m.title}"
 
     def import_series(self, tmdb_id, season_input=None, episode_input=None):
+        print(f"DEBUG: --- Starting Series Import for ID {tmdb_id} ---")
         try:
             s = self.tv_api.details(tmdb_id, append_to_response="credits,videos")
-        except:
+        except Exception as e:
             return "Error: Series ID invalid."
 
         video = AllVideo.query.filter_by(name=s.name).first()
@@ -157,12 +138,14 @@ class ContentImporter:
 
         country_name = ""
         if hasattr(s, 'production_countries') and s.production_countries:
-            c_obj = s.production_countries[0]
-            country_name = getattr(c_obj, 'name', None) or c_obj.get('name')
-
+            country_name = self._val(s.production_countries[0], 'name')
+        
         run_time = 45
         if hasattr(s, 'episode_run_time') and s.episode_run_time:
             run_time = s.episode_run_time[0]
+
+        # Get Main Trailer (Backup)
+        main_trailer = self._get_trailer(s)
 
         if not video:
             video = AllVideo(
@@ -178,7 +161,7 @@ class ContentImporter:
                 length=self._get_runtime(run_time),
                 country=country_name,
                 language=getattr(s, 'original_language', 'en'),
-                trailer_url=self._get_trailer(s) # <--- NEW TRAILER FETCH
+                trailer_url=main_trailer
             )
             video.genres = self.link_genres(s.genres)
             db.session.add(video)
@@ -194,58 +177,90 @@ class ContentImporter:
                 db.session.add(series_entry)
                 db.session.commit()
 
-        # Seasons/Episodes Logic
+        # Parse Inputs
         target_seasons = []
         if season_input:
             target_seasons = [int(x) for x in str(season_input).split(',') if x.strip().isdigit()]
         else:
             target_seasons = [seas.season_number for seas in s.seasons if seas.season_number > 0]
 
+        # Parse Episode Range
+        start_ep, end_ep = 0, 9999
+        if episode_input and str(episode_input).strip().lower() not in ["all", "", "none"]:
+            try:
+                parts = str(episode_input).split('-')
+                start_ep = int(parts[0])
+                end_ep = int(parts[1])
+            except: pass
+
         for seas_num in target_seasons:
             try:
-                tmdb_season = self.season_api.details(tmdb_id, seas_num)
+                tmdb_season = self.season_api.details(tmdb_id, seas_num, append_to_response="credits,videos")
             except:
                 continue 
 
+            # NEW: Get Cast & Trailer for this specific season
+            s_cast = self._get_cast(tmdb_season)
+            s_trailer = self._get_trailer(tmdb_season)
+
+            # FALLBACK: If season has no trailer, use the Main Series Trailer
+            if not s_trailer:
+                s_trailer = main_trailer
+
             db_season = Season.query.filter_by(series_id=series_entry.id, season_number=seas_num).first()
             if not db_season:
+                s_poster = getattr(tmdb_season, 'poster_path', None)
+                img_url = f"https://image.tmdb.org/t/p/w500{s_poster}" if s_poster else video.image
+                s_desc = getattr(tmdb_season, 'overview', '') or f"Season {seas_num}"
+                
                 db_season = Season(
                     series_id=series_entry.id,
                     season_number=seas_num,
-                    description=tmdb_season.overview or f"Season {seas_num}",
-                    image=f"https://image.tmdb.org/t/p/w500{tmdb_season.poster_path}" if tmdb_season.poster_path else video.image,
-                    release_date=self._get_date(tmdb_season.air_date),
-                    num_episodes=0
+                    description=s_desc,
+                    image=img_url,
+                    release_date=self._get_date(getattr(tmdb_season, 'air_date', None)),
+                    num_episodes=0,
+                    cast=s_cast,           # <--- Saved Cast
+                    trailer_url=s_trailer  # <--- Saved Trailer (or fallback)
                 )
                 db.session.add(db_season)
-                db.session.commit() 
+                db.session.commit()
 
+            # Episodes
             all_eps = tmdb_season.episodes
-            start_ep, end_ep = 0, 9999
-            if episode_input and episode_input.lower() != "all":
-                try:
-                    parts = episode_input.split('-')
-                    start_ep = int(parts[0])
-                    end_ep = int(parts[1])
-                except:
-                    pass 
-
+            count_added = 0
             for ep in all_eps:
-                if not (start_ep <= ep.episode_number <= end_ep): continue
-                if Episode.query.filter_by(season_id=db_season.id, episode_number=ep.episode_number).first(): continue
+                ep_num = self._val(ep, 'episode_number')
+                
+                if ep_num is None: continue
+                if not (start_ep <= int(ep_num) <= end_ep): continue
+                if Episode.query.filter_by(season_id=db_season.id, episode_number=ep_num).first(): continue
 
-                new_ep = Episode(
-                    season_id=db_season.id,
-                    episode_number=ep.episode_number,
-                    name=ep.name,
-                    description=ep.overview,
-                    released_date=self._get_date(ep.air_date),
-                    image=f"https://image.tmdb.org/t/p/w500{ep.still_path}" if ep.still_path else None,
-                    length=self._get_runtime(getattr(ep, 'runtime', 0))
-                )
-                db.session.add(new_ep)
-            
-            db.session.commit()
+                try:
+                    ep_name = self._val(ep, 'name', f'Episode {ep_num}')
+                    ep_still = self._val(ep, 'still_path')
+                    img_url = f"https://image.tmdb.org/t/p/w500{ep_still}" if ep_still else None
+
+                    new_ep = Episode(
+                        season_id=db_season.id,
+                        episode_number=ep_num,
+                        name=ep_name,
+                        description=self._val(ep, 'overview', ''),
+                        released_date=self._get_date(self._val(ep, 'air_date')),
+                        thumb_720p=img_url, 
+                        length=self._get_runtime(self._val(ep, 'runtime', 0)), # '100 min'
+                        cast=s_cast # <--- Copy Season Cast to Episode
+                    )
+                    db.session.add(new_ep)
+                    count_added += 1
+                except Exception as e:
+                    print(f"DEBUG: Error creating Ep {ep_num}: {e}")
+
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+
             db_season.num_episodes = Episode.query.filter_by(season_id=db_season.id).count()
             db.session.commit()
 
