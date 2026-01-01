@@ -922,6 +922,8 @@ def delete_request(id):
 
 
 @admin_bp.route('/admin/import-tmdb', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def import_tmdb():
     if request.method == 'POST':
         tmdb_id = request.form.get('tmdb_id')
