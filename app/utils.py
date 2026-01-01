@@ -2,11 +2,12 @@ from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason, Episode as TMDBEpis
 from slugify import slugify
 from datetime import datetime
 from .models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre, video_genre
+import os
 # Import your app context if needed, or run this inside a route
 
 # CONFIGURATION
 tmdb = TMDb()
-tmdb.api_key = 'YOUR_TMDB_API_KEY'
+tmdb.api_key = os.get('YOUR_TMDB_API_KEY')
 tmdb.language = 'en'
 
 class ContentImporter:
