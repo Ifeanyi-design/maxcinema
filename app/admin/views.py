@@ -921,34 +921,53 @@ def delete_request(id):
     return redirect(url_for('admin.view_requests'))
 
 
+# In admin.py
+
 @admin_bp.route('/admin/import-tmdb', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def import_tmdb():
     if request.method == 'POST':
-        tmdb_id = request.form.get('tmdb_id')
-        ctype = request.form.get('type') # 'movie' or 'series'
+        print("DEBUG: Form Submitted! Processing...") # <--- LOOK FOR THIS IN TERMINAL
         
-        # Instantiate your new class
-        importer = ContentImporter()
-
         try:
+            # 1. Check Imports
+            print("DEBUG: Initializing Importer...")
+            from .utils import ContentImporter # Import here to catch errors instantly
+            importer = ContentImporter()
+            print("DEBUG: Importer Initialized.")
+
+            # 2. Get Data
+            tmdb_id = request.form.get('tmdb_id')
+            ctype = request.form.get('type')
+            print(f"DEBUG: Type={ctype}, ID={tmdb_id}")
+
+            msg = ""
             if ctype == 'movie':
                 msg = importer.import_movie(tmdb_id)
-                flash(msg, 'success')
-
+            
             elif ctype == 'series':
-                # Get raw inputs (Strings)
-                seasons_input = request.form.get('seasons') # e.g., "5"
-                ep_range = request.form.get('episodes') # e.g., "1-8"
+                seasons_in = request.form.get('seasons')
+                ep_range = request.form.get('episodes')
+                print(f"DEBUG: Seasons={seasons_in}, Episodes={ep_range}")
+                
+                msg = importer.import_series(tmdb_id, seasons_in, ep_range)
+            
+            print(f"DEBUG: Success! Message: {msg}")
+            flash(msg, 'success')
 
-                # Pass them DIRECTLY to the importer. 
-                # The importer handles the splitting and conversion logic.
-                msg = importer.import_series(tmdb_id, seasons_input, ep_range)
-                flash(msg, 'success')
-
+        except ImportError as e:
+            err = f"CRASH: Missing Library! Run 'pip install tmdbv3api'. Error: {e}"
+            print(err)
+            flash(err, 'error')
+            
         except Exception as e:
-            flash(f"Error: {str(e)}", 'error')
+            # This prints the EXACT line number that failed
+            import traceback
+            traceback.print_exc() 
+            err = f"CRASH: {str(e)}"
+            print(err)
+            flash(err, 'error')
 
         return redirect(url_for('admin.import_tmdb'))
 
