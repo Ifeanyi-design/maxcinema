@@ -36,31 +36,52 @@ class ContentImporter:
         except: return "0m"
 
     def _get_cast(self, obj):
-        """Fixed: Uses dot notation (c.name) instead of dict (c['name'])"""
-        if not hasattr(obj, 'credits'): return ""
-        credits = obj.credits
-        
-        # Check if cast exists
+        """
+        FIXED: Access raw JSON to avoid 'getattr' crash on slicing.
+        The wrapper library sometimes fails on list slicing.
+        """
         cast_list = []
-        if hasattr(credits, 'cast'):
-            cast_list = credits.cast
-        
-        # Extract names using dot notation
+
+        # 1. Try to get raw list from _json (Safest)
+        if hasattr(obj, '_json'):
+            credits = obj._json.get('credits', {})
+            if isinstance(credits, dict):
+                cast_list = credits.get('cast', [])
+
+        # 2. Fallback to attribute access
+        elif hasattr(obj, 'credits'):
+            credits = obj.credits
+            if hasattr(credits, 'cast'):
+                cast_list = credits.cast
+
+        # 3. Ensure it is a list before slicing
+        if not isinstance(cast_list, list):
+            return ""
+
         names = []
         for c in cast_list[:5]:
-            if hasattr(c, 'name'):
-                names.append(c.name)
-                
+            # Handle if 'c' is dict (from _json) or object (from wrapper)
+            name = c.get('name') if isinstance(c, dict) else getattr(c, 'name', None)
+            if name:
+                names.append(name)
+
         return ", ".join(names)
 
     def link_genres(self, tmdb_genres):
-        """Fixed: Uses dot notation for genres"""
+        """Fixed: Uses raw access for genres to prevent crashes"""
         genre_objs = []
+        
+        # Ensure we have a list to iterate
+        if not isinstance(tmdb_genres, list):
+             # Try to extract from _json if it's a wrapper
+             if hasattr(tmdb_genres, '_json'):
+                 tmdb_genres = tmdb_genres._json
+             else:
+                 return []
+
         for g in tmdb_genres:
-            # Prefer object access (g.name), fallback to dict if needed
-            g_name = getattr(g, 'name', None)
-            if not g_name and isinstance(g, dict):
-                g_name = g.get('name')
+            # Handle both Dict and Object
+            g_name = g.get('name') if isinstance(g, dict) else getattr(g, 'name', None)
             
             if g_name:
                 db_genre = Genre.query.filter_by(name=g_name).first()
@@ -86,7 +107,8 @@ class ContentImporter:
         # Extract Country safely
         country_name = ""
         if hasattr(m, 'production_countries') and m.production_countries:
-            country_name = m.production_countries[0].name
+            c_obj = m.production_countries[0]
+            country_name = getattr(c_obj, 'name', None) or c_obj.get('name')
 
         # 3. Create Master Video
         video = AllVideo(
@@ -99,7 +121,7 @@ class ContentImporter:
             released_date=self._get_date(m.release_date),
             rating=m.vote_average,
             active=False,
-            # Extra Fields
+            # Extra Fields (Now Safe)
             star_cast=self._get_cast(m),
             length=self._get_runtime(getattr(m, 'runtime', 0)),
             country=country_name,
@@ -110,7 +132,7 @@ class ContentImporter:
         video.genres = self.link_genres(m.genres)
         
         db.session.add(video)
-        db.session.commit() # Save to generate ID
+        db.session.commit() 
 
         # 4. Create Movie Entry
         db_movie = DbMovie(all_video_id=video.id)
@@ -133,7 +155,8 @@ class ContentImporter:
         # Extract Country safely
         country_name = ""
         if hasattr(s, 'production_countries') and s.production_countries:
-            country_name = s.production_countries[0].name
+            c_obj = s.production_countries[0]
+            country_name = getattr(c_obj, 'name', None) or c_obj.get('name')
 
         # Extract Runtime safely
         run_time = 45
