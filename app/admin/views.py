@@ -934,7 +934,7 @@ def import_tmdb():
             # 1. Import inside the function to prevent circular errors
             # Note: Ensure the dot (.) matches where the file actually is. 
             # If utils.py is next to views.py, use .utils
-            from .utils import ContentImporter 
+            from ..utils import ContentImporter 
             
             importer = ContentImporter()
             
