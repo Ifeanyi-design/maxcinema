@@ -445,7 +445,7 @@ def genre(genre_type, contain="movie", page=1):
 @main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
 def detail(det, name, id, season=1, episode=1):
     video = AllVideo.query.get(id)
-    if video and video.slug:
+    if video and video.slug and det != "trailer_watch":
         name = video.slug
     
     if det == "movie":

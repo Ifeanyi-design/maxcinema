@@ -27,25 +27,25 @@
 
             <div id="genreMenu" class="pointer-events-none dark:bg-black bg-white hidden absolute top-full right-0 mr-0 max-h-[65vh] md:w-[50vw] lg:w-[40vw] p-2 mt-6 rounded-lg shadow-xl border-2">
                 <ul id="genreNav" class="grid grid-cols-3 items-center text-center rounded-lg w-full">
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Anime') }}" class="px-3 py-2">Anime</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Animation') }}" class="px-3 py-2">Animation</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Crime') }}" class="px-3 py-2">Crime</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Comedy') }}" class="px-3 py-2">Comedy</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Chinese') }}" class="px-3 py-2">Chinese</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Drama') }}" class="px-3 py-2">Drama</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Fantasy') }}" class="px-3 py-2">Fantasy</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Hollywood') }}" class="px-3 py-2">Hollywood</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Horror') }}" class="px-3 py-2">Horror</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Mystery') }}" class="px-3 py-2">Mystery</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Nollywood') }}" class="px-3 py-2">Nollywood</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Old') }}" class="px-3 py-2">Old</a></li>
-                    <li ><a href="{{ url_for('main.genre', page='1', genre_type='Sci-Fi') }}" class="px-3 py-2">Sci-Fi</a></li>
-                    <li><a href="{{ url_for('main.genre', page='1', genre_type='Indian') }}" class="px-3 py-2">Indian</a></li>
-                    <li><a href="{{ url_for('main.genre', page='1', genre_type='Korean') }}" class="px-3 py-2">Korean</a></li>
-                    <li><a href="{{ url_for('main.genre', page='1', genre_type='Reality') }}" class="px-3 py-2">Reality</a></li>
-                    <li><a href="{{ url_for('main.genre', page='1', genre_type='Wrestling') }}" class="px-3 py-2">Wrestling</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Action') }}" class="px-3 py-2 text-[#830506]">Action</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Anime') }}" class="px-3 py-2">Anime</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Animation') }}" class="px-3 py-2">Animation</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Crime') }}" class="px-3 py-2">Crime</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Comedy') }}" class="px-3 py-2">Comedy</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Chinese') }}" class="px-3 py-2">Chinese</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Drama') }}" class="px-3 py-2">Drama</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Fantasy') }}" class="px-3 py-2">Fantasy</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Hollywood') }}" class="px-3 py-2">Hollywood</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Horror') }}" class="px-3 py-2">Horror</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Mystery') }}" class="px-3 py-2">Mystery</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Nollywood') }}" class="px-3 py-2">Nollywood</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Old') }}" class="px-3 py-2">Old</a></li>
+                    <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Sci-Fi') }}" class="px-3 py-2">Sci-Fi</a></li>
+                    <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Indian') }}" class="px-3 py-2">Indian</a></li>
+                    <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Korean') }}" class="px-3 py-2">Korean</a></li>
+                    <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Reality') }}" class="px-3 py-2">Reality</a></li>
+                    <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Wrestling') }}" class="px-3 py-2">Wrestling</a></li>
                 </ul>
             </div>
         </nav>
@@ -72,25 +72,25 @@
 
         <div id="MobilegenreMenu" class="py-3 md:hidden dark:border-[#830506] bg-white dark:bg-[#0a0a0a] flex flex-col absolute top-full w-screen left-1/2 -translate-x-1/2 max-h-[60vh] p-2 shadow-xl border-2">
             <ul id="MobilegenreNav" class="flex flex-row overflow-x-auto scrollbar-hide items-center text-center rounded-lg w-full font-semibold uppercase snap-x snap-mandatory scroll-smooth">
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Action') }}" class="px-3 py-2">Action</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Anime') }}" class="px-3 py-2">Anime</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Animation') }}" class="px-3 py-2">Animation</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Crime') }}" class="px-3 py-2">Crime</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Comedy') }}" class="px-3 py-2">Comedy</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Chinese') }}" class="px-3 py-2">Chinese</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Drama') }}" class="px-3 py-2">Drama</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Fantasy') }}" class="px-3 py-2">Fantasy</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Hollywood') }}" class="px-3 py-2">Hollywood</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Horror') }}" class="px-3 py-2">Horror</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Mystery') }}" class="px-3 py-2">Mystery</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Nollywood') }}" class="px-3 py-2">Nollywood</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Old') }}" class="px-3 py-2">Old</a></li>
-                <li ><a href="{{ url_for('main.genre', page='1', genre_type='Sci-Fi') }}" class="px-3 py-2 no-break">Sci-Fi</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Indian') }}" class="px-3 py-2">Indian</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Korean') }}" class="px-3 py-2">Korean</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Reality') }}" class="px-3 py-2">Reality</a></li>
-                <li><a href="{{ url_for('main.genre', page='1', genre_type='Wrestling') }}" class="px-3 py-2">Wrestling</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Action') }}" class="px-3 py-2">Action</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Adventure') }}" class="px-3 py-2">Adventure</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Anime') }}" class="px-3 py-2">Anime</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Animation') }}" class="px-3 py-2">Animation</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Crime') }}" class="px-3 py-2">Crime</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Comedy') }}" class="px-3 py-2">Comedy</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Chinese') }}" class="px-3 py-2">Chinese</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Drama') }}" class="px-3 py-2">Drama</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Fantasy') }}" class="px-3 py-2">Fantasy</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Hollywood') }}" class="px-3 py-2">Hollywood</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Horror') }}" class="px-3 py-2">Horror</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Mystery') }}" class="px-3 py-2">Mystery</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Nollywood') }}" class="px-3 py-2">Nollywood</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Old') }}" class="px-3 py-2">Old</a></li>
+                <li ><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Sci-Fi') }}" class="px-3 py-2 no-break">Sci-Fi</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Indian') }}" class="px-3 py-2">Indian</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Korean') }}" class="px-3 py-2">Korean</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Reality') }}" class="px-3 py-2">Reality</a></li>
+                <li><a href="{{ url_for('main.genre', page='1', contain='all', genre_type='Wrestling') }}" class="px-3 py-2">Wrestling</a></li>
             </ul>
             <div id="scrollHint" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
                 <i class="fa-solid fa-angles-right"></i>
