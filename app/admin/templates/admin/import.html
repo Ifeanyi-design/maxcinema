@@ -1,0 +1,57 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-6">🎬 Auto-Import from TMDB</h2>
+
+    <div class="mb-8 border-b pb-8">
+        <h3 class="text-lg font-semibold mb-2">Import Movie</h3>
+        <form method="POST" class="flex gap-4">
+            <input type="hidden" name="type" value="movie">
+            <input type="text" name="tmdb_id" placeholder="TMDB ID (e.g. 550)" class="border p-2 rounded w-full" required>
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Fetch Movie</button>
+        </form>
+    </div>
+
+    <div>
+        <h3 class="text-lg font-semibold mb-2">Import Series</h3>
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" name="type" value="series">
+            
+            <div class="col-span-2">
+                <label class="block text-sm font-bold text-gray-700">TMDB ID</label>
+                <input type="text" name="tmdb_id" placeholder="e.g. 66732 (Stranger Things)" class="border p-2 rounded w-full" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">Seasons (Optional)</label>
+                <input type="text" name="seasons" placeholder="e.g. 1, 2 or 5" class="border p-2 rounded w-full">
+                <small class="text-gray-500">Leave blank to import ALL seasons.</small>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700">Episode Range</label>
+                <select name="episodes" class="border p-2 rounded w-full">
+                    <option value="All">Import All Episodes</option>
+                    <option value="1-5">1-5</option>
+                    <option value="1-8">1-8</option>
+                    <option value="1-10">1-10</option>
+                    <option value="1-12">1-12</option>
+                </select>
+                <small class="text-gray-500">Useful if you only have Part 1 files.</small>
+            </div>
+
+            <div class="col-span-2 mt-2">
+                <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded w-full font-bold hover:bg-green-700">
+                    Fetch Series Data
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="mt-4 bg-gray-100 p-4 rounded text-sm">
+        <strong>Tip:</strong> Find IDs at <a href="https://www.themoviedb.org/" target="_blank" class="text-blue-500 underline">TheMovieDB.org</a>. 
+        <br>For <em>Stranger Things</em>, ID is <strong>66732</strong>.
+    </div>
+</div>
+{% endblock %}
