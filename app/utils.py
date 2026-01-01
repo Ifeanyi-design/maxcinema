@@ -1,11 +1,19 @@
 from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason, Episode as TMDBEpisode
 from slugify import slugify
 from datetime import datetime
-from .models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre
+
+# ---------------------------------------------------------
+# FIX: Use 'app.models' to find the DB no matter where this file is
+# ---------------------------------------------------------
+try:
+    from app.models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre
+except ImportError:
+    # Fallback: Try going up one level (..models)
+    from ..models import db, AllVideo, Movie as DbMovie, Series, Season, Episode, Genre
 
 # ⚙️ CONFIGURATION
 tmdb = TMDb()
-tmdb.api_key = '3d6b99b6b66197eff0bbee7faab6cf5e'  # Your Key
+tmdb.api_key = '3d6b99b6b66197eff0bbee7faab6cf5e'
 tmdb.language = 'en'
 
 class ContentImporter:
