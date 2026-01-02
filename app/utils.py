@@ -205,17 +205,19 @@ class ContentImporter:
             if not s_trailer:
                 s_trailer = main_trailer
 
-            # Get Raw TMDB Overview (Don't set default yet)
+            # Get Raw TMDB Overview
             tmdb_overview = getattr(tmdb_season, 'overview', '').strip()
 
             db_season = Season.query.filter_by(series_id=series_entry.id, season_number=seas_num).first()
             
             if not db_season:
-                # --- CREATE NEW SEASON ---
+                # ---------------------------------------------------
+                # [CASE 1] NEW SEASON: Create it.
+                # Only here do we use the "Season X" fallback if text is empty.
+                # ---------------------------------------------------
                 s_poster = getattr(tmdb_season, 'poster_path', None)
                 img_url = f"https://image.tmdb.org/t/p/w500{s_poster}" if s_poster else video.image
                 
-                # FIX: Only use "Season X" if creating new and TMDB is empty
                 final_desc = tmdb_overview if tmdb_overview else f"Season {seas_num}"
                 
                 db_season = Season(
@@ -232,18 +234,22 @@ class ContentImporter:
                 db.session.commit()
             
             else:
-                # --- UPDATE EXISTING SEASON (Optional but Safe) ---
-                # FIX: Only update description if TMDB actually has text.
-                # This prevents overwriting your custom description with "Season X"
-                if tmdb_overview:
-                    db_season.description = tmdb_overview
-                
-                # Update other fields if needed
+                # ---------------------------------------------------
+                # [CASE 2] EXISTING SEASON: Safe Update.
+                # We intentionally DO NOT update the description here.
+                # This ensures your existing descriptions remain untouched.
+                # ---------------------------------------------------
                 if s_cast: db_season.cast = s_cast
                 if s_trailer: db_season.trailer_url = s_trailer
+                
+                # OPTIONAL: Uncomment the lines below ONLY if you want to overwrite 
+                # existing descriptions when TMDB has new, valid text.
+                # if tmdb_overview and len(tmdb_overview) > 10:
+                #    db_season.description = tmdb_overview
+                
                 db.session.commit()
 
-            # --- EPISODES LOGIC (Remains mostly the same) ---
+            # --- EPISODES LOGIC ---
             all_eps = tmdb_season.episodes
             count_added = 0
             for ep in all_eps:
