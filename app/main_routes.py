@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload, defer
 from sqlalchemy import or_, text, desc
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import random
 
 import os
 import time
@@ -567,6 +568,7 @@ def series_details(det, name, season, episode, id):
 
     return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
+
 @main_bp.route("/download/<type>/<int:id>")
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
@@ -579,20 +581,49 @@ def download_dispatcher(type, id, season=None, episode=None):
     else:
         return "Invalid type", 400
 
-    storage_server = video.storage_server
+    # Get the assigned server (just to check the type)
+    assigned_server = video.storage_server
 
-    if not storage_server or not storage_server.active:
+    if not assigned_server or not assigned_server.active:
         return "Storage server not found or inactive", 404
 
     if not video.download_link:
         return "File not linked in database", 404
 
-    server_type = storage_server.server_type.lower()
+    # Normalize type to lowercase for easy checking
+    server_type = assigned_server.server_type.lower()
+
+    # =====================================================
+    # 🚀 TELEGRAM LOAD BALANCER (The New Logic)
+    # =====================================================
+    if server_type == "telegram":
+        # 1. Fetch ALL active Telegram servers from the DB
+        telegram_pool = StorageServer.query.filter_by(
+            server_type="telegram", 
+            active=True
+        ).all()
+
+        if not telegram_pool:
+            return "No active Telegram servers available", 503
+
+        # 2. Pick one at random
+        selected_server = random.choice(telegram_pool)
+
+        # 3. Build the Link
+        # Pattern: {base_url}/watch/{hash}
+        # Example: https://worker-bot-1.koyeb.app/watch/Z2V0...
+        
+        base = selected_server.base_url.rstrip("/")
+        file_hash = video.download_link.strip() # The hash (e.g., Z2V0...)
+        
+        final_url = f"{base}/watch/{file_hash}"
+        
+        return redirect(final_url)
 
     # =====================================================
     # BYTESCALE
     # =====================================================
-    if server_type == "bytescale":
+    elif server_type == "bytescale":
         if type == "movie":
             return redirect(url_for(
                 "main.movie_start_download",
@@ -611,56 +642,31 @@ def download_dispatcher(type, id, season=None, episode=None):
                 episode=episode
             ))
 
-    elif server_type == "gofile":
-        # GoFile direct URL: base + download_link
-        link = video.download_link.strip()
-        if link.startswith("http"):
-            return redirect(link)
-        base = storage_server.base_url.rstrip("/")
-        final_url = f"{base}/{link}"
-        return redirect(final_url)
-
     # =====================================================
-    # TERABOX
+    # OTHER SERVERS (GoFile, TeraBox, StreamWish, etc.)
     # =====================================================
-    elif server_type == "terabox":
-
-        link = video.download_link.strip()
-
-        # If already a full URL → use it
-        if link.startswith("http"):
-            return redirect(link)
-
-        # Else build from base_url
-        base = storage_server.base_url.rstrip("/")
-        path = link.lstrip("/")
-        final_url = f"{base}/{path}"
-
-        return redirect(final_url)
-    
-    elif server_type in ["streamwish", "doodstream"]:
+    elif server_type in ["gofile", "terabox", "streamwish", "doodstream"]:
         link = video.download_link.strip()
         
-        # If it is a full link (e.g., https://dood.li/d/abc12345)
         if link.startswith("http"):
             return redirect(link)
 
-        # If it is just the code (e.g., abc12345), build the full URL
-        base = storage_server.base_url.rstrip("/")
+        base = assigned_server.base_url.rstrip("/")
         path = link.lstrip("/")
         final_url = f"{base}/{path}"
 
         return redirect(final_url)
 
     # =====================================================
-    # STANDARD SERVERS (S3, Local, FTP, etc.)
+    # DEFAULT FALLBACK
     # =====================================================
     else:
-        base = storage_server.base_url.rstrip("/")
+        base = assigned_server.base_url.rstrip("/")
         path = video.download_link.lstrip("/")
         final_url = f"{base}/{path}"
 
         return redirect(final_url)
+
 
 CHUNK_SIZE = 1024 * 1024  # 1 MB
 
