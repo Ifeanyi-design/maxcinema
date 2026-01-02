@@ -175,7 +175,8 @@ class StorageServerForm(FlaskForm):
         ('doodstream', 'DoodStream'),
         ('1fichier', '1Fichier'),
         ('gofile', 'GoFile'), 
-        ('pixeldrain', 'PixelDrain')
+        ('pixeldrain', 'PixelDrain'),
+        ('telegram', 'Telegram')
     ], validators=[DataRequired()])
     
     base_url = StringField('Base URL / Path', validators=[
