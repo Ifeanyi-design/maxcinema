@@ -199,34 +199,51 @@ class ContentImporter:
             except:
                 continue 
 
-            # NEW: Get Cast & Trailer for this specific season
+            # Get Cast & Trailer
             s_cast = self._get_cast(tmdb_season)
             s_trailer = self._get_trailer(tmdb_season)
-
-            # FALLBACK: If season has no trailer, use the Main Series Trailer
             if not s_trailer:
                 s_trailer = main_trailer
 
+            # Get Raw TMDB Overview (Don't set default yet)
+            tmdb_overview = getattr(tmdb_season, 'overview', '').strip()
+
             db_season = Season.query.filter_by(series_id=series_entry.id, season_number=seas_num).first()
+            
             if not db_season:
+                # --- CREATE NEW SEASON ---
                 s_poster = getattr(tmdb_season, 'poster_path', None)
                 img_url = f"https://image.tmdb.org/t/p/w500{s_poster}" if s_poster else video.image
-                s_desc = getattr(tmdb_season, 'overview', '') or f"Season {seas_num}"
+                
+                # FIX: Only use "Season X" if creating new and TMDB is empty
+                final_desc = tmdb_overview if tmdb_overview else f"Season {seas_num}"
                 
                 db_season = Season(
                     series_id=series_entry.id,
                     season_number=seas_num,
-                    description=s_desc,
+                    description=final_desc,
                     image=img_url,
                     release_date=self._get_date(getattr(tmdb_season, 'air_date', None)),
                     num_episodes=0,
-                    cast=s_cast,           # <--- Saved Cast
-                    trailer_url=s_trailer  # <--- Saved Trailer (or fallback)
+                    cast=s_cast,
+                    trailer_url=s_trailer
                 )
                 db.session.add(db_season)
                 db.session.commit()
+            
+            else:
+                # --- UPDATE EXISTING SEASON (Optional but Safe) ---
+                # FIX: Only update description if TMDB actually has text.
+                # This prevents overwriting your custom description with "Season X"
+                if tmdb_overview:
+                    db_season.description = tmdb_overview
+                
+                # Update other fields if needed
+                if s_cast: db_season.cast = s_cast
+                if s_trailer: db_season.trailer_url = s_trailer
+                db.session.commit()
 
-            # Episodes
+            # --- EPISODES LOGIC (Remains mostly the same) ---
             all_eps = tmdb_season.episodes
             count_added = 0
             for ep in all_eps:
@@ -248,8 +265,8 @@ class ContentImporter:
                         description=self._val(ep, 'overview', ''),
                         released_date=self._get_date(self._val(ep, 'air_date')),
                         thumb_720p=img_url, 
-                        length=self._get_runtime(self._val(ep, 'runtime', 0)), # '100 min'
-                        cast=s_cast # <--- Copy Season Cast to Episode
+                        length=self._get_runtime(self._val(ep, 'runtime', 0)),
+                        cast=s_cast 
                     )
                     db.session.add(new_ep)
                     count_added += 1
@@ -261,6 +278,7 @@ class ContentImporter:
             except:
                 db.session.rollback()
 
+            # Recalculate counts
             db_season.num_episodes = Episode.query.filter_by(season_id=db_season.id).count()
             db.session.commit()
 
