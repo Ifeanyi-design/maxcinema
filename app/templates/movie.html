@@ -182,7 +182,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     {% if stream_url %}
                         
                         {# Smart Naming Logic #}
-                        {% if 'dood' in stream_url %}
+                        {% if 'dood' or 'myvidplay' in stream_url %}
                             {% set btn_name = 'Doodstream' %}
                             {% set btn_color = 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' %}
                             {% set btn_icon = 'fa-play-circle' %}
