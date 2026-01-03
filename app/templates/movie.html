@@ -128,7 +128,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                 </div>
             </div>
 
-                        {# --- DOWNLOAD SECTION START --- #}
+                                    {# --- DOWNLOAD SECTION START --- #}
             <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 mb-2 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
 
                 {# --- LOGIC: Setup Variables --- #}
@@ -136,14 +136,14 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                 {% set dl_season = none if det == "movie" else season %}
                 {% set dl_episode = none if det == "movie" else episode %}
                 
-                {# 👇 GET STORAGE OBJECT (Fixing the logic) #}
+                {# 👇 GET STORAGE OBJECT #}
                 {% set storage_obj = video.storage_server if det == "movie" else current_episode.storage_server %}
 
                 {# ========================================== #}
                 {#      SCENARIO A: TELEGRAM STORAGE          #}
                 {# ========================================== #}
-                {# Check if storage exists AND if the name contains 'telegram' #}
-                {% if storage_obj and 'telegram' in storage_obj.name|lower %}
+                {# Logic: Check if storage exists AND if server_type is strictly 'telegram' #}
+                {% if storage_obj and storage_obj.server_type == 'telegram' %}
                     
                     {# 1. FAST SERVER (Bot File) #}
                     <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode, method='server') }}" 
@@ -165,12 +165,22 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                         </div>
                     </a>
 
+                    {# 3. DOODSTREAM (Stream) #}
+                    <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode, method='doodstream') }}" 
+                       class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-amber-600 hover:bg-amber-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-600/20 transition-all hover:-translate-y-1">
+                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-play-circle text-lg"></i></div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Stream</span>
+                            <span class="text-sm md:text-base">Doodstream</span>
+                        </div>
+                    </a>
+
                 {# ========================================== #}
                 {#      SCENARIO B: OTHER STORAGE             #}
                 {# ========================================== #}
                 {% else %}
                     
-                    {# 1. DIRECT DOWNLOAD (For Pixeldrain/Local/etc) #}
+                    {# 1. DIRECT DOWNLOAD #}
                     <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode) }}" 
                        class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
                         <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
