@@ -21,14 +21,14 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
 
 {% block content %}
 <section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto md:px-4 lg:w-[95%] my-4 md:my-8 mt-20 md:mt-24">
-    
+
     <section id="MovieDetails" class="flex flex-col lg:w-2/3 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-        
+
         <div class="w-full bg-[#830506] px-6 py-8 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-4 opacity-10">
                 <i class="fa-solid fa-film text-9xl text-white transform -rotate-12 translate-x-10 -translate-y-10"></i>
             </div>
-            
+
             <div class="relative z-10 flex flex-col items-center text-center">
                 <h1 class="font-black text-white text-2xl md:text-4xl uppercase tracking-tighter leading-tight drop-shadow-md">
                     Download {{ video.name }} ({{video.year_produced }})
@@ -55,7 +55,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     <i class="fa-regular fa-comments text-[#830506]"></i> {{ num_comment }}
                 </span>
             </div>
-            
+
             <div class="flex items-center gap-2">
                 <div class="flex text-yellow-400 text-xs">
                     {% for i in range(1,6) %}
@@ -128,37 +128,81 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                 </div>
             </div>
 
-            <div class="flex flex-col md:flex-row gap-4 mb-2 p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
-            
-                {% if det == "movie" %}
-                    <a href="{{ url_for('main.download_dispatcher', id=video.id, type=video.type) }}" 
-                    class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
-                        <span class="text-sm md:text-base">Download Movie</span>
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('main.download_dispatcher', type=video.type, id=current_episode.id, season=season, episode=episode) }}" 
-                    class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-file-download text-lg"></i></div>
+            {# --- DOWNLOAD SECTION START --- #}
+            <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 mb-2 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
+
+                {# --- LOGIC: Setup Variables --- #}
+                {% set dl_id = video.id if det == "movie" else current_episode.id %}
+                {% set dl_season = none if det == "movie" else season %}
+                {% set dl_episode = none if det == "movie" else episode %}
+                
+                {# 👇 Check Storage Type (Assumes field is named 'storage') #}
+                {% set dl_storage = video.storage if det == "movie" else current_episode.storage %}
+
+                {# ========================================== #}
+                {#      SCENARIO A: TELEGRAM STORAGE          #}
+                {# ========================================== #}
+                {% if dl_storage == 'telegram' %}
+                    
+                    {# 1. FAST SERVER (Bot File) #}
+                    <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode, method='server') }}" 
+                       class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
+                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-bolt text-lg"></i></div>
                         <div class="flex flex-col text-left leading-none">
-                            <span class="text-[10px] opacity-80 font-normal">Download</span>
-                            <span class="text-sm md:text-base">Season {{season}} • Ep {{episode}}</span>
+                            <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Fast Server</span>
+                            <span class="text-sm md:text-base">Download</span>
                         </div>
                     </a>
-                {% endif %}
-                
 
+                    {# 2. TELEGRAM (Direct Bot Link) #}
+                    <a href="https://t.me/MaxCinemaOfficial" target="_blank"
+                       class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#2AABEE] hover:bg-[#229ED9] text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-400/20 transition-all hover:-translate-y-1">
+                        <div class="bg-white/20 p-2 rounded-full"><i class="fa-brands fa-telegram text-lg"></i></div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Telegram</span>
+                            <span class="text-sm md:text-base">Bot Link</span>
+                        </div>
+                    </a>
+
+                    {# 3. DOODSTREAM (Stream) #}
+                    <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode, method='doodstream') }}" 
+                       class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-amber-600 hover:bg-amber-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-600/20 transition-all hover:-translate-y-1">
+                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-play-circle text-lg"></i></div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Stream</span>
+                            <span class="text-sm md:text-base">Doodstream</span>
+                        </div>
+                    </a>
+
+                {# ========================================== #}
+                {#      SCENARIO B: OTHER STORAGE             #}
+                {# ========================================== #}
+                {% else %}
+                    
+                    <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode) }}" 
+                       class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
+                        <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
+                        <div class="flex flex-col text-left leading-none">
+                            <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Direct Link</span>
+                            <span class="text-sm md:text-base">Download Now</span>
+                        </div>
+                    </a>
+
+                {% endif %}
+
+                {# 4. SHARE BUTTON (Always Visible) #}
                 <button id="shareVideoBtn" 
-                        class="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 font-black uppercase tracking-widest rounded-xl hover:border-[#830506] hover:text-[#830506] transition-all">
+                        class="flex-grow w-full md:w-auto flex items-center justify-center gap-3 px-5 py-4 bg-white border-2 border-gray-200 text-gray-700 font-black uppercase tracking-widest rounded-xl hover:border-[#830506] hover:text-[#830506] transition-all shadow-sm">
                     <i class="fa-solid fa-share-nodes text-lg"></i>
                     <span>Share</span>
                 </button>
             </div>
-            <div class="text-sm text-red-600 mt-2 mb-12 font-medium bg-red-50 p-2 rounded border border-red-200">
-                <span class="font-bold">NOTE:</span> If you are redirected to a betting/spam site, 
-                press <span class="font-bold">BACK</span> or <span class="font-bold">CLOSE TAB</span> 
-                immediately. The download will start on the 2nd or 3rd click.
+
+            {# WARNING MESSAGE #}
+            <div class="text-sm text-red-600 mt-2 mb-12 font-medium bg-red-50 p-3 rounded border border-red-200">
+                <p><i class="fas fa-exclamation-triangle mr-1"></i> <span class="font-bold">IMPORTANT:</span> If you are redirected to a betting or spam site, please press <span class="font-bold">BACK</span> or <span class="font-bold">CLOSE TAB</span> immediately. The real download/stream will start on the 2nd or 3rd click.</p>
             </div>
+            {# --- DOWNLOAD SECTION END --- #}
 
             {% if video.type == 'series' %}
         <div class="mb-12">
@@ -205,7 +249,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
 
         <div class="w-full max-w-6xl mx-auto my-2 text-red-800">
             <div class="text-xs text-gray-400 font-bold mb-1 uppercase">Sponsored</div>
-            
+
             <script async="async" data-cfasync="false" src="https://pl28375496.effectivegatecpm.com/34c7e3aba26fa9b6d684f5b76eeda71d/invoke.js"></script>
             <div id="container-34c7e3aba26fa9b6d684f5b76eeda71d"></div>
         </div>
@@ -282,7 +326,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                         </div>
                     {% endif %}
                 </div>
-                
+
                 <div class="bg-white p-4 md:p-8 rounded-b-2xl border border-gray-100 shadow-xl">
                     <h4 class="font-black text-gray-900 uppercase text-lg md:text-xl mb-6 tracking-tighter italic border-b-2 border-[#830506] inline-block">Leave a Reply</h4>
                     <form id="main-comment-form" class="text-black flex flex-col gap-6" data-video-id="{{ video.id }}">
@@ -326,7 +370,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                         {% for item in cat.data %}
                         <div onclick="window.location.href='{% if cat.type == 'trailer' %}{{ url_for('main.detail', det='trailer_watch', name=item.slug, id=item.id) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season='1', episode='1') }}{% endif %}'" 
                             class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 md:h-24 lg:h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200">
-                            
+
                             <div class="flex-shrink-0 w-20 h-full overflow-hidden">
                                 <div style="background-image: url('{{ item.image }}');"
                                     class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
@@ -362,7 +406,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
     <script>
 document.addEventListener('DOMContentLoaded', function() {
     const shareBtn = document.getElementById('shareVideoBtn');
-    
+
     if (shareBtn) {
         shareBtn.addEventListener('click', async () => {
             const shareData = {
@@ -378,12 +422,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Desktop Fallback: Copy to Clipboard
                     await navigator.clipboard.writeText(window.location.href);
-                    
+
                     // Visual feedback for desktop users
                     const originalText = shareBtn.innerHTML;
                     shareBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Link Copied!</span>';
                     shareBtn.classList.add('text-green-600', 'border-green-600');
-                    
+
                     setTimeout(() => {
                         shareBtn.innerHTML = originalText;
                         shareBtn.classList.remove('text-green-600', 'border-green-600');
