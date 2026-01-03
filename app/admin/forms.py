@@ -3,7 +3,7 @@ from wtforms import (
     StringField, TextAreaField, BooleanField, IntegerField, 
     FloatField, SelectField, SelectMultipleField, DateField, SubmitField, URLField, PasswordField
 )
-from wtforms.validators import DataRequired, Optional, NumberRange, Length
+from wtforms.validators import DataRequired, Optional, NumberRange, Length, URL
 
 class AllVideoForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
@@ -30,6 +30,7 @@ class AllVideoForm(FlaskForm):
     # Checkbox fields
     featured = BooleanField("Featured")
     trending = BooleanField("Trending")
+    backup_link = StringField('Backup/Stream Link', validators=[Optional(), URL()])
     active = BooleanField("Active")
 
     # Movie / Series switcher
@@ -125,6 +126,7 @@ class EpisodeForm(FlaskForm):
         validators=[Optional()],
         render_kw={"placeholder": "YYYY-MM-DD"}
     )
+    backup_link = StringField('Backup/Stream Link', validators=[Optional(), URL()])
     source = StringField("Source URL", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])
     storage_server_id = SelectField(

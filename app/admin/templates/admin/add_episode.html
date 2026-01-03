@@ -69,6 +69,11 @@
                     <label class="block mb-1 font-medium">{{ form.download_link.label }}</label>
                     {{ form.download_link(class="w-full px-3 py-2 border rounded-lg") }}
                 </div>
+                <div class="form-group mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Backup / Stream Link (Doodstream, etc.)</label>
+                    {{ form.backup_link(class="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-[#830506] outline-none", placeholder="https://doodstream.com/e/...") }}
+                    <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold">Leave empty to hide the stream button on the site.</p>
+                </div>
                 <div class="md:col-span-2">
                     <label class="block mb-1 font-medium">{{ form.storage_server_id.label }}</label>
                     {{ form.storage_server_id(class="w-full px-3 py-2 border rounded-lg") }}

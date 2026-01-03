@@ -143,7 +143,7 @@ def edit_video(video_id, prev):
         video.image = form.image.data
         video.type = form.type.data
         video.trailer_url = form.trailer_url.data
-
+        video.backup_link = form.backup_link.data
         # Update booleans
         video.featured = form.featured.data
         video.trending = form.trending.data
@@ -247,7 +247,7 @@ def add_movie(prev):
             star_cast=form.star_cast.data,
             source=form.source.data,
             released_date=form.released_date.data,
-            download_link=form.download_link.data,
+            backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
             image=form.image.data,
             type=form.type.data,
@@ -312,6 +312,7 @@ def add_series(prev):
             star_cast=form.star_cast.data,
             source=form.source.data,
             download_link=form.download_link.data,
+            backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
             released_date=form.released_date.data,
             image=form.image.data,

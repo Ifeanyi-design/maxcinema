@@ -102,6 +102,11 @@
                 {{ form.download_link.label(class="block text-gray-300 mb-1") }}
                 {{ form.download_link(class="w-full p-2 rounded bg-gray-700 text-white") }}
             </div>
+            <div class="form-group mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Backup / Stream Link (Doodstream, etc.)</label>
+                {{ form.backup_link(class="w-full p-3 border-2 border-gray-100 rounded-xl focus:border-[#830506] outline-none", placeholder="https://doodstream.com/e/...") }}
+                <p class="text-[10px] text-gray-400 mt-1 uppercase font-bold">Leave empty to hide the stream button on the site.</p>
+            </div>
             <div>
                 {{ form.image.label(class="block text-gray-300 mb-1") }}
                 {{ form.image(class="w-full p-2 rounded bg-gray-700 text-white") }}
