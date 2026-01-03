@@ -137,7 +137,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                 {% set dl_episode = none if det == "movie" else episode %}
                 
                 {# 👇 Check Storage Type (Assumes field is named 'storage') #}
-                {% set dl_storage = video.storage if det == "movie" else current_episode.storage %}
+                {% set dl_storage = video.storage_server if det == "movie" else current_episode.storage_server %}
 
                 {# ========================================== #}
                 {#      SCENARIO A: TELEGRAM STORAGE          #}
