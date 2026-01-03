@@ -166,7 +166,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                     {% set selected_bot = my_bots | random %}
 
                     <a href="https://t.me/{{ selected_bot }}?start={{ file_code }}" target="_blank"
-                       class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#2AABEE] hover:bg-[#229ED9] text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-400/20 transition-all hover:-translate-y-1">
+                       class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#2AABEE] hover:bg-[#229ED9] text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-400/20 transition-all hover:-translate-y-1">
                         <div class="bg-white/20 p-2 rounded-full"><i class="fa-brands fa-telegram text-lg"></i></div>
                         <div class="flex flex-col text-left leading-none">
                             <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Telegram</span>
@@ -197,7 +197,7 @@ Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | Max
                         {% endif %}
 
                         <a href="{{ stream_url }}" target="_blank"
-                           class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 {{ btn_color }} text-white font-black uppercase tracking-widest rounded-xl shadow-lg transition-all hover:-translate-y-1">
+                           class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 {{ btn_color }} text-white font-black uppercase tracking-widest rounded-xl shadow-lg transition-all hover:-translate-y-1">
                             <div class="bg-white/20 p-2 rounded-full"><i class="fas {{ btn_icon }} text-lg"></i></div>
                             <div class="flex flex-col text-left leading-none">
                                 <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Stream</span>
