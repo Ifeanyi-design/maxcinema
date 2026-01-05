@@ -17,7 +17,7 @@ from . import listeners
 from .extensions import db, login_manager
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
-    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest
+    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm
 )
 
 main_bp = Blueprint("main", __name__)
