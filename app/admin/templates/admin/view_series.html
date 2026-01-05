@@ -2,13 +2,10 @@
 {% block content %}
 <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
 
-    <!-- Sidebar -->
     {% include 'admin/sidebar.html' %}
 
-    <!-- Main Content -->
     <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
         
-
         <div class="hidden justify-between lg:flex w-[69%] items-center z-40 fixed top-0 bg-gray-900 py-4">
             <h1 class="text-4xl lg:text-3xl font-bold">Series</h1>
             <a href="{{ url_for('admin.add_series', prev='series') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Series</a>
@@ -21,7 +18,11 @@
                 <img src="{{ series.image or '' }}" alt="{{ series.name }}" class="w-full aspect-[3/5] object-cover">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-2 lg:p-3 pb-4 sm:pb-2 transition-opacity">
                     <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ series.name }}</h3>
-                    <p class="text-xl sm:text-[8px] lg:text-sm text-gray-300">Rating: {{ series.rating }} | Views: {{ series.views }}</p>
+                    
+                    <p class="text-xl sm:text-[8px] lg:text-sm text-gray-300">
+                        Rating: {{ series.rating }} | Views: {{ series.views }} | ⬇️ {{ series.downloads }}
+                    </p>
+                    
                     <p class="text-xl sm:text-[8px] lg:text-sm text-gray-400 mt-1">{{ series.genres | map(attribute='name') | join(', ') }}</p>
                     <p class="text-xl sm:text-[8px] lg:text-sm text-gray-300 mt-1">Seasons: {{ series.series.num_seasons }} | Episodes: {{ series.series.num_episodes }}</p>
                     <div class="mt-2 flex gap-4 sm:gap-1">

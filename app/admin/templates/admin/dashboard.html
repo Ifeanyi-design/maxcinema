@@ -4,34 +4,19 @@
 
         <div class="flex h-screen overflow-hidden z-50">
 
-            <!-- 
-                MOBILE BACKDROP 
-                Clicking this closes the sidebar.
-            -->
             <div id="backdrop" class="fixed inset-0 z-40 bg-black/50 opacity-0 invisible backdrop-transition md:hidden" aria-hidden="true"></div>
 
-            <!-- 
-                SIDEBAR COMPONENT
-                Responsive Wrapper Classes:
-                1. 'fixed inset-y-0 z-50': Makes it an overlay on mobile.
-                2. '-translate-x-full': Hides it by default on mobile.
-                3. 'md:static md:translate-x-0': Shows it normally on desktop.
-            -->
             <aside id="sidebar" class="
                 fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-gray-300 
                 transform -translate-x-full transition-transform duration-300 ease-in-out
                 md:translate-x-0 md:static md:inset-auto md:flex md:flex-col md:h-full
                 shadow-2xl md:shadow-none flex flex-col h-full
             ">
-                <!-- PADDING WRAPPER -->
                 <div class="p-6 flex flex-col h-full w-full">
                     
-                    <!-- HEADER AREA -->
-                    <!-- Modified to include Mobile Close Button -->
                     <div class="flex items-center justify-between mb-8">
                         <h1 class="text-2xl font-bold text-white">Admin Panel</h1>
                         
-                        <!-- Close X Button (Mobile Only) -->
                         <button id="closeSidebar" class="md:hidden text-gray-400 hover:text-white focus:outline-none">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -39,10 +24,8 @@
                         </button>
                     </div>
                 
-                    <!-- YOUR NAVIGATION LINKS (Jinja Included) -->
                     <nav class="flex flex-col gap-2 text-gray-300 flex-1 overflow-y-auto no-scrollbar">
 
-                        <!-- Dashboard -->
                         <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition {% if request.endpoint == 'admin.dashboard' %}text-yellow-400 font-semibold{% endif %}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
@@ -50,7 +33,6 @@
                             Dashboard
                         </a>
 
-                        <!-- Movies Collapsible -->
                         <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_movies','admin.add_movie'] else 'false' }} }" class="flex flex-col mt-1">
                             <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
                                 <span class="flex items-center gap-2">
@@ -69,7 +51,6 @@
                             </div>
                         </div>
 
-                        <!-- Series Collapsible -->
                         <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_series','admin.add_series'] else 'false' }} }" class="flex flex-col mt-1">
                             <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
                                 <span class="flex items-center gap-2">
@@ -95,7 +76,6 @@
                             Import Content
                         </a>
 
-                        <!-- Trailers -->
                         <a href="{{ url_for('admin.view_trailers') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_trailers','admin.add_trailer'] %}text-yellow-400 font-semibold{% endif %}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276a2 2 0 0 1 2.447 1.788v6.976a2 2 0 0 1-2.447 1.788L15 14M4 6h6v12H4z"/>
@@ -113,7 +93,6 @@
                             {% endif %}
                         </a>
 
-                        <!-- Users -->
                         <a href="{{ url_for('admin.view_users') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_users','admin.add_user'] %}text-yellow-400 font-semibold{% endif %}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8 8 0 1 1 17.804 5.121 8 8 0 0 1 5.121 17.804z"/>
@@ -121,16 +100,23 @@
                             Users <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_users }}</span>
                         </a>
 
-                        <!-- Storage -->
                         <a href="{{ url_for('admin.view_storage') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_storage','admin.add_storage'] %}text-yellow-400 font-semibold{% endif %}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
                             </svg>
                             Storage
                         </a>
+
+                        <a href="{{ url_for('admin.view_incomplete_content') }}" 
+                        class="flex items-center gap-2 px-2 py-1 rounded hover:text-red-400 transition mt-4 
+                        {% if request.endpoint == 'admin.view_incomplete_content' %}text-red-500 font-bold{% else %}text-gray-400{% endif %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            Broken Content
+                        </a>
                     </nav>
                 
-                    <!-- User Info / Logout -->
                     <div class="mt-auto pt-6 border-t border-gray-700">
                         <p class="text-sm">Logged in as: {{ current_user.username }}</p>
                         <a href="{{ url_for('admin.logout') }}" class="text-red-500 hover:text-red-400 text-sm mt-2 block">Logout</a>
@@ -138,14 +124,10 @@
                 </div>
             </aside>
 
-            <!-- MAIN CONTENT WRAPPER -->
             <div class="flex flex-col flex-1 w-0 overflow-hidden">
                 
-                <!-- MOBILE HEADER (Visible only on mobile/tablet - lg:hidden) -->
-                <!-- Added z-10 to ensure it stays on top of content -->
                 <header class="absolute top-0 left-0 w-full flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200 md:hidden flex-shrink-0 z-10">
                     <button id="openSidebar" class="text-gray-500 hover:text-gray-700 focus:outline-none p-2">
-                        <!-- Hamburger Icon -->
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <div class="flex items-center gap-4 w-screen justify-center">
@@ -159,26 +141,20 @@
                         <a href="{{ url_for('admin.add_series', prev='series') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-md">Add Series</a>
                         {% endif %}
                     </div>
-                    <div class="w-8"></div> <!-- Spacer for centering -->
-                </header>
+                    <div class="w-8"></div> </header>
 
-                <!-- MAIN SCREEN CONTENT -->
-                
-            </div>
+                </div>
         </div>
 
-        <!-- AlpineJS CDN for collapsibles -->
         <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 
 
-    <!-- Main Content -->
     <div class="flex-1 p-8 overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-4xl lg:text-3xl font-bold">Admin Dashboard</h1>
         </div>
 
-        <!-- Manage Videos Section -->
         <h2 class="text-3xl lg:text-2xl font-bold mb-4 mt-10">Manage Content</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for video in all_videos %}
@@ -187,7 +163,11 @@
                         <img src="{{ video.poster_url|default('') }}" alt="{{ video.name|default('') }}" class="w-full aspect-[3/5] object-cover">
                         <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 lg:p-3 pb-4 sm:pb-2 transition-opacity">
                             <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ video.name|default('') }}</h3>
-                            <p class="text-xl sm:text-[8px] lg:text-lg text-gray-300">{{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views</p>
+                            
+                            <p class="text-xl sm:text-[8px] lg:text-lg text-gray-300">
+                                {{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views | ⬇️ {{ video.downloads|default(0) }}
+                            </p>
+                            
                             <div class="mt-2 flex gap-4 sm:gap-1">
                                 <button type="button" 
                                     class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 sm:py-[0.8px] sm:px-1 lg:py-1 lg:px-3 rounded text-lg sm:text-[10px] lg:text-sm edit-button"
@@ -209,7 +189,11 @@
                         <img src="{{ video.poster_url|default('') }}" alt="{{ video.name|default('') }}" class="w-full aspect-[3/5] object-cover">
                         <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 transition-opacity">
                             <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ video.name|default('') }}</h3>
-                            <p class="text-xl sm:text-[8px] lg:text-lg text-gray-300">{{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views</p>
+                            
+                            <p class="text-xl sm:text-[8px] lg:text-lg text-gray-300">
+                                {{ video.type|capitalize|default('Movie') }} | {{ video.views|default(0) }} views | ⬇️ {{ video.downloads|default(0) }}
+                            </p>
+                            
                             <div class="mt-2 flex gap-4 sm:gap-1">
                                 <button type="button" 
                                     class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 sm:py-[0.8px] lg:py-1 lg:px-3 sm:px-1 rounded text-lg sm:text-[10px] lg:text-sm edit-button"

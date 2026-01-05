@@ -1,4 +1,5 @@
 from datetime import datetime
+from sqlalchemy import or_
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
 from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest
@@ -651,7 +652,7 @@ def edit_episode(name, prev, series_id, season_id, episode_id):
         flash(f"Season {season.season_number} updated.", "success")
         return redirect(url_for('admin.view_episodes',prev=prev, name=series.slug, ns=season.season_number, season_id=season.id))
 
-    return render_template('admin/add_episode.html', form=form, season=season, series=series, prev="serie", action="Edit")
+    return render_template('admin/add_episode.html', form=form, season=season, series=series, prev="serie" if prev == "serie" or prev == "series" else "incomplete", action="Edit")
 
 
 @admin_bp.route('/episodes/<name>/<int:id>/<int:season_id>/<prev>/<int:episode_id>/delete', methods=['POST'])
@@ -968,3 +969,27 @@ def import_tmdb():
         return redirect(url_for('admin.import_tmdb'))
 
     return render_template('admin/import.html')
+
+
+@admin_bp.route('/admin/incomplete-content')
+@login_required
+@admin_required
+def view_incomplete_content():
+    if not current_user.is_admin:
+        abort(403)
+
+    # 1. Fetch Movies with NO links (Download AND Backup are empty/None)
+    incomplete_movies = AllVideo.query.filter_by(type='movie').filter(
+        (AllVideo.download_link == None) | (AllVideo.download_link == ""),
+        (AllVideo.backup_link == None) | (AllVideo.backup_link == "")
+    ).all()
+
+    # 2. Fetch Episodes with NO links
+    incomplete_episodes = Episode.query.filter(
+        (Episode.download_link == None) | (Episode.download_link == ""),
+        (Episode.backup_link == None) | (Episode.backup_link == "")
+    ).all()
+
+    return render_template('admin/incomplete_content.html', 
+                           movies=incomplete_movies, 
+                           episodes=incomplete_episodes)

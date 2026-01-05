@@ -17,6 +17,10 @@
         <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
             Go back
         </button>
+    {% elif prev == "incomplete" %}
+        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_incomplete_content') }}'">
+            Go back
+        </button>
     {% endif %}
 
     <form method="POST" class="space-y-8 text-black">

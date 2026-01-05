@@ -2,10 +2,8 @@
 {% block content %}
 <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
 
-    <!-- Sidebar -->
     {% include 'admin/sidebar.html' %}
 
-    <!-- Main Content -->
     <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
         
         <div class="hidden justify-between lg:flex w-[69%] items-center z-40 fixed top-0 bg-gray-900 py-4">
@@ -20,7 +18,11 @@
                 <img src="{{ movie.image or '' }}" alt="{{ movie.name }}" class="w-full aspect-[3/5] object-cover">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 lg:p-3 pb-4 sm:pb-2 transition-opacity">
                     <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ movie.name }}</h3>
-                    <p class="text-xl sm:text-[8px] lg:text-sm text-gray-300">Rating: {{ movie.rating }} | Views: {{ movie.views }}</p>
+                    
+                    <p class="text-xl sm:text-[8px] lg:text-sm text-gray-300">
+                        Rating: {{ movie.rating }} | Views: {{ movie.views }} | ⬇️ {{ movie.downloads }}
+                    </p>
+                    
                     <p class="text-xl sm:text-[8px] lg:text-sm text-gray-400 mt-1">{{ movie.genres | map(attribute='name') | join(', ') }}</p>
                     <div class="mt-2 flex gap-4 sm:gap-1">
                         <a href="{{ url_for('admin.edit_video', video_id=movie.id, prev='movie') }}" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 sm:py-[0.8px] sm:px-1 lg:py-1 lg:px-3 rounded text-lg sm:text-[10px] lg:text-sm">Edit</a>
