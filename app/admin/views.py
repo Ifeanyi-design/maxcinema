@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import or_, func
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
-from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest
+from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest, SearchTerm
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
@@ -1032,6 +1032,8 @@ def stats_dashboard():
     req_filled = MovieRequest.query.filter_by(status='Filled').count()
     req_rejected = MovieRequest.query.filter_by(status='Rejected').count()
 
+    top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+
     return render_template('admin/stats.html',
                            total_users=total_users,
                            total_views=total_views,
@@ -1042,5 +1044,6 @@ def stats_dashboard():
                            top_movie_views=top_movie_views,
                            top_series_names=top_series_names,
                            top_series_downloads=top_series_downloads,
-                           req_stats=[req_pending, req_filled, req_rejected]
+                           req_stats=[req_pending, req_filled, req_rejected],
+                           top_searches=top_searches
                            )
