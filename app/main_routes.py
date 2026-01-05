@@ -255,6 +255,28 @@ def search_result(page=1):
         flash("Please enter a search term", "warning")
         return redirect(url_for("main.index"))
     
+    try:
+        # 1. Normalize query (convert to lowercase so "Batman" == "batman")
+        clean_term = query.lower()[:100] # Limit to 100 chars to match DB column size
+
+        # 2. Check if term exists in DB
+        existing_search = SearchTerm.query.filter_by(term=clean_term).first()
+        
+        if existing_search:
+            # If exists, just add +1 to count and update time
+            existing_search.count += 1
+            existing_search.last_searched = datetime.utcnow()
+        else:
+            # If new, create it
+            new_search = SearchTerm(term=clean_term, count=1)
+            db.session.add(new_search)
+        
+        db.session.commit()
+    except Exception as e:
+        # 3. Safety Net: If logging fails, ROLLBACK so the user still sees their results
+        db.session.rollback()
+        print(f"Error logging search term: {e}")
+
     search_filter = or_(
         AllVideo.name.ilike(f"%{query}%"),
         AllVideo.country.ilike(f"%{query}%"),
@@ -527,6 +549,15 @@ def series_details(det, name, season, episode, id):
         season_id=current_season.id,
         episode_number=episode
     ).first_or_404()
+
+    try:
+        # Assuming you already fetched 'current_episode' above
+        if current_episode:
+            current_episode.views += 1
+            db.session.commit()
+    except:
+        pass
+
     num_comment = Comment.query.filter_by(
         video_id=series.id,
         parent_id=None

@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
-
+    last_login = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Genre(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -165,6 +165,7 @@ class Episode(db.Model):
     video_480p = db.Column(db.String(500))
     video_720p = db.Column(db.String(500))
     video_1080p = db.Column(db.String(500))
+    views = db.Column(db.Integer, default=0)
 
     thumb_360p = db.Column(db.String, nullable=True)
     thumb_480p = db.Column(db.String, nullable=True)
@@ -307,3 +308,14 @@ class MovieRequest(db.Model):
 
     def __repr__(self):
         return f'<Request {self.movie_name} by {self.name}>'
+
+
+class SearchTerm(db.Model):
+    """Tracks what users are searching for to help you find missing content."""
+    id = db.Column(db.Integer, primary_key=True)
+    term = db.Column(db.String(100), nullable=False) # e.g., "Avengers"
+    count = db.Column(db.Integer, default=1)         # How many times searched?
+    last_searched = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Search {self.term}: {self.count}>"

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
 from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest
@@ -38,9 +38,13 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
         user = User.query.filter_by(email=email).first()
-        print(user)
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            try:
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback() # Safety first
             flash("Logged in successfully!", "success")
             return redirect(url_for("admin.dashboard"))
         flash("Invalid credentials", "danger")
@@ -993,3 +997,50 @@ def view_incomplete_content():
     return render_template('admin/incomplete_content.html', 
                            movies=incomplete_movies, 
                            episodes=incomplete_episodes)
+
+
+@admin_bp.route('/admin/stats')
+@login_required
+@admin_required
+def stats_dashboard():
+    if not current_user.is_admin:
+        abort(403)
+
+    # --- 1. BIG NUMBER CARDS (KPIs) ---
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_downloads = db.session.query(func.sum(AllVideo.downloads)).scalar() or 0
+    total_ep_downloads = db.session.query(func.sum(Episode.downloads)).scalar() or 0
+    # Combine movie + episode downloads
+    grand_total_downloads = total_downloads + total_ep_downloads
+    
+    pending_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    # --- 2. CHART DATA: Top 5 Movies by Views ---
+    top_movies_query = AllVideo.query.filter_by(type='movie').order_by(AllVideo.views.desc()).limit(5).all()
+    top_movie_names = [m.name for m in top_movies_query]
+    top_movie_views = [m.views for m in top_movies_query]
+
+    # --- 3. CHART DATA: Top 5 Series by Downloads ---
+    # (Since series popularity is the sum of episode downloads, we use the aggregate we built earlier or just AllVideo.downloads if you updated logic)
+    top_series_query = AllVideo.query.filter_by(type='series').order_by(AllVideo.downloads.desc()).limit(5).all()
+    top_series_names = [s.name for s in top_series_query]
+    top_series_downloads = [s.downloads for s in top_series_query]
+
+    # --- 4. PIE CHART: Requests ---
+    req_pending = MovieRequest.query.filter_by(status='Pending').count()
+    req_filled = MovieRequest.query.filter_by(status='Filled').count()
+    req_rejected = MovieRequest.query.filter_by(status='Rejected').count()
+
+    return render_template('admin/stats.html',
+                           total_users=total_users,
+                           total_views=total_views,
+                           total_downloads=grand_total_downloads,
+                           pending_requests=pending_requests,
+                           # Chart Data
+                           top_movie_names=top_movie_names,
+                           top_movie_views=top_movie_views,
+                           top_series_names=top_series_names,
+                           top_series_downloads=top_series_downloads,
+                           req_stats=[req_pending, req_filled, req_rejected]
+                           )

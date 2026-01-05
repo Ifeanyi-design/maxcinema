@@ -1,0 +1,184 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+
+    {% include 'admin/sidebar.html' %}
+
+    <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
+        
+        <h1 class="text-3xl font-bold mb-8">📊 Site Analytics</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-400 text-sm uppercase">Total Users</p>
+                        <h2 class="text-3xl font-bold">{{ total_users }}</h2>
+                    </div>
+                    <div class="p-3 bg-blue-500/20 rounded-full text-blue-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-400 text-sm uppercase">Total Views</p>
+                        <h2 class="text-3xl font-bold">{{ total_views }}</h2>
+                    </div>
+                    <div class="p-3 bg-green-500/20 rounded-full text-green-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-400 text-sm uppercase">Total Downloads</p>
+                        <h2 class="text-3xl font-bold">{{ total_downloads }}</h2>
+                    </div>
+                    <div class="p-3 bg-purple-500/20 rounded-full text-purple-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-gray-400 text-sm uppercase">Pending Requests</p>
+                        <h2 class="text-3xl font-bold">{{ pending_requests }}</h2>
+                    </div>
+                    <div class="p-3 bg-yellow-500/20 rounded-full text-yellow-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4 text-gray-200">🔥 Top 5 Movies (Views)</h3>
+                <canvas id="movieChart"></canvas>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold mb-4 text-gray-200">💾 Top 5 Series (Downloads)</h3>
+                <canvas id="seriesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             <div class="bg-gray-800 p-6 rounded-xl shadow-lg lg:col-span-1">
+                <h3 class="text-xl font-bold mb-4 text-gray-200">📬 Request Status</h3>
+                <div class="h-64 flex justify-center">
+                    <canvas id="requestChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg mt-8 mb-10">
+            <h3 class="text-xl font-bold mb-4 text-gray-200">🔍 Most Searched Terms</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-gray-700">
+                            <th class="pb-3 pl-2">Search Term</th>
+                            <th class="pb-3">Count</th>
+                            <th class="pb-3">Last Searched</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-300 divide-y divide-gray-700">
+                        {% for search in top_searches %}
+                        <tr class="hover:bg-gray-700/50 transition">
+                            <td class="py-3 pl-2 font-medium text-white capitalize">{{ search.term }}</td>
+                            <td class="py-3">
+                                <span class="bg-gray-700 text-white text-xs px-2 py-1 rounded-full">
+                                    {{ search.count }}
+                                </span>
+                            </td>
+                            <td class="py-3 text-sm text-gray-400">
+                                {{ search.last_searched.strftime('%Y-%m-%d') }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="py-4 text-center text-gray-500">No searches yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // 1. TOP MOVIES CHART
+    const ctxMovie = document.getElementById('movieChart').getContext('2d');
+    new Chart(ctxMovie, {
+        type: 'bar',
+        data: {
+            labels: {{ top_movie_names | tojson }},
+            datasets: [{
+                label: 'Views',
+                data: {{ top_movie_views | tojson }},
+                backgroundColor: 'rgba(34, 197, 94, 0.6)', // Green
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, grid: { color: '#374151' } }, x: { grid: { display: false } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 2. TOP SERIES CHART
+    const ctxSeries = document.getElementById('seriesChart').getContext('2d');
+    new Chart(ctxSeries, {
+        type: 'bar',
+        data: {
+            labels: {{ top_series_names | tojson }},
+            datasets: [{
+                label: 'Downloads',
+                data: {{ top_series_downloads | tojson }},
+                backgroundColor: 'rgba(168, 85, 247, 0.6)', // Purple
+                borderColor: 'rgba(168, 85, 247, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y', // Makes it a horizontal bar chart
+            scales: { x: { beginAtZero: true, grid: { color: '#374151' } }, y: { grid: { display: false } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // 3. REQUEST PIE CHART
+    const ctxReq = document.getElementById('requestChart').getContext('2d');
+    new Chart(ctxReq, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Filled', 'Rejected'],
+            datasets: [{
+                data: {{ req_stats | tojson }},
+                backgroundColor: ['#EAB308', '#22C55E', '#EF4444'], // Yellow, Green, Red
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } }
+        }
+    });
+</script>
+{% endblock %}
