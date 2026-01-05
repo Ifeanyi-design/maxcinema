@@ -213,17 +213,22 @@ class ContentImporter:
             if not db_season:
                 # ---------------------------------------------------
                 # [CASE 1] NEW SEASON: Create it.
-                # Only here do we use the "Season X" fallback if text is empty.
                 # ---------------------------------------------------
                 s_poster = getattr(tmdb_season, 'poster_path', None)
                 img_url = f"https://image.tmdb.org/t/p/w500{s_poster}" if s_poster else video.image
                 
-                final_desc = tmdb_overview if tmdb_overview else f"Season {seas_num}"
+                # Logic: TMDB -> Main Series -> "Season X"
+                if tmdb_overview:
+                    final_desc = tmdb_overview
+                elif video.description:
+                    final_desc = video.description 
+                else:
+                    final_desc = f"Season {seas_num}"
                 
                 db_season = Season(
                     series_id=series_entry.id,
                     season_number=seas_num,
-                    description=final_desc,
+                    description=final_desc, 
                     image=img_url,
                     release_date=self._get_date(getattr(tmdb_season, 'air_date', None)),
                     num_episodes=0,
@@ -236,16 +241,23 @@ class ContentImporter:
             else:
                 # ---------------------------------------------------
                 # [CASE 2] EXISTING SEASON: Safe Update.
-                # We intentionally DO NOT update the description here.
-                # This ensures your existing descriptions remain untouched.
                 # ---------------------------------------------------
                 if s_cast: db_season.cast = s_cast
                 if s_trailer: db_season.trailer_url = s_trailer
                 
-                # OPTIONAL: Uncomment the lines below ONLY if you want to overwrite 
-                # existing descriptions when TMDB has new, valid text.
-                # if tmdb_overview and len(tmdb_overview) > 10:
-                #    db_season.description = tmdb_overview
+                # 👇 UPDATED LOGIC: Handle "Season X" OR Empty descriptions
+                # Safely get current description, ensuring it is a string
+                current_desc = (db_season.description or "").strip()
+                
+                is_placeholder = current_desc.lower() == f"season {seas_num}".lower()
+                is_empty = not current_desc # True if empty string or None
+                
+                if tmdb_overview:
+                    # Priority 1: We found a real description on TMDB
+                    db_season.description = tmdb_overview
+                elif (is_placeholder or is_empty) and video.description:
+                    # Priority 2: Current is bad ("Season 1" or empty), use Series Desc
+                    db_season.description = video.description
                 
                 db.session.commit()
 
