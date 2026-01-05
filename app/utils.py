@@ -15,8 +15,6 @@ except ImportError:
 tmdb = TMDb()
 tmdb.api_key = '3d6b99b6b66197eff0bbee7faab6cf5e'
 tmdb.language = 'en'
-# IMPORTANT: Turn off debug mode for the library to prevent spam, 
-# but keep our own prints.
 tmdb.debug = False 
 
 class ContentImporter:
@@ -70,6 +68,25 @@ class ContentImporter:
                 if key: return f"https://www.youtube.com/watch?v={key}"
         return None
 
+    def _generate_unique_slug(self, name, current_type):
+        """
+        Generates a unique slug. 
+        If 'the-flash' exists as a movie, the series becomes 'the-flash-series'.
+        """
+        base_slug = slugify(name)
+        candidate = base_slug
+        
+        # Check if this slug is taken by ANY video
+        existing = AllVideo.query.filter_by(slug=candidate).first()
+        
+        # If it exists, and it's NOT the same type (e.g. Movie vs Series collision)
+        if existing:
+            # If we are importing a Series, but the slug belongs to a Movie (or vice versa)
+            if existing.type != current_type:
+                candidate = f"{base_slug}-{current_type}" # e.g. "the-flash-series"
+        
+        return candidate
+
     def link_genres(self, tmdb_genres):
         genre_objs = []
         if not isinstance(tmdb_genres, list):
@@ -83,8 +100,7 @@ class ContentImporter:
                 if not db_genre:
                     db_genre = Genre(name=g_name)
                     db.session.add(db_genre)
-                    # Commit immediately so ID is generated
-                    db.session.commit() 
+                    db.session.commit()
                 genre_objs.append(db_genre)
         return genre_objs
 
@@ -95,19 +111,24 @@ class ContentImporter:
             m = self.movie_api.details(tmdb_id, append_to_response="credits,videos")
         except Exception as e:
             print(f"❌ TMDB FETCH ERROR: {e}")
-            return f"Error: Could not find Movie ID {tmdb_id} on TMDB."
+            return f"Error: Could not find Movie ID {tmdb_id}."
 
         try:
-            if AllVideo.query.filter_by(name=m.title).first():
-                return f"⚠️ Movie '{m.title}' already exists in DB."
+            # FIX 1: Check NAME and TYPE
+            existing_video = AllVideo.query.filter_by(name=m.title, type='movie').first()
+            if existing_video:
+                return f"⚠️ Movie '{m.title}' already exists."
 
             country_name = ""
             if hasattr(m, 'production_countries') and m.production_countries:
                 country_name = self._val(m.production_countries[0], 'name')
+            
+            # FIX 2: Generate Safe Slug
+            final_slug = self._generate_unique_slug(m.title, 'movie')
 
             video = AllVideo(
                 name=m.title,
-                slug=slugify(m.title),
+                slug=final_slug,
                 type='movie',
                 description=m.overview,
                 image=f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
@@ -146,7 +167,8 @@ class ContentImporter:
             return f"Error: Could not find Series ID {tmdb_id}"
 
         try:
-            video = AllVideo.query.filter_by(name=s.name).first()
+            # FIX 1: Ensure we look for a SERIES, not a Movie
+            video = AllVideo.query.filter_by(name=s.name, type='series').first()
             series_entry = None
 
             country_name = ""
@@ -161,9 +183,13 @@ class ContentImporter:
 
             if not video:
                 print(f"📝 Creating new Series entry for: {s.name}")
+                
+                # FIX 2: Generate Safe Slug (e.g. "the-flash-series")
+                final_slug = self._generate_unique_slug(s.name, 'series')
+
                 video = AllVideo(
                     name=s.name,
-                    slug=slugify(s.name),
+                    slug=final_slug,
                     type='series',
                     description=s.overview,
                     image=f"https://image.tmdb.org/t/p/w500{s.poster_path}" if s.poster_path else None,
