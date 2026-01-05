@@ -581,6 +581,22 @@ def download_dispatcher(type, id, season=None, episode=None):
     else:
         return "Invalid type", 400
 
+    try:
+        # 1. Increment the count for the specific item (Movie or Episode)
+        video.downloads += 1
+
+        # 2. If it's a Series Episode, ALSO increment the main Series counter
+        # This makes the Series show up as "Popular" on the home page
+        if type == "series":
+            # Hierarchy: Episode -> Season -> Series -> AllVideo
+            video.season.series.all_video.downloads += 1
+        
+        db.session.commit()
+    except Exception as e:
+        # If the database is busy or fails, we rollback so the download still works
+        db.session.rollback()
+        print(f"Error tracking download: {e}")
+
     # Get the assigned server (just to check the type)
     assigned_server = video.storage_server
 

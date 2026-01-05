@@ -136,145 +136,164 @@
 #     seed()
 
 
-import requests
-from slugify import slugify
-from datetime import datetime
-from sqlalchemy import event
+# import requests
+# from slugify import slugify
+# from datetime import datetime
+# from sqlalchemy import event
 
-# Import your app and models
-from app import create_app, db
-from app.models import Trailer
+# # Import your app and models
+# from app import create_app, db
+# from app.models import Trailer
 
-# Import listeners to disable them temporarily (just like we did for seed_db)
-from app import listeners 
+# # Import listeners to disable them temporarily (just like we did for seed_db)
+# from app import listeners 
 
-# -----------------------------------------
-# CONFIGURATION
-# -----------------------------------------
-TMDB_API_KEY = "3d6b99b6b66197eff0bbee7faab6cf5e"
-BASE_URL = "https://api.themoviedb.org/3"
-IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
+# # -----------------------------------------
+# # CONFIGURATION
+# # -----------------------------------------
+# TMDB_API_KEY = "3d6b99b6b66197eff0bbee7faab6cf5e"
+# BASE_URL = "https://api.themoviedb.org/3"
+# IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
+# app = create_app()
+
+# def get_popular_movies(page=1):
+#     """Fetch popular movies from TMDB."""
+#     url = f"{BASE_URL}/movie/popular?api_key={TMDB_API_KEY}&page={page}&language=en-US"
+#     try:
+#         response = requests.get(url)
+#         response.raise_for_status()
+#         return response.json().get("results", [])
+#     except Exception as e:
+#         print(f"   [Error] Fetching page {page}: {e}")
+#         return []
+
+# def get_movie_trailer(movie_id):
+#     """Fetch the first YouTube trailer key for a specific movie."""
+#     url = f"{BASE_URL}/movie/{movie_id}/videos?api_key={TMDB_API_KEY}&language=en-US"
+#     try:
+#         response = requests.get(url)
+#         videos = response.json().get("results", [])
+        
+#         # Priority: 'Trailer' type on 'YouTube'
+#         for v in videos:
+#             if v.get("site") == "YouTube" and v.get("type") == "Trailer":
+#                 return v.get("key")
+        
+#         # Fallback: 'Teaser' if no trailer found
+#         for v in videos:
+#             if v.get("site") == "YouTube" and v.get("type") == "Teaser":
+#                 return v.get("key")
+                
+#     except Exception:
+#         pass
+#     return None
+
+# def remove_trailer_listeners():
+#     """Disable listeners to prevent locks during bulk insert."""
+#     print("--> Disabling Trailer listeners...")
+#     if event.contains(Trailer, 'after_insert', listeners.update_sitemap_trailer):
+#         event.remove(Trailer, 'after_insert', listeners.update_sitemap_trailer)
+#     if event.contains(Trailer, 'after_update', listeners.update_sitemap_trailer):
+#         event.remove(Trailer, 'after_update', listeners.update_sitemap_trailer)
+
+# def populate_trailers(max_pages=3):
+#     # 1. Disable listeners to avoid "Database Locked" errors
+#     remove_trailer_listeners()
+
+#     with app.app_context():
+#         print(f"--> Starting Trailer Import (Pages 1 to {max_pages})...")
+        
+#         added_count = 0
+#         skipped_count = 0
+
+#         for page in range(1, max_pages + 1):
+#             print(f"--> Fetching Page {page}...")
+#             movies = get_popular_movies(page)
+
+#             for movie in movies:
+#                 title = movie.get("title")
+                
+#                 # Check for duplicate by slug
+#                 slug = slugify(title)
+#                 existing = Trailer.query.filter_by(slug=slug).first()
+#                 if existing:
+#                     print(f"   [Skip] '{title}' already exists.")
+#                     skipped_count += 1
+#                     continue
+
+#                 # Get trailer link
+#                 yt_key = get_movie_trailer(movie.get("id"))
+#                 if not yt_key:
+#                     # Skip movies that don't have a YouTube trailer
+#                     continue
+
+#                 # Parse dates
+#                 release_date_str = movie.get("release_date")
+#                 release_date = None
+#                 release_year = None
+#                 if release_date_str:
+#                     try:
+#                         release_date = datetime.strptime(release_date_str, "%Y-%m-%d")
+#                         release_year = release_date.year
+#                     except ValueError:
+#                         pass
+
+#                 # Create Trailer Object
+#                 new_trailer = Trailer(
+#                     name=title,
+#                     slug=slug,
+#                     trailer_link=f"https://www.youtube.com/embed/{yt_key}",
+#                     description=movie.get("overview"),
+#                     image=IMAGE_BASE + movie.get("poster_path") if movie.get("poster_path") else None,
+#                     release_date=release_date,
+#                     release_year=release_year,
+#                     views=0
+#                 )
+
+#                 db.session.add(new_trailer)
+#                 added_count += 1
+#                 print(f"   [+] Added: {title}")
+
+#             # Commit after every page to save progress
+#             try:
+#                 db.session.commit()
+#             except Exception as e:
+#                 db.session.rollback()
+#                 print(f"   [Error] Commit failed for page {page}: {e}")
+
+#         print("\n---------------------------------------------------")
+#         print(f"DONE! Added {added_count} new trailers. Skipped {skipped_count} duplicates.")
+#         print("---------------------------------------------------")
+
+#         # Optional: Re-enable sitemap generation manually at the end
+#         print("--> Updating Sitemap...")
+#         try:
+#             from app.main_routes import generate_sitemap
+#             generate_sitemap()
+#             print("--> Sitemap updated.")
+#         except Exception as e:
+#             print(f"--> Could not update sitemap: {e}")
+
+# if __name__ == "__main__":
+#     # You can change max_pages to fetch more (e.g., 5 or 10)
+#     populate_trailers(max_pages=5)
+
+
+from app import create_app
+from sqlalchemy import create_engine, text
+
+# 1. Load your app to get the Neon URL
 app = create_app()
+db_url = app.config['SQLALCHEMY_DATABASE_URI']
 
-def get_popular_movies(page=1):
-    """Fetch popular movies from TMDB."""
-    url = f"{BASE_URL}/movie/popular?api_key={TMDB_API_KEY}&page={page}&language=en-US"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json().get("results", [])
-    except Exception as e:
-        print(f"   [Error] Fetching page {page}: {e}")
-        return []
+print(f"🔌 Connecting to: {db_url}")
 
-def get_movie_trailer(movie_id):
-    """Fetch the first YouTube trailer key for a specific movie."""
-    url = f"{BASE_URL}/movie/{movie_id}/videos?api_key={TMDB_API_KEY}&language=en-US"
-    try:
-        response = requests.get(url)
-        videos = response.json().get("results", [])
-        
-        # Priority: 'Trailer' type on 'YouTube'
-        for v in videos:
-            if v.get("site") == "YouTube" and v.get("type") == "Trailer":
-                return v.get("key")
-        
-        # Fallback: 'Teaser' if no trailer found
-        for v in videos:
-            if v.get("site") == "YouTube" and v.get("type") == "Teaser":
-                return v.get("key")
-                
-    except Exception:
-        pass
-    return None
+# 2. Connect to the database
+engine = create_engine(db_url)
 
-def remove_trailer_listeners():
-    """Disable listeners to prevent locks during bulk insert."""
-    print("--> Disabling Trailer listeners...")
-    if event.contains(Trailer, 'after_insert', listeners.update_sitemap_trailer):
-        event.remove(Trailer, 'after_insert', listeners.update_sitemap_trailer)
-    if event.contains(Trailer, 'after_update', listeners.update_sitemap_trailer):
-        event.remove(Trailer, 'after_update', listeners.update_sitemap_trailer)
-
-def populate_trailers(max_pages=3):
-    # 1. Disable listeners to avoid "Database Locked" errors
-    remove_trailer_listeners()
-
-    with app.app_context():
-        print(f"--> Starting Trailer Import (Pages 1 to {max_pages})...")
-        
-        added_count = 0
-        skipped_count = 0
-
-        for page in range(1, max_pages + 1):
-            print(f"--> Fetching Page {page}...")
-            movies = get_popular_movies(page)
-
-            for movie in movies:
-                title = movie.get("title")
-                
-                # Check for duplicate by slug
-                slug = slugify(title)
-                existing = Trailer.query.filter_by(slug=slug).first()
-                if existing:
-                    print(f"   [Skip] '{title}' already exists.")
-                    skipped_count += 1
-                    continue
-
-                # Get trailer link
-                yt_key = get_movie_trailer(movie.get("id"))
-                if not yt_key:
-                    # Skip movies that don't have a YouTube trailer
-                    continue
-
-                # Parse dates
-                release_date_str = movie.get("release_date")
-                release_date = None
-                release_year = None
-                if release_date_str:
-                    try:
-                        release_date = datetime.strptime(release_date_str, "%Y-%m-%d")
-                        release_year = release_date.year
-                    except ValueError:
-                        pass
-
-                # Create Trailer Object
-                new_trailer = Trailer(
-                    name=title,
-                    slug=slug,
-                    trailer_link=f"https://www.youtube.com/embed/{yt_key}",
-                    description=movie.get("overview"),
-                    image=IMAGE_BASE + movie.get("poster_path") if movie.get("poster_path") else None,
-                    release_date=release_date,
-                    release_year=release_year,
-                    views=0
-                )
-
-                db.session.add(new_trailer)
-                added_count += 1
-                print(f"   [+] Added: {title}")
-
-            # Commit after every page to save progress
-            try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
-                print(f"   [Error] Commit failed for page {page}: {e}")
-
-        print("\n---------------------------------------------------")
-        print(f"DONE! Added {added_count} new trailers. Skipped {skipped_count} duplicates.")
-        print("---------------------------------------------------")
-
-        # Optional: Re-enable sitemap generation manually at the end
-        print("--> Updating Sitemap...")
-        try:
-            from app.main_routes import generate_sitemap
-            generate_sitemap()
-            print("--> Sitemap updated.")
-        except Exception as e:
-            print(f"--> Could not update sitemap: {e}")
-
-if __name__ == "__main__":
-    # You can change max_pages to fetch more (e.g., 5 or 10)
-    populate_trailers(max_pages=5)
+# 3. Force delete the version history
+with engine.connect() as conn:
+    conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+    conn.commit()
+    print("✅ SUCCESS: Neon DB memory wiped. You can now upgrade.")

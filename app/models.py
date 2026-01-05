@@ -52,6 +52,7 @@ class AllVideo(db.Model):
     subtitles = db.Column(db.String(200))
     source = db.Column(db.String(300))
     views = db.Column(db.Integer, default=0)
+    downloads = db.Column(db.Integer, default=0)
     trailer_url = db.Column(db.String(300))
     total_comment = db.Column(db.Integer, default=0, nullable=True)
     video_360p = db.Column(db.String(500))  # path or URL
@@ -120,7 +121,7 @@ class Series(db.Model):
     num_episodes = db.Column(db.Integer)
 
     all_video = db.relationship('AllVideo', back_populates='series')
-    seasons = db.relationship('Season', back_populates='series', cascade="all, delete-orphan")
+    seasons = db.relationship('Season', back_populates='series', cascade="all, delete-orphan", order_by="Season.season_number")
 
 # Season table
 class Season(db.Model):
@@ -159,6 +160,7 @@ class Episode(db.Model):
     download_link = db.Column(db.String(300))
     # 👇 NEW COLUMN
     backup_link = db.Column(db.String(500), nullable=True)
+    downloads = db.Column(db.Integer, default=0)
     video_360p = db.Column(db.String(500))
     video_480p = db.Column(db.String(500))
     video_720p = db.Column(db.String(500))
