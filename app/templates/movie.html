@@ -1,22 +1,40 @@
 {% extends "base.html" %}
 
 {% block title %}
-Download {{ video.title }} ({{ video.year_produced }}) Full Movie Free MP4 | MaxCinema
+    {% if video.type == 'series' %}
+        {# For Series: Show Name + Season/Episode + Episode Title #}
+        Download {{ video.name }} S{{ season }} Ep{{ episode }} | MaxCinema
+    {% else %}
+        {# For Movies: Show Name + Year #}
+        Download {{ video.name }} ({{ video.year_produced }}) Full Movie | MaxCinema
+    {% endif %}
 {% endblock %}
 
 {% block social_tags %}
-    <meta property="og:title" content="Download {{ video.name }} ({{ video.year_produced }}) - Free MP4">
-    <meta property="og:description" content="Download full movie in 480p/720p/1080p. {{ video.description[:100] }}... Click to watch and download now on MaxCinema."> 
-    <meta property="og:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
+    {# --- LOGIC: Determine Image & Title based on Movie vs Series --- #}
+    {% if video.type == 'series' %}
+        {% set share_title = "Download " ~ video.name ~ " - Season " ~ season ~ " Episode " ~ episode %}
+        {% set share_image = current_season.image if current_season and current_season.image else video.image %}
+        {% set share_desc = "Watch " ~ video.name ~ " Ep " ~ episode ~ " in HD/480p. " ~ (current_episode.name if current_episode else '') %}
+    {% else %}
+        {% set share_title = "Download " ~ video.name ~ " (" ~ video.year_produced ~ ") - Free MP4" %}
+        {% set share_image = video.image %}
+        {% set share_desc = "Download full movie. " ~ video.description[:100] ~ "..." %}
+    {% endif %}
+
+    {# --- OPEN GRAPH (WhatsApp, Facebook, Discord) --- #}
+    <meta property="og:title" content="{{ share_title }}">
+    <meta property="og:description" content="{{ share_desc }}">
+    <meta property="og:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
     <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="video.movie">
     <meta property="og:site_name" content="MaxCinema">
 
+    {# --- TWITTER CARDS --- #}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Download {{ video.name }} - MaxCinema">
-    <meta name="twitter:description" content="Download full movie in HD. Link active.">
-    <meta name="twitter:image" content="{{ video.image if video.image else 'https://i.imgur.com/KLN2bPo.png' }}">
-
+    <meta name="twitter:title" content="{{ share_title }}">
+    <meta name="twitter:description" content="{{ share_desc }}">
+    <meta name="twitter:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
 {% endblock %}
 
 {% block content %}
