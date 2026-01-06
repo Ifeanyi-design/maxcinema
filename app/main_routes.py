@@ -603,19 +603,19 @@ def series_details(det, name, season, episode, id):
 @main_bp.route("/download/<type>/<int:id>")
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
-
+    BRAND_TAG = "[MaxCinema]"
     # --- Fetch video ---
     if type == "movie":
         video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
         # Generate Name: "Iron-Man.mp4"
-        raw_name = video.name
-        full_clean_name = slugify(raw_name)
+        clean_name = slugify(video.name)
+        full_clean_name = f"{BRAND_TAG}_{clean_name}"
     
     elif type == "series":
         video = Episode.query.get_or_404(id)
         # Generate Name: "The-Flash-S01E01.mp4"
         series_name = slugify(video.season.series.all_video.name)
-        full_clean_name = f"{series_name}_S{video.season.season_number:02d}E{video.episode_number:02d}"
+        full_clean_name = f"{BRAND_TAG}_{series_name}_S{video.season.season_number:02d}E{video.episode_number:02d}"
     else:
         return "Invalid type", 400
 
