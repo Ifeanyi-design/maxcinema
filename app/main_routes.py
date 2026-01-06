@@ -603,7 +603,7 @@ def series_details(det, name, season, episode, id):
 @main_bp.route("/download/<type>/<int:id>")
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
-    BRAND_TAG = "[MaxCinema]"
+    BRAND_TAG = "[MaxCinema.name.ng]"
     # --- Fetch video ---
     if type == "movie":
         video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
