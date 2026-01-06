@@ -5,21 +5,11 @@
     {% include 'admin/sidebar.html' %}
     
     <div class="flex-1 p-8 overflow-y-auto pt-[70px]">
-        
         <div class="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
             <h1 class="text-3xl font-bold mb-2">⚡ Bulk Link Import</h1>
             <h2 class="text-xl text-yellow-500 mb-6">
                 {{ series.all_video.name }} - Season {{ season.season_number }}
             </h2>
-
-            <div class="bg-blue-900/30 border border-blue-500 p-4 rounded mb-6 text-sm">
-                <p><strong>Instructions:</strong></p>
-                <ul class="list-disc ml-5 mt-1">
-                    <li>Copy your links from your Bot/Text file.</li>
-                    <li>Paste them below. <strong>One link per line.</strong></li>
-                    <li>The first link will go to Episode 1, the second to Episode 2, etc.</li>
-                </ul>
-            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
@@ -29,11 +19,9 @@
                         {% for ep in episodes %}
                         <div class="flex justify-between border-b border-gray-800 py-2 text-sm">
                             <span>Ep {{ ep.episode_number }}: {{ ep.name }}</span>
-                            {% if ep.download_link %}
-                                <span class="text-green-500">Has Link ✅</span>
-                            {% else %}
-                                <span class="text-red-500">No Link ❌</span>
-                            {% endif %}
+                            <span class="{{ 'text-green-500' if ep.download_link else 'text-red-500' }}">
+                                {{ 'Has Link ✅' if ep.download_link else 'No Link ❌' }}
+                            </span>
                         </div>
                         {% endfor %}
                     </div>
@@ -42,10 +30,18 @@
                 <form method="POST">
                     <h3 class="font-bold mb-3 text-gray-400">Paste Links Here:</h3>
                     <textarea name="link_list" 
-                              class="w-full h-96 bg-gray-900 text-white border border-gray-600 rounded p-4 font-mono text-sm focus:border-yellow-500 focus:outline-none"
-                              placeholder="https://myserver.com/flash_s01e01.mp4&#10;https://myserver.com/flash_s01e02.mp4&#10;..."
+                              class="w-full h-80 bg-gray-900 text-white border border-gray-600 rounded p-4 font-mono text-sm focus:border-yellow-500 focus:outline-none"
+                              placeholder="Paste your links (one per line)..."
                               required></textarea>
                     
+                    <div class="mt-4 flex items-center bg-gray-700/50 p-3 rounded border border-gray-600">
+                        <input type="checkbox" id="distribute_telegram" name="distribute_telegram" class="w-5 h-5 text-green-600 rounded focus:ring-green-500 bg-gray-700 border-gray-600" checked>
+                        <label for="distribute_telegram" class="ml-3 text-sm font-medium text-gray-200">
+                            Distribute across <b>Telegram Servers</b> (Round-Robin)
+                            <p class="text-xs text-gray-400 font-normal">If checked, links will cycle: Server A → Server B → Server A...</p>
+                        </label>
+                    </div>
+
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded mt-4 transition">
                         🚀 Auto-Match & Save Links
                     </button>
