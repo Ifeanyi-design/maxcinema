@@ -1,8 +1,9 @@
 # listeners.py
-from sqlalchemy import event, text
+from sqlalchemy import event, text, inspect
 from datetime import datetime
 from slugify import slugify
 from .models import Trailer, db, RecentItem, AllVideo, Episode, Series, Movie
+
 
 
 # -------------------------------------------------------
@@ -70,15 +71,32 @@ def recent_video_insert(mapper, connection, target):
 # =======================================================
 @event.listens_for(AllVideo, "after_update")
 def recent_video_update(mapper, connection, target):
+    # 1. Inspect the object to see what changed
+    state = inspect(target)
+    
+    # 2. Define columns to IGNORE (don't bump to top if these change)
+    ignored_columns = ['views', 'downloads', 'num_votes', 'rating', 'total_comment']
+    
+    # 3. Check if any RELEVANT column changed
+    relevant_change = False
+    for attr in state.attrs:
+        # Check if the attribute has a history of change
+        if attr.history.has_changes():
+            if attr.key not in ignored_columns:
+                relevant_change = True
+                break
+    
+    # 4. If only views/downloads changed, DO NOTHING.
+    if not relevant_change:
+        return
+
+    # 5. Proceed with logic if it's a Movie and a real change happened
     if target.type == "movie":
-        # FIX: Use target.id (AllVideo ID)
         video_id = target.id
-        
+
         if video_id:
-            # Always remove old record
             delete_old_recent(connection, video_id=video_id)
 
-            # Insert refresh record
             insert_recent(
                 connection,
                 video_id=video_id,
@@ -114,14 +132,32 @@ def recent_episode_insert(mapper, connection, target):
     )
 
 # =======================================================
-# 🔥 EPISODES UPDATE
+# 🔥 EPISODES UPDATE - FIXED
 # =======================================================
 @event.listens_for(Episode, "after_update")
 def recent_episode_update(mapper, connection, target):
-    # Same logic as insert
+    # 1. Inspect state
+    state = inspect(target)
+
+    # 2. Define columns to IGNORE
+    ignored_columns = ['views', 'downloads']
+
+    # 3. Check for relevant changes
+    relevant_change = False
+    for attr in state.attrs:
+        if attr.history.has_changes():
+            if attr.key not in ignored_columns:
+                relevant_change = True
+                break
+    
+    # 4. Stop if only views changed
+    if not relevant_change:
+        return
+
+    # 5. Proceed with logic
     sql = text("SELECT series_id FROM season WHERE id = :sid")
     result = connection.execute(sql, {"sid": target.season_id}).fetchone()
-    
+
     series_id = result[0] if result else None
 
     if series_id:
@@ -134,6 +170,7 @@ def recent_episode_update(mapper, connection, target):
         type="series",
         series_id=series_id
     )
+
 
 
 @event.listens_for(AllVideo, "before_insert")
