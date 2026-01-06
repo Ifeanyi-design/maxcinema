@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    
+    <div class="flex-1 p-8 overflow-y-auto pt-[70px]">
+        
+        <div class="max-w-4xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+            <h1 class="text-3xl font-bold mb-2">⚡ Bulk Link Import</h1>
+            <h2 class="text-xl text-yellow-500 mb-6">
+                {{ series.all_video.name }} - Season {{ season.season_number }}
+            </h2>
+
+            <div class="bg-blue-900/30 border border-blue-500 p-4 rounded mb-6 text-sm">
+                <p><strong>Instructions:</strong></p>
+                <ul class="list-disc ml-5 mt-1">
+                    <li>Copy your links from your Bot/Text file.</li>
+                    <li>Paste them below. <strong>One link per line.</strong></li>
+                    <li>The first link will go to Episode 1, the second to Episode 2, etc.</li>
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div>
+                    <h3 class="font-bold mb-3 text-gray-400">Episodes in Database:</h3>
+                    <div class="h-96 overflow-y-auto bg-gray-900 p-4 rounded border border-gray-700">
+                        {% for ep in episodes %}
+                        <div class="flex justify-between border-b border-gray-800 py-2 text-sm">
+                            <span>Ep {{ ep.episode_number }}: {{ ep.name }}</span>
+                            {% if ep.download_link %}
+                                <span class="text-green-500">Has Link ✅</span>
+                            {% else %}
+                                <span class="text-red-500">No Link ❌</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <h3 class="font-bold mb-3 text-gray-400">Paste Links Here:</h3>
+                    <textarea name="link_list" 
+                              class="w-full h-96 bg-gray-900 text-white border border-gray-600 rounded p-4 font-mono text-sm focus:border-yellow-500 focus:outline-none"
+                              placeholder="https://myserver.com/flash_s01e01.mp4&#10;https://myserver.com/flash_s01e02.mp4&#10;..."
+                              required></textarea>
+                    
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded mt-4 transition">
+                        🚀 Auto-Match & Save Links
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
