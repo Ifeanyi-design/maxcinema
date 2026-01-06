@@ -1233,7 +1233,7 @@ def sitemap_page():
     series_list = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).all()
 
     # 3. Fetch Trailers
-    trailers = Trailer.query.filter_by(active=True).order_by(Trailer.date_added.desc()).all()
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).all()
     return render_template("sitemap.html",
                            movies=movies,
                            series_list=series_list,
