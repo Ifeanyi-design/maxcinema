@@ -1047,3 +1047,49 @@ def stats_dashboard():
                            req_stats=[req_pending, req_filled, req_rejected],
                            top_searches=top_searches
                            )
+
+
+@admin_bp.route('/admin/series/<int:series_id>/season/<int:season_num>/bulk-links', methods=['GET', 'POST'])
+@login_required
+def bulk_link_season(series_id, season_num):
+    if not current_user.is_admin:
+        abort(403)
+
+    # 1. Get the Series and Specific Season
+    series = Series.query.get_or_404(series_id)
+    season = Season.query.filter_by(series_id=series.id, season_number=season_num).first_or_404()
+    
+    # Get all episodes ordered by number (1, 2, 3...)
+    episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
+
+    if request.method == 'POST':
+        # 2. Get the big block of text and split it by new lines
+        raw_text = request.form.get('link_list', '').strip()
+        
+        # Split by line and remove empty lines
+        links = [line.strip() for line in raw_text.split('\n') if line.strip()]
+
+        if not links:
+            flash("No links provided!", "error")
+            return redirect(request.url)
+
+        # 3. Match Links to Episodes
+        # We assume Line 1 = Ep 1, Line 2 = Ep 2, etc.
+        updated_count = 0
+        
+        # Zip combines the list of episodes and links together
+        for episode, link in zip(episodes, links):
+            episode.download_link = link
+            # If you want to auto-generate a backup link (e.g. if the bot gives 2 links per line), logic goes here
+            updated_count += 1
+        
+        try:
+            db.session.commit()
+            flash(f"✅ Successfully updated {updated_count} episodes for Season {season_num}!", "success")
+            # Redirect back to the series view
+            return redirect(url_for('admin.view_series_specific', id=series_id, name=series.all_video.slug))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error saving links: {str(e)}", "error")
+
+    return render_template('admin/bulk_links.html', series=series, season=season, episodes=episodes)
