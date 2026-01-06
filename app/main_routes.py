@@ -607,10 +607,19 @@ def download_dispatcher(type, id, season=None, episode=None):
     # --- Fetch video ---
     if type == "movie":
         video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+        # Generate Name: "Iron-Man.mp4"
+        raw_name = video.name
+        full_clean_name = slugify(raw_name)
+    
     elif type == "series":
         video = Episode.query.get_or_404(id)
+        # Generate Name: "The-Flash-S01E01.mp4"
+        series_name = slugify(video.season.series.all_video.name)
+        full_clean_name = f"{series_name}_S{video.season.season_number:02d}E{video.episode_number:02d}"
     else:
         return "Invalid type", 400
+
+    
 
     try:
         # 1. Increment the count for the specific item (Movie or Episode)
@@ -663,7 +672,7 @@ def download_dispatcher(type, id, season=None, episode=None):
         base = selected_server.base_url.rstrip("/")
         file_hash = video.download_link.strip() # The hash (e.g., Z2V0...)
         
-        final_url = f"{base}/watch/{file_hash}"
+        final_url = f"{base}/watch/{file_hash}?name={full_clean_name}"
         
         return redirect(final_url)
 
