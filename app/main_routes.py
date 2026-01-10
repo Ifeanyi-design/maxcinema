@@ -663,7 +663,7 @@ def download_dispatcher(type, id, season=None, episode=None):
             return "No active Telegram servers available", 503
 
         # 2. Pick one at random
-        selected_server = random.choice(telegram_pool)
+        selected_server = telegram_pool[0]
 
         # 3. Build the Link
         # Pattern: {base_url}/watch/{hash}
