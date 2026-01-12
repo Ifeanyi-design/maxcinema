@@ -60,6 +60,7 @@ class AllVideo(db.Model):
     video_720p = db.Column(db.String(500))
     video_1080p = db.Column(db.String(500))
     video_qualities = db.Column(db.JSON)
+    coming_soon = db.Column(db.Boolean, default=False)
 
     thumb_360p = db.Column(db.String, nullable=True)
     thumb_480p = db.Column(db.String, nullable=True)
@@ -171,6 +172,7 @@ class Episode(db.Model):
     thumb_480p = db.Column(db.String, nullable=True)
     thumb_720p = db.Column(db.String, nullable=True)
     thumb_1080p = db.Column(db.String, nullable=True)
+    coming_soon = db.Column(db.Boolean, default=False)
 
     # Link to storage server
     storage_server_id = db.Column(db.Integer, db.ForeignKey('storage_servers.id'), nullable=True)

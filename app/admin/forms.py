@@ -26,6 +26,7 @@ class AllVideoForm(FlaskForm):
     image = StringField("Image Poster", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])
     trailer_url = StringField("Trailer URL", validators=[Optional()])
+    coming_soon = BooleanField('Is this Coming Soon?')
 
     # Checkbox fields
     featured = BooleanField("Featured")
@@ -126,6 +127,7 @@ class EpisodeForm(FlaskForm):
         validators=[Optional()],
         render_kw={"placeholder": "YYYY-MM-DD"}
     )
+    coming_soon = BooleanField('Is this Coming Soon?')
     backup_link = StringField('Backup/Stream Link', validators=[Optional(), URL()])
     source = StringField("Source URL", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])

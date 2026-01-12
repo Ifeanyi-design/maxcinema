@@ -149,6 +149,7 @@ def edit_video(video_id, prev):
         video.type = form.type.data
         video.trailer_url = form.trailer_url.data
         video.backup_link = form.backup_link.data
+        video.coming_soon=form.coming_soon.data
         # Update booleans
         video.featured = form.featured.data
         video.trending = form.trending.data
@@ -259,6 +260,7 @@ def add_movie(prev):
             featured=form.featured.data,
             trending=form.trending.data,
             active=form.active.data,
+            coming_soon=form.coming_soon.data,
             storage_server_id=form.storage_server_id.data or None
         )
 
@@ -325,6 +327,7 @@ def add_series(prev):
             featured=form.featured.data,
             trending=form.trending.data,
             active=form.active.data,
+            coming_soon=form.coming_soon.data,
             storage_server_id=form.storage_server_id.data or None
         )
 
