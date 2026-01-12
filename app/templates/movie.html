@@ -163,15 +163,38 @@
 
                 {% if is_coming_soon %}
                     
-                    {# --- HYPE BOX / COUNTDOWN UI --- #}
+                    {% set target_date = video.released_date if det == "movie" else current_episode.released_date %}
+                    {% set today_date = now.date() %} 
+                    {# If target_date is None (not set in admin), default to today to prevent errors #}
+                    {% set diff = (target_date - today_date).days if target_date else 0 %}
+
                     <div class="w-full bg-black text-white rounded-xl p-8 text-center border-2 border-[#830506] shadow-xl relative overflow-hidden group">
+                        
                         <div class="absolute inset-0 bg-[#830506] opacity-10 group-hover:opacity-20 transition-opacity"></div>
                         
                         <h3 class="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2 relative z-10">
-                            <i class="fa-solid fa-clock text-yellow-400 mr-2"></i> Release Pending
+                            <i class="fa-solid fa-clock text-yellow-400 mr-2"></i> 
+                            
+                            {# --- SMART HEADLINE LOGIC --- #}
+                            {% if diff <= 0 %}
+                                DROPPING TODAY
+                            {% elif diff == 1 %}
+                                DROPPING TOMORROW
+                            {% else %}
+                                COMING THIS {{ target_date.strftime('%A') | upper }}
+                            {% endif %}
                         </h3>
+
                         <p class="text-gray-300 font-bold text-sm md:text-lg mb-6 relative z-10">
-                            The video file drops here <span class="text-yellow-400">TODAY</span>.
+                            
+                            {# --- SMART DESCRIPTION LOGIC --- #}
+                            {% if diff <= 0 %}
+                                The wait is over. The file will be uploaded <span class="text-yellow-400 animate-pulse">ANY MOMENT NOW</span>.
+                            {% elif diff == 1 %}
+                                Get ready. The file drops in less than <span class="text-yellow-400">24 HOURS</span>.
+                            {% else %}
+                                Scheduled for <span class="text-yellow-400">{{ target_date.strftime('%B %d') }}</span> ({{ diff }} Days Left).
+                            {% endif %}
                         </p>
                         
                         <div class="inline-block bg-[#830506] px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs md:text-sm shadow-lg animate-pulse">
