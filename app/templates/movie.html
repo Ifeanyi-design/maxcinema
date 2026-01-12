@@ -1,555 +1,1461 @@
-{% extends "base.html" %}
+from flask import Blueprint, make_response, render_template, abort, redirect, url_for, flash, request, jsonify, current_app, Response, stream_with_context, session
+from flask_login import current_user, login_user, logout_user, login_required
+from sqlalchemy.sql import func
+from sqlalchemy.orm import joinedload, defer
+from sqlalchemy import or_, text, desc
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import random
 
-{% block title %}
-    {% if video.type == 'series' %}
-        {# For Series: Show Name + Season/Episode + Episode Title #}
-        Download {{ video.name }} S{{ season }} Ep{{ episode }} | MaxCinema
-    {% else %}
-        {# For Movies: Show Name + Year #}
-        Download {{ video.name }} ({{ video.year_produced }}) Full Movie | MaxCinema
-    {% endif %}
-{% endblock %}
+import os
+import time
+import requests
+from datetime import datetime, timedelta
+from functools import wraps
+from slugify import slugify
+from . import listeners
+from .extensions import db, login_manager
+from .models import (
+    AllVideo, Movie, Series, StorageServer, User, Season, Episode,
+    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm
+)
 
-{% block social_tags %}
-    {# --- LOGIC: Determine Image & Title based on Movie vs Series --- #}
-    {% if video.type == 'series' %}
-        {% set share_title = "Download " ~ video.name ~ " - Season " ~ season ~ " Episode " ~ episode %}
-        {% set share_image = current_season.image if current_season and current_season.image else video.image %}
-        {% set share_desc = "Watch " ~ video.name ~ " Ep " ~ episode ~ " in HD/480p. " ~ (current_episode.name if current_episode else '') %}
-    {% else %}
-        {% set share_title = "Download " ~ video.name ~ " (" ~ video.year_produced ~ ") - Free MP4" %}
-        {% set share_image = video.image %}
-        {% set share_desc = "Download full movie. " ~ video.description[:100] ~ "..." %}
-    {% endif %}
-
-    {# --- OPEN GRAPH (WhatsApp, Facebook, Discord) --- #}
-    <meta property="og:title" content="{{ share_title }}">
-    <meta property="og:description" content="{{ share_desc }}">
-    <meta property="og:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
-    <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:type" content="video.movie">
-    <meta property="og:site_name" content="MaxCinema">
-
-    {# --- TWITTER CARDS --- #}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ share_title }}">
-    <meta name="twitter:description" content="{{ share_desc }}">
-    <meta name="twitter:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
-{% endblock %}
-
-{% block content %}
-<section id="Merger" class="flex flex-col lg:flex-row gap-6 mx-auto md:px-4 lg:w-[95%] my-4 md:my-8 mt-20 md:mt-24">
-
-    <section id="MovieDetails" class="flex flex-col lg:w-2/3 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-
-        <div class="w-full bg-[#830506] px-6 py-8 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-4 opacity-10">
-                <i class="fa-solid fa-film text-9xl text-white transform -rotate-12 translate-x-10 -translate-y-10"></i>
-            </div>
-
-            <div class="relative z-10 flex flex-col items-center text-center">
-                <h1 class="font-black text-white text-2xl md:text-4xl uppercase tracking-tighter leading-tight drop-shadow-md">
-                    Download {{ video.name }} ({{video.year_produced }})
-                </h1>
-                {% if video.year_produced %}
-                    <span class="inline-block mt-2 px-3 py-1 bg-black/20 rounded-full text-white/90 text-xs font-bold border border-white/10">
-                        {{ video.year_produced }}
-                    </span>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-center md:justify-between px-6 py-4 bg-white border-b border-gray-100 gap-4">
-            <div class="flex flex-wrap justify-center gap-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                <span class="flex items-center gap-2">
-                    <i class="fa-regular fa-calendar text-[#830506]"></i> {{ video.date_added.strftime('%b %d, %Y') }}
-                </span>
-                <span class="w-px h-4 bg-gray-300 hidden md:block"></span>
-                <span class="flex items-center gap-2">
-                    <i class="fa-regular fa-folder-open text-[#830506]"></i> {{ video.type }}
-                </span>
-                <span class="w-px h-4 bg-gray-300 hidden md:block"></span>
-                <span class="flex items-center gap-2">
-                    <i class="fa-regular fa-comments text-[#830506]"></i> {{ num_comment }}
-                </span>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <div class="flex text-yellow-400 text-xs">
-                    {% for i in range(1,6) %}
-                        <i class="fas fa-star {{ 'text-gray-300' if i > video.rating else '' }}"></i>
-                    {% endfor %}
-                </div>
-                <span class="text-[#830506] font-black text-sm">{{ video.rating | round(1) }}</span>
-            </div>
-        </div>
-
-        <div class="p-3 md:p-8">
-            <div class="flex flex-col md:flex-row gap-6 mb-6">
-                <div class="w-full md:w-2/5 lg:w-1/3 flex-shrink-0">
-                    <img src="{% if video.type == 'series' and current_season %}{{ current_season.image or video.image}}{% else %}{{ video.image }}{%endif%}" alt="Download {{ video.name }}" class="w-full rounded-xl shadow-xl border-2 md:border-4 border-white object-cover aspect-[2/3] max-h-[400px] md:max-h-none mx-auto">
-                </div>
-                <div class="w-full md:w-3/5 lg:w-2/3">
-                    <h2 class="text-[#830506] font-black text-lg md:text-xl uppercase mb-3 border-l-4 border-[#830506] pl-3 italic">Synopsis</h2>
-                    <p class="text-gray-700 leading-relaxed font-medium italic text-base md:text-lg">"{% if video.type == 'series' and current_season %}{{ current_season.description or video.description}}{% else %}{{ video.description }}{% endif %}"</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner mb-8">
-                {% if video.type == 'series' %}
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Current Watch</span> <span class="text-gray-900 font-bold bg-white px-2 py-1 rounded shadow-sm border border-gray-100">S{{ season }} E{{ episode }}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Title</span> <span class="text-gray-900 font-bold bg-white px-2 py-1 rounded shadow-sm border border-gray-100">{{ current_episode.name }}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Series Status</span> <span class="text-gray-900 font-bold">{% if current_season.completed %} Completed {% else %} Ongoing {% endif %}</span></div>
-                {% endif %}
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Release Date</span> <span class="text-gray-900 font-bold">{% if video.type == "series" and current_episode %}{{current_episode.released_date or 'N/A'}}{% else %}{{ video.released_date or 'N/A' }} {% endif %}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Duration</span> <span class="text-gray-900 font-bold">{% if video.type == "series" %} {{ current_episode.length }} {% else %} {{ video.length }} {% endif %}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Cast</span> <span class="text-gray-900 font-bold leading-tight">{% if video.type == "series" and current_season %}{{ current_season.cast or video.star_cast}}{%else%}{{ video.star_cast }}{%endif%}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Language / Subtitles</span> <span class="text-gray-900 font-bold">{{ video.language or 'English' }} / {{ video.subtitles or 'None' }}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Source / Quality</span> <span class="text-gray-900 font-bold">{% if video.type == "series" and current_episode %}{{current_episode.source or 'HD'}}{%else%}{{ video.source or 'HD' }}{%endif%}</span></div>
-                <div class="text-sm"><span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Country</span> <span class="text-gray-900 font-bold">{{ video.country or 'International' }}</span></div>
-                <div class="text-sm">
-                    <span class="font-black text-gray-400 uppercase text-[10px] block mb-1">Genres</span> 
-                    <span class="text-gray-900 font-bold">
-                        {% for g in video.genres %}
-                            <a href="{{ url_for('main.genre', contain='all', genre_type=g.name) }}" class="hover:text-[#830506] transition-colors">{{ g.name }}</a>{{ ", " if not loop.last }}
-                        {% else %}
-                            N/A
-                        {% endfor %}
-                    </span>
-                </div>
-            </div>
-
-            {% set trailer_src = video.trailer_url %}
-            {% if video.type == 'series' and current_season and current_season.trailer_url %}
-                {% set trailer_src = current_season.trailer_url %}
-            {% endif %}
-
-            {% if trailer_src %}
-            <div class="mb-10">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Official Preview</p>
-                <div class="w-full rounded-xl overflow-hidden shadow-lg bg-black aspect-video relative group">
-                    <iframe 
-                        src="{{ trailer_src.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') | safe }}?rel=0&modestbranding=1" 
-                        class="w-full h-full" 
-                        frameborder="0" 
-                        allowfullscreen
-                        loading="lazy" 
-                        title="Trailer">
-                    </iframe>
-                </div>
-            </div>
-            {% endif %}
-            <div class="w-full my-6">
-                <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
-                <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
-                    {% include 'ads/banner.html' %}
-                </div>
-            </div>
-
-                                    {# --- DOWNLOAD SECTION START --- #}
-            <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 mb-2 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
-
-                {# --- LOGIC: Setup Variables --- #}
-                {% set dl_id = video.id if det == "movie" else current_episode.id %}
-                {% set dl_season = none if det == "movie" else season %}
-                {% set dl_episode = none if det == "movie" else episode %}
-                
-                {# 👇 GET STORAGE OBJECT #}
-                {% set storage_obj = video.storage_server if det == "movie" else current_episode.storage_server %}
-                {% set dl_link = video.download_link if det == "movie" else current_episode.download_link %}
+main_bp = Blueprint("main", __name__)
 
 
-                {% if dl_link == 'coming_soon' %}
-                    
-                    {# --- HYPE BOX / COUNTDOWN UI --- #}
-                    <div class="w-full bg-black text-white rounded-xl p-8 text-center border-2 border-[#830506] shadow-xl relative overflow-hidden group">
-                        <div class="absolute inset-0 bg-[#830506] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                        
-                        <h3 class="text-2xl md:text-3xl font-black uppercase italic tracking-tighter mb-2 relative z-10">
-                            <i class="fa-solid fa-clock text-yellow-400 mr-2"></i> Release Pending
-                        </h3>
-                        <p class="text-gray-300 font-bold text-sm md:text-lg mb-6 relative z-10">
-                            The video file drops here <span class="text-yellow-400">TODAY</span>.
-                        </p>
-                        
-                        <div class="inline-block bg-[#830506] px-6 py-3 rounded-full font-black uppercase tracking-widest text-xs md:text-sm shadow-lg animate-pulse">
-                            Status: Waiting for Upload
-                        </div>
 
-                        <p class="mt-6 text-[10px] text-gray-500 font-mono uppercase">
-                            Bookmark this page. The buttons will appear automatically.
-                        </p>
-                    </div>
+# # ---------------- Admin Required ----------------
+# def admin_required(f):
+#     @wraps(f)
+#     def decorated_function(*args, **kwargs):
+#         if not current_user.is_authenticated or not current_user.is_admin:
+#             abort(403)
+#         return f(*args, **kwargs)
+#     return decorated_function
 
-                {% else %}
+# @login_manager.user_loader
+# def load_user(user_id):
+#     return User.query.get(int(user_id))
 
-                    {# ========================================== #}
-                    {#      SCENARIO A: TELEGRAM STORAGE          #}
-                    {# ========================================== #}
-                    {# Logic: Check if storage exists AND if server_type is strictly 'telegram' #}
-                    {% if storage_obj and storage_obj.server_type == 'telegram' %}
-                        
-                        {# 1. FAST SERVER (Bot File) #}
-                        <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode, method='server') }}" 
-                           class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                            <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-bolt text-lg"></i></div>
-                            <div class="flex flex-col text-left leading-none">
-                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Fast Server</span>
-                                <span class="text-sm md:text-base">Download</span>
-                            </div>
-                        </a>
+@main_bp.app_errorhandler(404)
+def page_not_found(e):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("404.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 404
+
+@main_bp.app_errorhandler(500)
+def internal_server_error(e):
+    # This happens if your server crashes (like the "Delete Series" bug earlier)
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template('500.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 500
+
+@main_bp.app_errorhandler(403)
+def access_forbidden(e):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template('403.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 403
+
+
+@main_bp.context_processor
+def inject_now():
+    # Nigeria is UTC + 1
+    nigeria_time = datetime.utcnow() + timedelta(hours=1) 
+    return {'now': nigeria_time}
+
+
+def ping_search_engines():
+    sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
+    try:
+        requests.get(f"http://www.google.com/ping?sitemap={sitemap_url}")
+        requests.get(f"http://www.bing.com/ping?sitemap={sitemap_url}")
+        print("Search engines notified!")
+    except Exception as e:
+        print("Ping failed:", e)
+
+def get_up_next(trailer):
+    # Same release year
+    if trailer.release_year:
+        up_next = Trailer.query.filter(
+            Trailer.release_year == trailer.release_year,
+            Trailer.id != trailer.id
+        ).limit(6).all()
+
+        if up_next:
+            return up_next
+
+    # Fallback: recent trailers
+    up_next = Trailer.query.filter(
+        Trailer.id != trailer.id
+    ).order_by(Trailer.date_added.desc()).limit(6).all()
+
+    if up_next:
+        return up_next
+
+    # Final fallback: random
+    return Trailer.query.filter(
+        Trailer.id != trailer.id
+    ).order_by(func.random()).limit(6).all()
+
+def populate_recent_items_bulk():
+    """
+    Efficiently populate RecentItem table with latest movies and latest episodes per series.
+    """
+    try:
+        # Clear existing RecentItem table in one go
+        db.session.query(RecentItem).delete(synchronize_session=False)
+
+        # --- Latest movies ---
+        movies = Movie.query.order_by(Movie.date_added.desc()).all()
+        recent_movie_items = [
+            RecentItem(
+                video_id=m.id,
+                episode_id=None,
+                date_added=m.date_added,
+                type="movie"
+            )
+            for m in movies
+        ]
+        if recent_movie_items:
+            db.session.bulk_save_objects(recent_movie_items)
+
+        # --- Latest episode per series ---
+        latest_episodes = Episode.query.order_by(Episode.date_added.desc()).all()
+        seen_series = set()
+        recent_series_items = []
+
+        for e in latest_episodes:
+            if not e.season or not e.season.series:
+                continue
+
+            series_id = e.season.series.id
+            if series_id in seen_series:
+                continue
+
+            recent_series_items.append(
+                RecentItem(
+                    video_id=None,
+                    episode_id=e.id,
+                    date_added=e.date_added,
+                    type="series",
+                    series_id=series_id
+                )
+            )
+            seen_series.add(series_id)
+
+        if recent_series_items:
+            db.session.bulk_save_objects(recent_series_items)
+
+        # Commit everything at once
+        db.session.commit()
+        print("RecentItem table populated successfully (bulk)!")
+
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+from sqlalchemy.exc import OperationalError, PendingRollbackError
+
+def safe_populate_bulk(retries=5, delay=0.2):
+    for attempt in range(1, retries + 1):
+        try:
+            populate_recent_items_bulk()
+            break
+        except (OperationalError, PendingRollbackError) as e:
+            if 'database is locked' in str(e):
+                print(f"Database locked, retrying {attempt}/{retries} after {delay}s...")
+                db.session.rollback()
+                time.sleep(delay)
+            else:
+                raise
+    else:
+        print("Failed to populate RecentItem after multiple retries (bulk).")
+safe_populate = safe_populate_bulk
+
+@main_bp.route('/')
+@main_bp.route('/<int:page>')
+def index(page=1):
+    per_page = 24
+    features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).limit(8).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    top_rated_movies = AllVideo.query.filter(AllVideo.num_votes > 0, AllVideo.active == True)\
+                                  .order_by(desc(AllVideo.rating))\
+                                  .limit(10).all()
+
+    data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
+    videos = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).all()
+    # Paginate RecentItem directly
+    recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
+                                       .paginate(page=page, per_page=per_page, error_out=False)
     
-                        {# 2. TELEGRAM (Random Load Balancer) #}
-                        
-                        {% set file_code = dl_link.split('/')[-1] if dl_link else '' %}
+    print(len(recent_paginated.items))
+    # Collect IDs for this page
+    video_ids = [r.video_id for r in recent_paginated.items if r.video_id]
+    episode_ids = [r.episode_id for r in recent_paginated.items if r.episode_id]
+    print(len(video_ids)) 
+
+
+    # Load all Video/Episode objects in one query each
+    if video_ids:
+        videos = {
+            v.all_video_id: v for v in Movie.query
+            .join(AllVideo)
+            .filter(Movie.all_video_id.in_(video_ids), AllVideo.active == True)
+            .all()
+        }
+    else:
+        videos = {}
+    if episode_ids:
+        episodes = {
+            e.id: e for e in Episode.query
+            .join(Season).join(Series).join(AllVideo)
+            .filter(Episode.id.in_(episode_ids), AllVideo.active == True)
+            .all()
+        }
+    else:
+        episodes = {}
+    # Prepare items for display
+    items = []
+    series_name = []
+    index=True
+
+    for r in recent_paginated.items:
+        if r.video_id:
+            v = videos.get(r.video_id)
+            if v:
+                items.append(v)
+        elif r.episode_id:
+            e = episodes.get(r.episode_id)
+            if e and e.season.series.all_video.name not in series_name:
+                series_name.append(e.season.series.all_video.name)
+                items.append(e)
+    return render_template('index.html', features=features, data=data,
+                            trending_series=series_trend,
+                              trending_movie=movie_trend,
+                                items=items, per_page=per_page,
+                                  page=page, total_pages=recent_paginated.pages,
+                                  top_rated_movies=top_rated_movies,
+                                  videos=recent_paginated, index=index, trending_trailers=trending_trailers)
+
+@main_bp.route("/featured/<int:page>")
+@main_bp.route("/featured")
+def featured(page=1):
+    per_page = 24
+    feature = True
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    featured_videos = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    return render_template("featured.html", trending_series=series_trend, trending_movie=movie_trend, videos=featured_videos, feature=feature, trending_trailers=trending_trailers)
+
+@main_bp.route("/search_result")
+@main_bp.route("/search_result/<int:page>")
+def search_result(page=1):
+    per_page=24
+    query = request.args.get("search", "").strip()
+
+    if not query:
+        flash("Please enter a search term", "warning")
+        return redirect(url_for("main.index"))
     
-                        {# 👇 DEFINE YOUR BOTS HERE (No @ symbol) #}
-                        {% set my_bots = ['MaxStreamV2_Bot', 'max_worker1_bot', 'max_cinema_stream_bot', 'Maxload2_bot', 'Maxload_bot'] %}
-                        
-                        {# 👇 PICK ONE RANDOMLY #}
-                        {% set selected_bot = my_bots | random %}
+    try:
+        # 1. Normalize query (convert to lowercase so "Batman" == "batman")
+        clean_term = query.lower()[:100] # Limit to 100 chars to match DB column size
+
+        # 2. Check if term exists in DB
+        existing_search = SearchTerm.query.filter_by(term=clean_term).first()
+        
+        if existing_search:
+            # If exists, just add +1 to count and update time
+            existing_search.count += 1
+            existing_search.last_searched = datetime.utcnow()
+        else:
+            # If new, create it
+            new_search = SearchTerm(term=clean_term, count=1)
+            db.session.add(new_search)
+        
+        db.session.commit()
+    except Exception as e:
+        # 3. Safety Net: If logging fails, ROLLBACK so the user still sees their results
+        db.session.rollback()
+        print(f"Error logging search term: {e}")
+
+    search_filter = or_(
+        AllVideo.name.ilike(f"%{query}%"),
+        AllVideo.country.ilike(f"%{query}%"),
+        AllVideo.description.ilike(f"%{query}%"),
+        AllVideo.genres.any(Genre.name.ilike(f"%{query}%")),
+        AllVideo.star_cast.ilike(f"%{query}%")
+
+    )
+    videos = (
+        AllVideo.query.options(joinedload(AllVideo.genres)).filter(search_filter, AllVideo.active.is_(True)).order_by(
+            AllVideo.date_added.desc()
+        ).paginate(page=page, per_page=per_page, error_out=False)
+    )
+    series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    searches = True
+    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend)
+
+@main_bp.route("/contact_us")
+def contact_us():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("contact_us.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/privacy_policy")
+def privacy():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("privacy_policy.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/dcma")
+def dcma():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/genre/<string:contain>/<string:genre_type>")
+@main_bp.route("/genre/<string:contain>/<string:genre_type>/page/<int:page>")
+def genre(genre_type, contain="movie", page=1):
+    per_page = 24
     
-                        <a href="https://t.me/{{ selected_bot }}?start={{ file_code }}" target="_blank"
-                           class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#2AABEE] hover:bg-[#229ED9] text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-400/20 transition-all hover:-translate-y-1">
-                            <div class="bg-white/20 p-2 rounded-full"><i class="fa-brands fa-telegram text-lg"></i></div>
-                            <div class="flex flex-col text-left leading-none">
-                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Telegram</span>
-                                <span class="text-sm md:text-base">Get File</span>
-                            </div>
-                        </a>
-    
-                        {# 3. BACKUP / STREAM BUTTON (Dynamic) #}
-                        {# 👇 Get the link from the new DB column #}
-                        {% set stream_url = video.backup_link if det == "movie" else current_episode.backup_link %}
-    
-                        {# 👇 Only show if the link actually exists #}
-                        {% if stream_url %}
-                            
-                            {# Smart Naming Logic #}
-                            {% if 'dood' or 'myvidplay' in stream_url %}
-                                {% set btn_name = 'Doodstream' %}
-                                {% set btn_color = 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' %}
-                                {% set btn_icon = 'fa-play-circle' %}
-                            {% elif 'tape' in stream_url %}
-                                {% set btn_name = 'StreamTape' %}
-                                {% set btn_color = 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20' %}
-                                {% set btn_icon = 'fa-tape' %}
-                            {% else %}
-                                {% set btn_name = 'Watch Online' %}
-                                {% set btn_color = 'bg-green-600 hover:bg-green-700 shadow-green-600/20' %}
-                                {% set btn_icon = 'fa-external-link-alt' %}
-                            {% endif %}
-    
-                            <a href="{{ stream_url }}" target="_blank"
-                               class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 {{ btn_color }} text-white font-black uppercase tracking-widest rounded-xl shadow-lg transition-all hover:-translate-y-1">
-                                <div class="bg-white/20 p-2 rounded-full"><i class="fas {{ btn_icon }} text-lg"></i></div>
-                                <div class="flex flex-col text-left leading-none">
-                                    <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Stream</span>
-                                    <span class="text-sm md:text-base">{{ btn_name }}</span>
-                                </div>
-                            </a>
-                        {% endif %}
-    
-                    {# ========================================== #}
-                    {#      SCENARIO B: OTHER STORAGE             #}
-                    {# ========================================== #}
-                    {% else %}
-                        
-                        {# 1. DIRECT DOWNLOAD #}
-                        <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode) }}" 
-                           class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                            <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
-                            <div class="flex flex-col text-left leading-none">
-                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Direct Link</span>
-                                <span class="text-sm md:text-base">Download Now</span>
-                            </div>
-                        </a>
-                    
-                    {# 3. BACKUP / STREAM BUTTON (Dynamic) #}
-                        {# 👇 Get the link from the new DB column #}
-                        {% set stream_url = video.backup_link if det == "movie" else current_episode.backup_link %}
-    
-                        {# 👇 Only show if the link actually exists #}
-                        {% if stream_url %}
-                            
-                            {# Smart Naming Logic #}
-                            {% if 'dood' or 'myvidplay' in stream_url %}
-                                {% set btn_name = 'Doodstream' %}
-                                {% set btn_color = 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' %}
-                                {% set btn_icon = 'fa-play-circle' %}
-                            {% elif 'tape' in stream_url %}
-                                {% set btn_name = 'StreamTape' %}
-                                {% set btn_color = 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20' %}
-                                {% set btn_icon = 'fa-tape' %}
-                            {% else %}
-                                {% set btn_name = 'Watch Online' %}
-                                {% set btn_color = 'bg-green-600 hover:bg-green-700 shadow-green-600/20' %}
-                                {% set btn_icon = 'fa-external-link-alt' %}
-                            {% endif %}
-    
-                            <a href="{{ stream_url }}" target="_blank"
-                               class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 {{ btn_color }} text-white font-black uppercase tracking-widest rounded-xl shadow-lg transition-all hover:-translate-y-1">
-                                <div class="bg-white/20 p-2 rounded-full"><i class="fas {{ btn_icon }} text-lg"></i></div>
-                                <div class="flex flex-col text-left leading-none">
-                                    <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Stream</span>
-                                    <span class="text-sm md:text-base">{{ btn_name }}</span>
-                                </div>
-                            </a>
-                        {% endif %}
-    
-                    {% endif %}
-                {% endif %}
-
-                {# SHARE BUTTON (Always Visible) #}
-                <button id="shareVideoBtn" 
-                        class="flex-grow w-full md:w-auto flex items-center justify-center gap-3 px-5 py-4 bg-white border-2 border-gray-200 text-gray-700 font-black uppercase tracking-widest rounded-xl hover:border-[#830506] hover:text-[#830506] transition-all shadow-sm">
-                    <i class="fa-solid fa-share-nodes text-lg"></i>
-                    <span>Share</span>
-                </button>
-            </div>
-
-            {# WARNING MESSAGE #}
-            <div class="text-sm text-red-600 mt-2 mb-12 font-medium bg-red-50 p-3 rounded border border-red-200">
-                <p><i class="fas fa-exclamation-triangle mr-1"></i> <span class="font-bold">IMPORTANT:</span> If you are redirected to a betting or spam site, please press <span class="font-bold">BACK</span> or <span class="font-bold">CLOSE TAB</span> immediately. The real download will start on the 2nd or 3rd click.</p>
-            </div>
-            {# --- DOWNLOAD SECTION END --- #}
-
-
-            {% if video.type == 'series' %}
-        <div class="mb-12">
-            <div class="mb-6">
-                <h3 class="text-gray-900 font-black uppercase text-xs tracking-widest mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-[#830506]"></i> Select Season
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    {% for s in seasons %}
-                        <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=s.season_number, episode=episode) }}" 
-                           class="px-5 py-2 rounded-lg font-bold text-xs uppercase border transition-all 
-                           {% if s.season_number == current_season.season_number %} 
-                                bg-[#830506] border-[#830506] text-white shadow-md
-                           {% else %} 
-                                border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] bg-white
-                           {% endif %}">
-                            Season {{ s.season_number }}
-                        </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div>
-                <h3 class="text-gray-900 font-black uppercase text-xs tracking-widest mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-list-ol text-[#830506]"></i> Select Episode
-                </h3>
-                <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-                    {% for ep in current_season.episodes |sort(attribute='episode_number') %}
-                        <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=ep.episode_number) }}" 
-                           class="flex flex-col items-center justify-center py-2 rounded-lg border transition-all group
-                           {% if episode|int == ep.episode_number|int %} 
-                                border-[#830506] bg-red-50 text-[#830506] font-black shadow-inner
-                           {% else %} 
-                                border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] hover:bg-white
-                           {% endif %}">
-                            <span class="text-[10px] uppercase font-bold opacity-60">Ep</span>
-                            <span class="text-sm font-bold">{{ ep.episode_number }}</span>
-                        </a>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="w-full max-w-6xl mx-auto my-2 text-red-800">
-            <div class="text-xs text-gray-400 font-bold mb-1 uppercase">Sponsored</div>
-
-            <script async="async" data-cfasync="false" src="https://pl28375496.effectivegatecpm.com/34c7e3aba26fa9b6d684f5b76eeda71d/invoke.js"></script>
-            <div id="container-34c7e3aba26fa9b6d684f5b76eeda71d"></div>
-        </div>
-
-            <div id="ratingContainer" class="bg-[#111111] p-6 md:p-10 rounded-3xl text-center shadow-2xl mb-12">
-                <p class="text-gray-400 font-black uppercase text-[10px] tracking-[0.4em] mb-4">Rate This Video</p>
-                <div id="starRating" data-video-id="{{ video.id }}" class="flex items-center justify-center gap-2 text-3xl md:text-5xl mb-4">
-                    {% for i in range(1,6) %}
-                    <button class="star text-gray-700 hover:text-yellow-400 transition-all duration-300 transform hover:scale-125" data-value="{{ i }}"><i class="fas fa-star"></i></button>
-                    {% endfor %}
-                </div>
-                <div class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 text-white font-bold">
-                    <div class="flex items-center gap-2">
-                        <span id="averageRating" class="text-xl md:text-3xl text-yellow-400">{{ video.rating }}</span>
-                        <span class="text-gray-500">/ 5</span>
-                    </div>
-                    <span class="hidden md:block text-gray-700">|</span>
-                    <span class="text-[10px] md:text-xs uppercase text-gray-400">({{ video.num_votes }} Global Votes)</span>
-                </div>
-                <p id="ratingValue" class="text-[10px] text-[#830506] mt-4 font-black uppercase tracking-widest">Tap stars to vote</p>
-            </div>
-
-            <div id="telegramCta" class="mb-12">
-                <div class="flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl shadow-lg gap-4" style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-white/20 p-3 rounded-full"><i class="fa-brands fa-telegram-plane text-white text-2xl"></i></div>
-                        <div class="text-center md:text-left">
-                            <p class="text-white font-black text-sm md:text-base">Join MaxCinema Telegram</p>
-                            <p class="text-white/80 text-[10px] md:text-xs font-bold uppercase italic">Get new release notifications</p>
-                        </div>
-                    </div>
-                    <a href="https://t.me/MaxCinemaOfficial" class="w-full md:w-auto bg-white text-[#0088cc] font-black px-6 py-3 rounded-full hover:bg-gray-100 transition-colors shadow-md text-center text-xs uppercase">Join Now</a>
-                </div>
-            </div>
-
-            <div class="mt-12">
-                <div class="w-full bg-[#830506] py-3 text-center rounded-t-xl">
-                    <h2 class="font-black text-white uppercase text-xs md:text-sm tracking-widest">Recommended Content</h2>
-                </div>
-                <div id="relatedList" class="grid grid-cols-2 min-[450px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 p-3 md:p-4 border-x border-b rounded-b-xl border-gray-100 bg-gray-50/30">
-                    {% for suggest in suggested %}
-                    <a href="{{ url_for('main.detail', det=suggest.type, name=suggest.name, id=suggest.id, season=1 if suggest.type == 'series' else none, episode=1 if suggest.type == 'series' else none) }}" class="group block bg-white rounded-lg md:rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1">
-                        <div class="relative aspect-[2/2.5] overflow-hidden">
-                            <img src="{{ suggest.image }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy">
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                <i class="fas fa-play text-white text-2xl"></i>
-                            </div>
-                        </div>
-                        <div class="p-2 md:p-3">
-                            <p class="text-[10px] md:text-xs font-black text-gray-900 line-clamp-1 group-hover:text-[#830506]">{{ suggest.name }}</p>
-                            <p class="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase mt-1">{{ suggest.type }}</p>
-                        </div>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="w-full my-8">
-                {% include 'ads/banner.html' %}
-            </div>
-
-            <div class="mt-16">
-                <div class="w-full bg-[#830506] text-white font-black p-4 text-center rounded-t-2xl uppercase tracking-tighter text-lg shadow-md">
-                    <i class="fa-solid fa-comments mr-2"></i> {{ num_comment }} Conversation{{ 's' if num_comment != 1 else '' }}
-                </div>
-                <div id="comments-container" class="bg-gray-50/50 p-3 md:p-4 border-x border-gray-100 space-y-4">
-                    {% if comments %}
-                        {% for comment in comments %}
-                            {% include 'comments.html' %}
-                        {% endfor %}
-                    {% else %}
-                        <div class="py-10 text-center">
-                            <p class="text-gray-400 font-black uppercase text-xs tracking-widest italic">Be the first to share your thoughts!</p>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <div class="bg-white p-4 md:p-8 rounded-b-2xl border border-gray-100 shadow-xl">
-                    <h4 class="font-black text-gray-900 uppercase text-lg md:text-xl mb-6 tracking-tighter italic border-b-2 border-[#830506] inline-block">Leave a Reply</h4>
-                    <form id="main-comment-form" class="text-black flex flex-col gap-6" data-video-id="{{ video.id }}">
-                        <textarea name="text" placeholder="Write your comment..." class="w-full p-4 md:p-5 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 md:h-40 font-medium text-gray-700"></textarea>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                            <input type="text" name="name" placeholder="Full Name" class="text-black w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
-                            <input type="email" name="email" placeholder="Email Address" class="text-black w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
-                        </div>
-                        <button type="submit" class="w-full md:w-fit px-12 py-4 bg-[#830506] text-white font-black uppercase rounded-full hover:bg-black transition-all shadow-lg self-end flex items-center justify-center gap-2">
-                            Post <i class="fa-solid fa-paper-plane text-xs"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-8">
-            <div class="w-full flex flex-col gap-4">
-                {% include 'ads/sidebar.html' %}
-                <div class="hidden md:flex lg:hidden w-full">
-                    {% include 'ads/sidebar.html' %}
-                </div>
-            </div>
-
-            {% set categories = [
-                {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},
-                {'id': 'TrendingSeries', 'title': 'Trending Series', 'icon': 'fa-fire', 'data': trending_series, 'type': 'series'},
-                {'id': 'Trailers', 'title': 'New Trailers', 'icon': 'fa-play-circle', 'data': trending_trailers, 'type': 'trailer'}
-            ] %}
-
-            {% for cat in categories %}
-                <section id="{{ cat.id }}" class="flex flex-col w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-2">
-                        <h2 class="font-bold text-white text-sm md:text-base uppercase flex items-center gap-2 tracking-wide">
-                            <i class="fa-solid {{ cat.icon }}"></i> {{ cat.title }}
-                        </h2>
-                    </div>
-
-                    <div class="flex flex-col p-2 gap-2">
-                        {% for item in cat.data %}
-                        <div onclick="window.location.href='{% if cat.type == 'trailer' %}{{ url_for('main.detail', det='trailer_watch', name=item.slug, id=item.id) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season='1', episode='1') }}{% endif %}'" 
-                            class="group flex flex-row items-center bg-gray-50 hover:bg-gray-100 rounded-md overflow-hidden h-20 md:h-24 lg:h-20 transition-all cursor-pointer border border-transparent hover:border-gray-200">
-
-                            <div class="flex-shrink-0 w-20 h-full overflow-hidden">
-                                <div style="background-image: url('{{ item.image }}');"
-                                    class="w-full h-full bg-center bg-cover transition-transform duration-500 group-hover:scale-110">
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col justify-center px-3 overflow-hidden">
-                                <h3 class="text-gray-900 text-xs md:text-sm font-bold line-clamp-2 leading-tight group-hover:text-[#830506] transition-colors">
-                                    {{ item.name }}
-                                </h3>
-                                <div class="flex items-center gap-2 mt-1 text-[10px] text-gray-500 font-semibold italic">
-                                    <i class="fas fa-calendar-alt text-[#830506]"></i>
-                                    <span>{{ (item.updated_at or item.date_added).strftime('%b %d, %Y') }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="p-2 border-t border-gray-50">
-                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
-                        class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
-                            View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i>
-                        </a>
-                    </div>
-                </section>
-            {% endfor %}
-    </aside>
-</section>
-{% endblock %}
-
-{% block script %}
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const shareBtn = document.getElementById('shareVideoBtn');
-
-    if (shareBtn) {
-        shareBtn.addEventListener('click', async () => {
-            const shareData = {
-                title: '{{ video.name }} | MaxCinema',
-                text: 'Check out {{ video.name }} on MaxCinema - {{ video.description[:100] }}...',
-                url: window.location.href,
-            };
-
-            try {
-                if (navigator.share) {
-                    // Trigger Native Mobile Share (WhatsApp, Telegram, etc.)
-                    await navigator.share(shareData);
-                } else {
-                    // Desktop Fallback: Copy to Clipboard
-                    await navigator.clipboard.writeText(window.location.href);
-
-                    // Visual feedback for desktop users
-                    const originalText = shareBtn.innerHTML;
-                    shareBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>Link Copied!</span>';
-                    shareBtn.classList.add('text-green-600', 'border-green-600');
-
-                    setTimeout(() => {
-                        shareBtn.innerHTML = originalText;
-                        shareBtn.classList.remove('text-green-600', 'border-green-600');
-                    }, 2000);
-                }
-            } catch (err) {
-                console.log('Error sharing:', err);
-            }
-        });
+    # 1. Define Region Mapping
+    # Maps the Button Name -> The keyword to search in your 'country' column
+    region_map = {
+        'Hollywood': 'United States',      # Searches for 'USA' or 'United States'
+        'Nollywood': 'Nigeria',
+        'Korean': 'Korea',       # Searches for 'South Korea' or 'Korea'
+        'Indian': 'India',
+        'Chinese': 'China'
     }
-});
-</script>
 
-{% endblock %}
+    if genre_type == 'Hollywood':
+        # Special check for Hollywood to catch BOTH "USA" and "United States"
+        if contain == 'movie':
+            videos = AllVideo.query.filter(
+                or_(AllVideo.country.ilike('%USA%'), AllVideo.country.ilike('%United States%')),
+                AllVideo.active == True, AllVideo.type == "movie"
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        else:
+            videos = AllVideo.query.filter(
+                or_(AllVideo.country.ilike('%USA%'), AllVideo.country.ilike('%United States%')),
+                AllVideo.active == True
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        
+        # Create the mock genre for the title
+        class MockGenre:
+             def __init__(self, name): self.name = name
+        genre = MockGenre(name=genre_type)
+    
+    # 2. Check if the user clicked a Region
+    elif genre_type in region_map:
+        search_country = region_map[genre_type]
+        
+        # Filter by COUNTRY, not Genre
+        if contain != 'movie':
+            videos = AllVideo.query.filter(
+                AllVideo.country.ilike(f'%{search_country}%'), 
+                AllVideo.active == True
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        else:
+            videos = AllVideo.query.filter(
+                AllVideo.country.ilike(f'%{search_country}%'), 
+                AllVideo.active == True, AllVideo.type == "movie"
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        # Create a fake genre object so your template doesn't crash if it uses {{ genre.name }}
+        class MockGenre:
+            def __init__(self, name):
+                self.name = name
+        genre = MockGenre(name=genre_type)
+
+    elif genre_type == "Old":
+        # Adjust the year (2000, 2010) to whatever you consider "Old"
+        if contain != 'movie':
+            videos = AllVideo.query.filter(
+                AllVideo.year_produced < 2010, 
+                AllVideo.active == True
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        else:
+            videos = AllVideo.query.filter(
+                AllVideo.year_produced < 2010, 
+                AllVideo.active == True, AllVideo.type == "movie"
+            ).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+        class MockGenre:
+            def __init__(self, name): self.name = name
+        genre = MockGenre(name="Classic Movies")
+
+    # 3. Handle Special "Sci-Fi" case
+    elif genre_type == "Anime":
+        # USE MOCK GENRE (Safer)
+        # This prevents a 404 error if "Anime" isn't strictly in your genres table
+        class MockGenre:
+            def __init__(self, name): self.name = name
+        genre = MockGenre(name="Anime")
+
+        if contain != 'movie':
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(
+                    Genre.name == "Animation",   # Looks for 'Animation'
+                    AllVideo.country == "Japan", # AND 'Japan'
+                    AllVideo.active == True
+                )
+                .order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+            )
+        else:
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(
+                    Genre.name == "Animation",   # Looks for 'Animation'
+                    AllVideo.country == "Japan", # AND 'Japan'
+                    AllVideo.active == True, 
+                    AllVideo.type == "movie"
+                )
+                .order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+            )
+
+    elif genre_type == "Sci-Fi":
+        genre = Genre.query.filter_by(name="Science Fiction").first_or_404()
+        if contain != 'movie':
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(Genre.name == "Science Fiction", AllVideo.active == True)
+                .paginate(page=page, per_page=per_page)
+            )
+        else:
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(Genre.name == "Science Fiction", AllVideo.active == True, AllVideo.type == "movie")
+                .paginate(page=page, per_page=per_page)
+            )
+
+    # 4. Standard Genres (Action, Comedy, etc.)
+    else:
+        genre = Genre.query.filter_by(name=genre_type).first_or_404()
+        
+        if contain != 'movie':
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(Genre.name == genre_type, AllVideo.active == True)
+                .paginate(page=page, per_page=per_page)
+            )
+        else:
+            videos = (
+                AllVideo.query.join(AllVideo.genres)
+                .filter(Genre.name == genre_type, AllVideo.active == True, AllVideo.type == "movie")
+                .paginate(page=page, per_page=per_page)
+            )
+
+    # --- Sidebar Data (Unchanged) ---
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    
+    return render_template("genre.html", 
+                           genre_type=genre_type, 
+                           genre=genre, 
+                           videos=videos, 
+                           trending_series=series_trend, 
+                           trending_movie=movie_trend, 
+                           trending_trailers=trending_trailers, 
+                           is_genre=True, context=contain)
+
+
+@main_bp.route("/<det>/<name>/<int:id>")
+@main_bp.route("/<det>/<name>/<int:id>/<int:season>/<int:episode>")
+def detail(det, name, id, season=1, episode=1):
+    video = AllVideo.query.get(id)
+    if video and video.slug and det != "trailer_watch":
+        name = video.slug
+    
+    if det == "movie":
+        return redirect(url_for("main.movie_details", det=det, name=name, id=id))
+        print("hello")
+    elif det == "series":
+        return redirect(url_for("main.series_details", det=det, name=name, season=season, episode=episode, id=id))
+    elif det == "trailer_watch":
+        return redirect(url_for("main.watch_trailer", det=det, name=name))
+
+@main_bp.route("/download/<det>/<name>/<int:id>")
+def movie_details(det, name, id):
+    movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+    num_comment = Comment.query.filter_by(
+        video_id=movie.id,
+        parent_id=None
+    ).count()
+    comments = Comment.query.filter_by(video_id=movie.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    genre_ids=[g.id for g in movie.genres]
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.active == True).distinct().limit(6).all()
+
+    # Optional: prepare breakdown for template
+    breakdown = {i: db.session.query(func.count(Rating.id))
+                     .filter(Rating.video_id==movie.id, Rating.rating==i)
+                     .scalar() for i in range(1,6)}
+
+    more_needed=0
+    if len(suggested) < 6:
+        more_needed = 6 - len(suggested)
+
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
+    suggested.extend(extra)
+    
+    try:
+        # 1. Safety Valve: Clear any pending/accidental changes so we don't save garbage
+        db.session.rollback()
+
+        # 2. Atomic Update: Increase view count directly in DB
+        # This is fast and DOES NOT trigger the 'updated_at' timestamp change
+        AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
+
+        # 3. Save only this specific change
+        db.session.commit()
+        
+    except Exception as e:
+        # If the view count fails for some reason, just ignore it.
+        # Don't crash the whole page just because a counter failed.
+        db.session.rollback()
+        print(f"Error updating view count: {e}")
+
+    return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
+def series_details(det, name, season, episode, id):
+    print(id)
+    series = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+
+    # 2. Ensure it is a series
+    if not series.series:
+        return "This is not a series", 404
+
+    serie = series.series
+
+    # 3. Get all seasons
+    seasons = serie.seasons
+
+    # 4. Get the requested season
+    current_season = Season.query.filter_by(
+        series_id=serie.id,
+        season_number=season
+    ).first_or_404()
+
+    # 5. Get the requested episode
+    current_episode = Episode.query.filter_by(
+        season_id=current_season.id,
+        episode_number=episode
+    ).first_or_404()
+
+    try:
+        # Assuming you already fetched 'current_episode' above
+        if current_episode:
+            current_episode.views += 1
+            db.session.commit()
+    except:
+        pass
+
+    num_comment = Comment.query.filter_by(
+        video_id=series.id,
+        parent_id=None
+    ).count()
+    comments = Comment.query.filter_by(video_id=series.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    genre_ids=[g.id for g in series.genres]
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series", AllVideo.active == True).distinct().limit(6).all()
+    # Optional: prepare breakdown for template
+    breakdown = {i: db.session.query(func.count(Rating.id))
+                     .filter(Rating.video_id==series.id, Rating.rating==i)
+                     .scalar() for i in range(1,6)}
+
+    more_needed=0
+    if len(suggested) < 6:
+        more_needed = 6 - len(suggested)
+
+    extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
+    suggested.extend(extra)
+    
+    try:
+        # 1. Safety Valve: Clear any pending/accidental changes so we don't save garbage
+        db.session.rollback()
+
+        # 2. Atomic Update: Increase view count directly in DB
+        # This is fast and DOES NOT trigger the 'updated_at' timestamp change
+        AllVideo.query.filter_by(id=id).update({'views': AllVideo.views + 1})
+
+        # 3. Save only this specific change
+        db.session.commit()
+        
+    except Exception as e:
+        # If the view count fails for some reason, just ignore it.
+        # Don't crash the whole page just because a counter failed.
+        db.session.rollback()
+        print(f"Error updating view count: {e}")
+
+    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+
+@main_bp.route("/download/<type>/<int:id>")
+@main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
+def download_dispatcher(type, id, season=None, episode=None):
+    BRAND_TAG = "[MaxCinema.name.ng]"
+    # --- Fetch video ---
+    if type == "movie":
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+        # Generate Name: "Iron-Man.mp4"
+        clean_name = slugify(video.name)
+        full_clean_name = f"{BRAND_TAG}_{clean_name}"
+    
+    elif type == "series":
+        video = Episode.query.get_or_404(id)
+        # Generate Name: "The-Flash-S01E01.mp4"
+        series_name = slugify(video.season.series.all_video.name)
+        full_clean_name = f"{BRAND_TAG}_{series_name}_S{video.season.season_number:02d}E{video.episode_number:02d}"
+    else:
+        return "Invalid type", 400
+
+    
+
+    try:
+        # 1. Increment the count for the specific item (Movie or Episode)
+        video.downloads += 1
+
+        # 2. If it's a Series Episode, ALSO increment the main Series counter
+        # This makes the Series show up as "Popular" on the home page
+        if type == "series":
+            # Hierarchy: Episode -> Season -> Series -> AllVideo
+            video.season.series.all_video.downloads += 1
+        
+        db.session.commit()
+    except Exception as e:
+        # If the database is busy or fails, we rollback so the download still works
+        db.session.rollback()
+        print(f"Error tracking download: {e}")
+
+    # Get the assigned server (just to check the type)
+    assigned_server = video.storage_server
+
+    if not assigned_server or not assigned_server.active:
+        return "Storage server not found or inactive", 404
+
+    if not video.download_link:
+        return "File not linked in database", 404
+
+    # Normalize type to lowercase for easy checking
+    server_type = assigned_server.server_type.lower()
+
+    # =====================================================
+    # 🚀 TELEGRAM LOAD BALANCER (The New Logic)
+    # =====================================================
+    if server_type == "telegram":
+        # 1. Fetch ALL active Telegram servers from the DB
+        telegram_pool = StorageServer.query.filter_by(
+            server_type="telegram", 
+            active=True
+        ).all()
+
+        if not telegram_pool:
+            return "No active Telegram servers available", 503
+
+        # 2. Pick one at random
+        selected_server = telegram_pool[0]
+
+        # 3. Build the Link
+        # Pattern: {base_url}/watch/{hash}
+        # Example: https://worker-bot-1.koyeb.app/watch/Z2V0...
+        
+        base = selected_server.base_url.rstrip("/")
+        file_hash = video.download_link.strip() # The hash (e.g., Z2V0...)
+        
+        final_url = f"{base}/watch/{file_hash}?name={full_clean_name}"
+        
+        return redirect(final_url)
+
+    # =====================================================
+    # BYTESCALE
+    # =====================================================
+    elif server_type == "bytescale":
+        if type == "movie":
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="movie",
+                name=video.name,
+                id=id
+            ))
+        else:
+            clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
+            return redirect(url_for(
+                "main.movie_start_download",
+                type="series",
+                name=clean_name,
+                id=id,
+                season=season,
+                episode=episode
+            ))
+
+    # =====================================================
+    # OTHER SERVERS (GoFile, TeraBox, StreamWish, etc.)
+    # =====================================================
+    elif server_type in ["gofile", "terabox", "streamwish", "doodstream"]:
+        link = video.download_link.strip()
+        
+        if link.startswith("http"):
+            return redirect(link)
+
+        base = assigned_server.base_url.rstrip("/")
+        path = link.lstrip("/")
+        final_url = f"{base}/{path}"
+
+        return redirect(final_url)
+
+    # =====================================================
+    # DEFAULT FALLBACK
+    # =====================================================
+    else:
+        base = assigned_server.base_url.rstrip("/")
+        path = video.download_link.lstrip("/")
+        final_url = f"{base}/{path}"
+
+        return redirect(final_url)
+
+
+CHUNK_SIZE = 1024 * 1024  # 1 MB
+
+@main_bp.route("/<type>/<name>/<int:id>/start")
+@main_bp.route("/<type>/<name>/<int:id>/<season>/<episode>/start")
+def movie_start_download(type, name, id, season=None, episode=None):
+    """
+    Specific Route for Bytescale Proxying.
+    We only come here if the Dispatcher sent us.
+    """
+    
+    # --- 1. Fetch Video ---
+    if type == "movie":
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+        clean_name = video.name
+    else:
+        video = Episode.query.get_or_404(id)
+        clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
+
+    # --- 2. Construct Filename for User Download ---
+    filename_in_db = video.download_link
+    root, ext = os.path.splitext(filename_in_db)
+    if not ext: ext = ".mp4"
+    
+    output_filename = secure_filename(f"{clean_name}{ext}")
+
+    # --- 3. Build The Source Link ---
+    base = video.storage_server.base_url.rstrip('/')
+    path = filename_in_db.lstrip('/')
+    source_url = f"{base}/{path}"
+    direct_url = source_url # Default if API fails
+
+    # --- 4. BYTESCALE API LOGIC ---
+    try:
+        api_key = video.storage_server.api_key
+        # Fallback to app config if server key is missing
+        if not api_key:
+            api_key = current_app.config.get("BYTESCALE_API_KEY")
+
+        if api_key:
+            headers_api = {"Authorization": f"Bearer {api_key}"}
+            # Generate a temporary download URL from Bytescale
+            resp = requests.post(
+                "https://api.bytescale.com/v1/files/generate_download_url",
+                json={"url": source_url},
+                headers=headers_api,
+                timeout=10
+            )
+            if resp.status_code == 200:
+                direct_url = resp.json().get("download_url", source_url)
+                print("Using Bytescale Generated URL")
+    except Exception as e:
+        print(f"Bytescale API Error: {e}")
+
+    # --- 5. PROXY STREAMING ---
+    # We stream the data so we can force the filename header
+    
+    try:
+        head = requests.head(direct_url, allow_redirects=True, timeout=10)
+        total_size = int(head.headers.get("Content-Length", 0))
+    except:
+        total_size = 0
+
+    range_header = request.headers.get("Range", None)
+    start = 0
+    end = total_size - 1 if total_size > 0 else 0
+    status_code = 200
+
+    if range_header and total_size > 0:
+        try:
+            range_val = range_header.strip().split("=")[1]
+            start = int(range_val.split("-")[0])
+            if "-" in range_val and range_val.split("-")[1]:
+                 end_val = int(range_val.split("-")[1])
+                 if end_val < total_size:
+                     end = end_val
+            status_code = 206
+        except:
+            start = 0
+
+    headers = {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": f'attachment; filename="{output_filename}"',
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(end - start + 1)
+    }
+    if status_code == 206:
+        headers["Content-Range"] = f"bytes {start}-{end}/{total_size}"
+
+    def generate():
+        try:
+            with requests.get(
+                direct_url,
+                stream=True,
+                headers={"Range": f"bytes={start}-{end}"},
+                timeout=15
+            ) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=CHUNK_SIZE):
+                    yield chunk
+        except Exception as e:
+            print(f"Stream broken: {e}")
+
+    return Response(stream_with_context(generate()), status=status_code, headers=headers)
+
+@main_bp.route("/trailers/<string:det>/<string:name>")
+def watch_trailer(det="trailer_watch", name=None):
+    dark = True
+
+    trailer = Trailer.query.filter_by(slug=name).first_or_404()
+    up_next = get_up_next(trailer)
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+
+    # Count only top-level
+    num_comment = Comment.query.filter_by(
+        trailer_id=trailer.id,
+        parent_id=None
+    ).count()
+
+    # Increase views
+    trailer.views += 1
+    db.session.commit()
+
+    # Load only main comments (NO replies)
+    comments = Comment.query.filter_by(
+        trailer_id=trailer.id,
+        parent_id=None
+    ).order_by(Comment.date_added.desc()).all()
+
+    return render_template(
+        f"{det}.html",
+        trailer=trailer,
+        comments=comments,
+        dark=dark,
+        up_next=up_next,
+        num_comment=num_comment,
+        trending_trailers=trending_trailers
+    )
+
+
+@main_bp.route("/trending/<type>")
+def trending(type):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
+    trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+    trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+    old_but_gold = AllVideo.query.filter(
+        AllVideo.type == "movie",
+        AllVideo.year_produced <= 2020,
+        AllVideo.rating >= 4,
+        AllVideo.active == True
+    ).order_by(AllVideo.rating.desc()).limit(10).all()
+        
+
+    get_started_items = (
+        AllVideo.query
+            .filter(
+                or_(
+                    # Movies: short length
+                    (AllVideo.type == "movie") & (AllVideo.length <= "1h 59m"),
+
+                    # Series: few seasons (you could store num_seasons on AllVideo if you want)
+                    (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
+                ),
+                AllVideo.active == True
+            )
+            .order_by(AllVideo.views.desc())  # popular first
+            .limit(10)
+            .all()
+    )
+    return render_template(f"trending.html", old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi)
+
+@main_bp.route("/trailers")
+@main_bp.route("/trailers/<int:page>")
+def trailer(page=1):
+    dark = True
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    trailers = True
+    per_page = 24
+    videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
+    return render_template("trailers.html", dark=dark, videos=videos, per_page=per_page, page=page, trailers=trailers, trending_trailers=trending_trailers)
+
+
+@main_bp.route("/watch_download/<type>/<name>/<int:id>")
+@main_bp.route("/watch_download/<type>/<name>/<int:id>/<season>/<episode>")
+def movie_stream_download(type, name, id, season=None, episode=None):
+    
+
+    if type == "movie":
+        video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+    else:
+        video = Episode.query.get_or_404(id)
+
+    # Choose best default quality (prioritize 720p > 1080p > 480p > 360p)
+    for q in ["720p", "1080p", "480p", "360p"]:
+        if getattr(video, f"video_{q}", None):
+            default_quality = q
+            break
+    else:
+        default_quality = None  # No video available
+
+    if not default_quality:
+        return "No available video for streaming", 404
+    
+    if type == "movie":
+        return redirect(url_for("main.movie_download", type=type, id=id, name=name, quality=default_quality))
+    else:
+        return redirect(url_for("main.series_download", type=type, name=name, id=id, season=season, episode=episode))
+
+@main_bp.route("/watch_movie/<type>/<name>/<int:id>")
+def movie_download(type, name, id):
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+
+    # Get the best available quality
+
+    
+    genre_ids=[g.id for g in movie.genres]
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+
+    more_needed = max(0, 6 - len(suggested))
+    if more_needed:
+        extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True)\
+            .order_by(func.random()).limit(more_needed).all()
+        suggested.extend(extra)
+    return render_template("stream.html", video=movie, suggested=suggested, id=id, type=type, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+
+@main_bp.route("/watch_series/<type>/<name>/<int:id>/s<season>/e<int:episode>")
+def series_download(type, name, id, season, episode):
+    ep = Episode.query.get_or_404(id)
+    
+
+    # Trending lists
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    qualities = ep.video_qualities or {}
+    return render_template(
+        "stream_download.html",
+        video=ep,
+        qualities=qualities,
+        type=type,
+        season=int(season),
+        episode=int(episode),
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    )
+
+@main_bp.route("/nav/<nav>")
+@main_bp.route("/nav/<nav>/<int:page>")
+def navbar(nav, page=1):
+    dark = False
+    videos = ""
+    per_page = 24
+    recent_requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).limit(10).all()
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    trending_action = ""
+    trending_animation = ""
+    trending_sci_fi = ""
+    old_but_gold = ""
+    get_started_items = ""
+    trailers = False
+    if nav=="trailers" or nav=="all_trailers":
+        nav="trailers"
+        dark = True
+        trailers = True
+        videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
+    if nav=="trending":
+        series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
+        movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
+        trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+        trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
+        old_but_gold = AllVideo.query.filter(
+            AllVideo.type == "movie",
+            AllVideo.year_produced <= 2020,
+            AllVideo.rating >= 4,
+            AllVideo.active == True
+        ).order_by(AllVideo.rating.desc()).limit(10).all()
+        
+
+        get_started_items = (
+            AllVideo.query
+                .filter(
+                    or_(
+                        # Movies: short length
+                        (AllVideo.type == "movie") & (AllVideo.length <= "1h 59m"),
+
+                        # Series: few seasons (you could store num_seasons on AllVideo if you want)
+                        (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
+                    ),
+                    AllVideo.active == True
+                )
+                .order_by(AllVideo.views.desc())  # popular first
+                .limit(10)
+                .all()
+        )
+
+    if nav == "all_movie":
+        videos = AllVideo.query.filter_by(type="movie", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+    if nav == "all_series":
+        videos = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
+
+    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers,
+recent_requests=recent_requests)
+
+
+@main_bp.route('/rate/<int:video_id>', methods=['POST'])
+def rate_video(video_id):
+    video = AllVideo.query.get_or_404(video_id)
+    ip_address = request.remote_addr
+    data = request.get_json()
+    new_rating = int(data.get('rating', 0))
+
+    if new_rating < 1 or new_rating > 5:
+        return jsonify({'error': 'Invalid rating'}), 400
+
+    # Check if this IP already rated
+    existing = Rating.query.filter_by(video_id=video.id, ip_address=ip_address).first()
+    if existing:
+        existing.rating = new_rating  # UPDATE rating if IP exists
+    else:
+        rating = Rating(video_id=video.id, ip_address=ip_address, rating=new_rating)
+        db.session.add(rating)
+
+    db.session.commit()
+
+    # Recalculate average rating
+    avg = db.session.query(func.avg(Rating.rating)).filter(Rating.video_id == video.id).scalar()
+    count = db.session.query(func.count(Rating.id)).filter(Rating.video_id == video.id).scalar()
+
+    video.rating = round(avg, 2)
+    video.num_votes = count
+    db.session.commit()
+
+    # Rating breakdown
+    breakdown = {}
+    for i in range(1, 6):
+        breakdown[i] = db.session.query(func.count(Rating.id)).filter(Rating.video_id == video.id, Rating.rating == i).scalar()
+
+    return jsonify({
+        'average_rating': video.rating,
+        'num_votes': video.num_votes,
+        'breakdown': breakdown
+    })  
+
+@main_bp.route('/comment/add/<int:video_id>', methods=['POST'])
+@main_bp.route('/comment/add/<int:video_id>/<string:type>', methods=['POST'])
+def add_comment(video_id, type="video"):
+    name = request.form.get('name')
+    email = request.form.get('email')
+    text = request.form.get('text')
+
+    # Basic Validation
+    if not all([name, email, text]):
+        return jsonify({'success': False, 'error': 'All fields required'}), 400
+
+    video_obj = None
+    comment = None
+
+    if type == "trailer":
+        # 1. Create Comment
+        comment = Comment(
+            trailer_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=None
+        )
+        # 2. Get Video Object
+        video_obj = Trailer.query.get_or_404(video_id)
+        # 3. Update Count (Incrementing is faster than counting all rows every time)
+        video_obj.total_comment = (video_obj.total_comment or 0) + 1
+
+    else: # Default to "video" (Movie/Series)
+        comment = Comment(
+            video_id=video_id,
+            name=name,
+            email=email,
+            text=text,
+            parent_id=None
+        )
+        video_obj = AllVideo.query.get_or_404(video_id)
+        video_obj.total_comment = (video_obj.total_comment or 0) + 1
+
+    # 4. Single Commit for everything
+    try:
+        db.session.add(comment)
+        db.session.add(video_obj) # Ensure video update is tracked
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    if type == 'trailer':
+        # dark_comments.html expects 'trailer', not 'video'
+        html = render_template('dark_comments.html', comment=comment, trailer=video_obj)
+    else:
+        # comments.html expects 'video'
+        html = render_template('comments.html', comment=comment, video=video_obj)
+    return jsonify({'success': True, 'html': html})
+
+
+@main_bp.route('/comment/reply/<int:video_id>', methods=['POST'])
+@main_bp.route('/comment/reply/<int:video_id>/<string:type>', methods=['POST'])
+def reply_comment(video_id, type="video"):
+    name = request.form.get('name')
+    email = request.form.get('email')
+    text = request.form.get('text')
+    parent_id = request.form.get('parent_id')
+
+    if not all([name, email, text]):
+        return jsonify({'success': False, 'error': 'All fields are required'})
+
+    video_obj = None
+    reply = None
+
+    if type == "trailer":
+        reply = Comment(
+            trailer_id=video_id,
+            name=name, email=email, text=text,
+            parent_id=parent_id if parent_id else None
+        )
+        video_obj = Trailer.query.get_or_404(video_id)
+    else:
+        reply = Comment(
+            video_id=video_id,
+            name=name, email=email, text=text,
+            parent_id=parent_id if parent_id else None
+        )
+        video_obj = AllVideo.query.get_or_404(video_id)
+
+    db.session.add(reply)
+    db.session.commit()
+
+    # 👇 THIS IS THE FIX 👇
+    if type == 'trailer':
+        html = render_template('dark_comments.html', comment=reply, trailer=video_obj)
+    else:
+        html = render_template('comments.html', comment=reply, video=video_obj)
+    
+    return jsonify({'success': True, 'html': html})
+
+@main_bp.route("/admin/uploads")
+def admin_uploads():
+    # # Only allow admins
+    # if not current_user.is_admin:
+    #     return redirect(url_for('index'))
+
+    # Get all videos and episodes
+    movies = AllVideo.query.order_by(AllVideo.id.desc()).all()
+    episodes = Episode.query.order_by(Episode.id.desc()).all()
+
+    return render_template("download.html", movies=movies, episodes=episodes)
+
+@main_bp.route('/sitemap.xml')
+def sitemap():
+    """
+    Dynamic Sitemap: Generates XML on the fly.
+    Always up to date with DB. No file saving required.
+    """
+    host = "https://www.maxcinema.name.ng"
+
+    # 1. Define Static Pages
+    static_urls = [
+        {'loc': f"{host}/"},
+        {'loc': f"{host}/trending/movie"},
+        {'loc': f"{host}/trending/series"},
+        {'loc': f"{host}/request/movie"},
+    ]
+
+    # 2. Fetch Data (Limit to recent 2000 to keep it fast)
+    # If you have < 2000 movies, .limit() does nothing, which is fine.
+    movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
+    series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(1000).all()
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
+
+    # 3. Render Template
+    xml_content = render_template(
+        'sitemap.xml',
+        host=host, 
+        static_urls=static_urls,
+        movies=movies,
+        series_list=series_list,
+        trailers=trailers
+    )
+    
+    # 4. Return as correct XML type
+    response = make_response(xml_content)
+    response.headers["Content-Type"] = "application/xml"
+
+    response.headers["X-Robots-Tag"] = "noindex"
+    return response
+
+@main_bp.route("/sitemap")
+def sitemap_page():
+    # 1. Fetch Movies
+    movies = AllVideo.query.filter_by(type="movie", active=True).order_by(AllVideo.date_added.desc()).all()
+
+    # 2. Fetch Series (This returns a list of AllVideo objects)
+    series_list = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).all()
+
+    # 3. Fetch Trailers
+    trailers = Trailer.query.order_by(Trailer.date_added.desc()).all()
+    return render_template("sitemap.html",
+                           movies=movies,
+                           series_list=series_list,
+                           trailers=trailers)
+
+
+@main_bp.route('/request/movie', methods=['POST'])
+def request_movie():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    movie_name = request.form.get('movie_name')
+    description = request.form.get('description')
+
+    # Basic Validation
+    if not all([name, email, movie_name]):
+        return jsonify({'success': False, 'error': 'Name, Email, and Movie Name are required'}), 400
+
+    new_request = MovieRequest(
+        name=name,
+        email=email,
+        movie_name=movie_name,
+        description=description,
+        status='Pending'
+    )
+
+    try:
+        db.session.add(new_request)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Request submitted successfully!'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+@main_bp.route('/live_search')
+def live_search():
+    """
+    Returns the top 5 matches as JSON for the dropdown.
+    """
+    query = request.args.get("q", "").strip()
+    
+    # If empty, return nothing
+    if not query or len(query) < 2:
+        return jsonify([])
+
+    # Search Logic (Same as your main search, but simpler/faster)
+    search_filter = or_(
+        AllVideo.name.ilike(f"%{query}%"),
+        AllVideo.star_cast.ilike(f"%{query}%")
+    )
+    
+    # Only get Top 5, and only fetch columns we need (optimization)
+    results = AllVideo.query.filter(search_filter, AllVideo.active.is_(True))\
+              .order_by(AllVideo.views.desc())\
+              .limit(5).all()
+
+    # Convert database objects to a simple JSON list
+    suggestions = []
+    for video in results:
+        suggestions.append({
+            "name": video.name,
+            "image": video.image, # Ensure you have this column or use a placeholder
+            "year": video.date_added.year,
+            "url": url_for('main.detail', det=video.type, name=video.slug, id=video.id, _external=True)
+        })
+
+    return jsonify(suggestions)
+
+
+from sqlalchemy import text  # Ensure this is imported at the top
+
+@main_bp.route('/ping')
+def ping():
+    # =========================================================
+    # ✅ OPTION 1: LIGHTWEIGHT PING (ACTIVE)
+    # This keeps your Flask App awake, but lets Neon DB sleep.
+    # This is CRITICAL for the Free Tier (saves your 100 hours).
+    # =========================================================
+    return "App is awake (DB Sleeping)", 200
+
+
+    # =========================================================
+    # ❌ OPTION 2: HEAVY PING (OLD CODE - COMMENTED OUT)
+    # This wakes up the Database every time. 
+    # WARNING: This will use up your 100 hours in 4 days.
+    # Only uncomment this if you start paying for a Database.
+    # =========================================================
+    # try:
+    #     # 1. Try to wake the DB with a tiny, zero-cost query
+    #     db.session.execute(text("SELECT 1"))
+    #     return "OK (DB Awake)", 200
+    # except Exception as e:
+    #     # 2. If Neon is sleeping or erroring, CATCH the error.
+    #     # Do not let the app crash.
+    #     print(f"Ping managed a DB Error: {e}")
+    #
+    #     # 3. CRITICAL: Rollback the session so the NEXT user doesn't get an error
+    #     db.session.rollback()
+    #
+    #     # 4. Return OK anyway so Cron Job doesn't get red alerts
+    #     return "OK (DB Reset)", 200
+
+
+# # ---------------- Dashboard ----------------
+# @main_bp.route("/admin")
+# @login_required
+# @admin_required
+# def admin_dashboard():
+#     movies_count = AllVideo.query.filter_by(type="movie").count()
+#     series_count = Series.query.count()
+#     episodes_count = Episode.query.count()
+#     genres_count = Genre.query.count()
+#     servers_count = StorageServer.query.count()
+#     return render_template("admin/dashboard.html",
+#                            movies_count=movies_count,
+#                            series_count=series_count,
+#                            episodes_count=episodes_count,
+#                            genres_count=genres_count,
+#                            servers_count=servers_count)
+
+
+
+# if __name__ == '__main__':
+#     with app.app_context():
+#         db.create_all()
+        # video = Episode.query.all()
+        # d = AllVideo.query.get_or_404(1).date_added
+        # for v in video:
+        #     v.date_added = d
+        #     db.session.commit()
+        
+        # edit = Series.query.get(9)
+        # edit.seasons[-1].completed = True
+        # db.session.commit()
+        # safe_populate()
+        
+        
+        # for movie in AllVideo.query.limit(60).all():
+        #     movie.download_link = "https://upcdn.io/W23MTTR/raw/Mr%20Beast%E2%80%99s%20insane%20%241%20million%20challenge.mp4"
+        # db.session.commit()
+
+        # # For Episode
+        # for ep in Episode.query.all():
+        #     ep.update_video_qualities()
+        # db.session.commit()
+        # videos = AllVideo.query.all()
+        # for video in videos:
+        #     if not video.slug:
+        #         video.slug = slugify(video.name)
+        # db.session.commit()
+        # generate_sitemap()
+        # existing = StorageServer.query.filter_by(name="Bytescale").first()
+        # if not existing:
+        #     bytescale_server = StorageServer(
+        #         name="Bytescale",
+        #         server_type="bytescale",
+        #         active=True
+        #     )
+        #     db.session.add(bytescale_server)
+        #     db.session.commit()
+        #     print("Bytescale storage server added successfully.")
+        # else:
+        #     print("Bytescale storage server already exists.")
+
+        # Get Bytescale server
+        # bytescale_server = StorageServer.query.filter_by(name="Bytescale").first()
+        # if not bytescale_server:
+        #     raise ValueError("Bytescale server not found. Add it first.")
+
+        # # Update all movies
+        # AllVideo.query.update({AllVideo.storage_server_id: bytescale_server.id})
+
+        # # Update all episodes
+        # Episode.query.update({Episode.storage_server_id: bytescale_server.id})
+
+        # # Commit changes
+        # db.session.commit()
+
+        # print("All videos and episodes assigned to Bytescale server.")
+
+        # video = AllVideo.query.get(60)
+
+        # if video:
+        #     # Delete related Ratings
+        #     Rating.query.filter_by(video_id=video.id).delete()
+
+        #     # Delete related Comments
+        #     Comment.query.filter_by(video_id=video.id).delete()
+
+        #     # Remove from VideoGenre association table
+        #     video.genres = []
+
+        #     # Delete associated Movie or Series objects
+        #     if video.movie:
+        #         db.session.delete(video.movie)
+        #     if video.series:
+        #         # Delete all seasons and episodes via cascade
+        #         db.session.delete(video.series)
+
+        #     # Delete from RecentItem if it exists
+        #     RecentItem.query.filter_by(video_id=video.id).delete()
+
+        #     # Finally, delete the video
+        #     db.session.delete(video)
+
+        #     try:
+        #         db.session.commit()
+        #         print("AllVideo with id 60 deleted successfully!")
+        #     except Exception as e:
+        #         db.session.rollback()
+        #         print("Error deleting video:", e)
+        # else:
+        #     print("Video not found.")
+        
+
+    # app.run(debug=True, host="0.0.0.0", port=5000)

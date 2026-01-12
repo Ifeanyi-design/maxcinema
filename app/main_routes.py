@@ -10,7 +10,7 @@ import random
 import os
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from slugify import slugify
 from . import listeners
@@ -59,8 +59,16 @@ def access_forbidden(e):
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     return render_template('403.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 403
 
+
+@main_bp.context_processor
+def inject_now():
+    # Nigeria is UTC + 1
+    nigeria_time = datetime.utcnow() + timedelta(hours=1) 
+    return {'now': nigeria_time}
+
+
 def ping_search_engines():
-    sitemap_url = "https://yourdomain.com/static/sitemap.xml"
+    sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
     try:
         requests.get(f"http://www.google.com/ping?sitemap={sitemap_url}")
         requests.get(f"http://www.bing.com/ping?sitemap={sitemap_url}")
