@@ -647,20 +647,39 @@ def edit_episode(name, prev, series_id, season_id, episode_id):
     episode = Episode.query.get_or_404(episode_id)
     series = AllVideo.query.get_or_404(series_id)
     season = Season.query.get_or_404(season_id)
+    
     form = EpisodeForm(obj=episode)
     form.storage_server_id.choices = [
         (s.id, s.name) for s in StorageServer.query.filter_by(active=True).all()
     ]
 
     if form.validate_on_submit():
+        # ⚠️ CRITICAL FIX: Save the old ID before populate_obj wipes it
+        original_season_id = episode.season_id
+        
         form.populate_obj(episode)
+        
+        # Logic: If the Admin typed a new ID, check if valid. 
+        # If they left it empty (None), restore the original ID.
+        if form.season_id.data:
+            # Check if this new Season ID exists
+            if Season.query.get(form.season_id.data):
+                episode.season_id = form.season_id.data
+            else:
+                db.session.rollback() # Undo changes
+                flash(f"Error: Season ID {form.season_id.data} does not exist!", "error")
+                return render_template('admin/add_episode.html', form=form, season=season, series=series, prev="serie", action="Edit")
+        else:
+            # Restore the original ID so it doesn't become None/Null
+            episode.season_id = original_season_id
+
         episode.updated_at = datetime.utcnow()
         db.session.commit()
-        flash(f"Season {season.season_number} updated.", "success")
-        return redirect(url_for('admin.view_episodes',prev=prev, name=series.slug, ns=season.season_number, season_id=season.id))
+        
+        flash(f"Episode updated successfully.", "success")
+        return redirect(url_for('admin.view_episodes', prev=prev, name=series.slug, ns=season.season_number, season_id=season.id))
 
     return render_template('admin/add_episode.html', form=form, season=season, series=series, prev="serie" if prev == "serie" or prev == "series" else "incomplete", action="Edit")
-
 
 @admin_bp.route('/episodes/<name>/<int:id>/<int:season_id>/<prev>/<int:episode_id>/delete', methods=['POST'])
 @login_required
