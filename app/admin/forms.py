@@ -104,8 +104,14 @@ class SeasonForm(FlaskForm):
     submit = SubmitField("Save Season")
 
 
-
 class EpisodeForm(FlaskForm):
+    # 👇 NEW FIELD ADDED HERE
+    season_id = IntegerField(
+        "Season ID (Override)",
+        validators=[Optional()],
+        render_kw={"placeholder": "Manually enter Season ID to move this episode"}
+    )
+
     episode_number = IntegerField(
         "Episode Number",
         validators=[DataRequired(), NumberRange(min=1)],
