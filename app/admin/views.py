@@ -1028,46 +1028,86 @@ def stats_dashboard():
     if not current_user.is_admin:
         abort(403)
 
-    # --- 1. BIG NUMBER CARDS (KPIs) ---
+    # --- 1. BIG NUMBER CARDS ---
     total_users = User.query.count()
     total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
-    total_downloads = db.session.query(func.sum(AllVideo.downloads)).scalar() or 0
-    total_ep_downloads = db.session.query(func.sum(Episode.downloads)).scalar() or 0
-    # Combine movie + episode downloads
-    grand_total_downloads = total_downloads + total_ep_downloads
+    
+    # Calculate Total Downloads (Movies + All Episodes)
+    movie_downloads = db.session.query(func.sum(AllVideo.downloads)).filter(AllVideo.type == 'movie').scalar() or 0
+    episode_downloads = db.session.query(func.sum(Episode.downloads)).scalar() or 0
+    grand_total_downloads = movie_downloads + episode_downloads
     
     pending_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     # --- 2. CHART DATA: Top 5 Movies by Views ---
+    # We truncate names to 20 chars so the chart doesn't look messy
     top_movies_query = AllVideo.query.filter_by(type='movie').order_by(AllVideo.views.desc()).limit(5).all()
-    top_movie_names = [m.name for m in top_movies_query]
+    
+    top_movie_names = []
+    for m in top_movies_query:
+        name = m.name
+        if len(name) > 20:
+            name = name[:20] + "..."
+        top_movie_names.append(name)
+        
     top_movie_views = [m.views for m in top_movies_query]
 
-    # --- 3. CHART DATA: Top 5 Series by Downloads ---
-    # (Since series popularity is the sum of episode downloads, we use the aggregate we built earlier or just AllVideo.downloads if you updated logic)
-    top_series_query = AllVideo.query.filter_by(type='series').order_by(AllVideo.downloads.desc()).limit(5).all()
-    top_series_names = [s.name for s in top_series_query]
-    top_series_downloads = [s.downloads for s in top_series_query]
+    # --- 3. CHART DATA: Top 5 Series by Downloads (THE FIX) ---
+    # Logic: Join AllVideo -> Series -> Season -> Episode -> Sum(Episode.downloads)
+    top_series_data = db.session.query(
+        AllVideo.name, 
+        func.sum(Episode.downloads).label('total_dl')
+    ).join(Series, Series.all_video_id == AllVideo.id)\
+     .join(Season, Season.series_id == Series.id)\
+     .join(Episode, Episode.season_id == Season.id)\
+     .group_by(AllVideo.name)\
+     .order_by(func.sum(Episode.downloads).desc())\
+     .limit(5).all()
+
+    top_series_names = []
+    top_series_downloads = []
+    
+    for name, count in top_series_data:
+        # Truncate series names too
+        if len(name) > 20:
+            name = name[:20] + "..."
+        top_series_names.append(name)
+        top_series_downloads.append(count if count else 0)
 
     # --- 4. PIE CHART: Requests ---
     req_pending = MovieRequest.query.filter_by(status='Pending').count()
     req_filled = MovieRequest.query.filter_by(status='Filled').count()
     req_rejected = MovieRequest.query.filter_by(status='Rejected').count()
 
+    # --- 5. SEARCH TERMS ---
     top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+
+    # --- 6. NEW: STORAGE HEALTH ---
+    servers = StorageServer.query.all()
+    server_stats = []
+    for s in servers:
+        # Avoid division by zero
+        percent = (s.used_storage_gb / s.max_storage_gb * 100) if s.max_storage_gb > 0 else 0
+        server_stats.append({
+            'name': s.name,
+            'percent': round(percent, 1),
+            'used': round(s.used_storage_gb, 1),
+            'total': s.max_storage_gb
+        })
 
     return render_template('admin/stats.html',
                            total_users=total_users,
                            total_views=total_views,
                            total_downloads=grand_total_downloads,
                            pending_requests=pending_requests,
-                           # Chart Data
+                           # Charts
                            top_movie_names=top_movie_names,
                            top_movie_views=top_movie_views,
                            top_series_names=top_series_names,
                            top_series_downloads=top_series_downloads,
                            req_stats=[req_pending, req_filled, req_rejected],
-                           top_searches=top_searches
+                           top_searches=top_searches,
+                           server_stats=server_stats
                            )
 
 
