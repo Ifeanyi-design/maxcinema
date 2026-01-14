@@ -157,6 +157,9 @@
                 {# 👇 GET STORAGE OBJECT #}
                 {% set storage_obj = video.storage_server if det == "movie" else current_episode.storage_server %}
                 
+                {# 👇 CHECK IF DOWNLOAD LINK EXISTS (For Manual Links) #}
+                {% set check_dl_link = video.download_link if det == "movie" else current_episode.download_link %}
+                
                 {# 👇 NEW DYNAMIC CALCULATION: Check the Boolean from DB #}
                 {% set is_coming_soon = video.coming_soon if det == "movie" else current_episode.coming_soon %}
 
@@ -280,17 +283,27 @@
                     {# ========================================== #}
                     {% else %}
                         
-                        {# 1. DIRECT DOWNLOAD #}
-                        <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode) }}" 
-                           class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
-                            <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
-                            <div class="flex flex-col text-left leading-none">
-                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Direct Link</span>
-                                <span class="text-sm md:text-base">Download Now</span>
-                            </div>
-                        </a>
+                        {# 1. DIRECT DOWNLOAD (WITH EMPTY CHECK) #}
+                        {% if check_dl_link %}
+                            <a href="{{ url_for('main.download_dispatcher', id=dl_id, type=video.type, season=dl_season, episode=dl_episode) }}" 
+                               class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
+                                <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
+                                <div class="flex flex-col text-left leading-none">
+                                    <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Direct Link</span>
+                                    <span class="text-sm md:text-base">Download Now</span>
+                                </div>
+                            </a>
+                        {% else %}
+                            <button disabled class="flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-8 py-4 bg-gray-200 text-gray-400 font-black uppercase tracking-widest rounded-xl cursor-not-allowed">
+                                <div class="bg-gray-300 p-2 rounded-full"><i class="fas fa-clock text-lg"></i></div>
+                                <div class="flex flex-col text-left leading-none">
+                                    <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Status</span>
+                                    <span class="text-sm md:text-base">Coming Soon</span>
+                                </div>
+                            </button>
+                        {% endif %}
                     
-                    {# 3. BACKUP / STREAM BUTTON (Dynamic) #}
+                        {# 3. BACKUP / STREAM BUTTON (Dynamic) #}
                         {# 👇 Get the link from the new DB column #}
                         {% set stream_url = video.backup_link if det == "movie" else current_episode.backup_link %}
     
@@ -351,9 +364,9 @@
                         <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=s.season_number, episode=episode) }}" 
                            class="px-5 py-2 rounded-lg font-bold text-xs uppercase border transition-all 
                            {% if s.season_number == current_season.season_number %} 
-                                bg-[#830506] border-[#830506] text-white shadow-md
+                               bg-[#830506] border-[#830506] text-white shadow-md
                            {% else %} 
-                                border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] bg-white
+                               border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] bg-white
                            {% endif %}">
                             Season {{ s.season_number }}
                         </a>
@@ -370,9 +383,9 @@
                         <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=season, episode=ep.episode_number) }}" 
                            class="flex flex-col items-center justify-center py-2 rounded-lg border transition-all group
                            {% if episode|int == ep.episode_number|int %} 
-                                border-[#830506] bg-red-50 text-[#830506] font-black shadow-inner
+                               border-[#830506] bg-red-50 text-[#830506] font-black shadow-inner
                            {% else %} 
-                                border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] hover:bg-white
+                               border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] hover:bg-white
                            {% endif %}">
                             <span class="text-[10px] uppercase font-bold opacity-60">Ep</span>
                             <span class="text-sm font-bold">{{ ep.episode_number }}</span>
