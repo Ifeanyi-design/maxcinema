@@ -229,7 +229,8 @@
     
                         {# 2. TELEGRAM (Random Load Balancer) #}
                         
-                        {% set file_code = dl_link.split('/')[-1] if dl_link else '' %}
+                        {% set file_code_raw = video.download_link if det == "movie" else current_episode.download_link %}
+                        {% set file_code = file_code_raw.strip() if file_code_raw else '' %}
     
                         {# 👇 DEFINE YOUR BOTS HERE (No @ symbol) #}
                         {% set my_bots = ['MaxStreamV2_Bot', 'max_cinema_stream_bot', 'Maxload2_bot', 'Maxload_bot'] %}
