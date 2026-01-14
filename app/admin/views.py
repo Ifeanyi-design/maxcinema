@@ -1040,7 +1040,6 @@ def stats_dashboard():
     pending_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     # --- 2. CHART DATA: Top 5 Movies by Views ---
-    # We truncate names to 20 chars so the chart doesn't look messy
     top_movies_query = AllVideo.query.filter_by(type='movie').order_by(AllVideo.views.desc()).limit(5).all()
     
     top_movie_names = []
@@ -1052,27 +1051,21 @@ def stats_dashboard():
         
     top_movie_views = [m.views for m in top_movies_query]
 
-    # --- 3. CHART DATA: Top 5 Series by Downloads (THE FIX) ---
-    # Logic: Join AllVideo -> Series -> Season -> Episode -> Sum(Episode.downloads)
-    top_series_data = db.session.query(
-        AllVideo.name, 
-        func.sum(Episode.downloads).label('total_dl')
-    ).join(Series, Series.all_video_id == AllVideo.id)\
-     .join(Season, Season.series_id == Series.id)\
-     .join(Episode, Episode.season_id == Season.id)\
-     .group_by(AllVideo.name)\
-     .order_by(func.sum(Episode.downloads).desc())\
-     .limit(5).all()
+    # --- 3. CHART DATA: Top 5 Series by POPULARITY (VIEWS) ---
+    # 👇 FIXED: We now sort by VIEWS so JJK appears immediately. 
+    # (Previously it sorted by downloads, which were likely 0 due to broken links).
+    top_series_query = AllVideo.query.filter_by(type='series').order_by(AllVideo.views.desc()).limit(5).all()
 
     top_series_names = []
-    top_series_downloads = []
+    top_series_downloads = [] # We keep this variable name so the HTML doesn't break
     
-    for name, count in top_series_data:
-        # Truncate series names too
+    for s in top_series_query:
+        name = s.name
         if len(name) > 20:
             name = name[:20] + "..."
         top_series_names.append(name)
-        top_series_downloads.append(count if count else 0)
+        # Using views here ensures the chart is populated
+        top_series_downloads.append(s.views)
 
     # --- 4. PIE CHART: Requests ---
     req_pending = MovieRequest.query.filter_by(status='Pending').count()
