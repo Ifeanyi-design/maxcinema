@@ -177,7 +177,7 @@
                     <div class="group flex items-center gap-3 bg-[#222] hover:bg-[#282828] rounded-xl overflow-hidden h-20 transition-all cursor-pointer border border-white/5" 
                         onclick="window.location.href='{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}'">
                         <div class="w-24 h-full relative flex-shrink-0">
-                            <img src="{{ trailer.image }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <img src="{{ trailer.image }}" alt="{{ trailer.name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         </div>
                         <div class="flex flex-col justify-center overflow-hidden">
                             <h3 class="text-gray-200 line-clamp-2 font-black text-[10px] leading-tight group-hover:text-[#830506] transition-colors uppercase tracking-tight">

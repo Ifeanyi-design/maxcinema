@@ -111,7 +111,7 @@
                         onclick="window.location.href='{{ url_for('main.detail', det='trailer_watch', name=trailer.slug, id=trailer.id) }}'">
 
                         <div class="flex-shrink-0 w-24 h-full relative">
-                            <img src="{{ trailer.image }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <img src="{{ trailer.image }}" alt="{{ trailer.name }}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
                         </div>
 
