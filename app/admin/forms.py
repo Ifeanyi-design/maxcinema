@@ -25,6 +25,7 @@ class AllVideoForm(FlaskForm):
     source = StringField("Source URL", validators=[Optional()])
     image = StringField("Image Poster", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])
+    dub_download_link = StringField("Download Code (Dub)", validators=[Optional()], render_kw={"placeholder": "Optional English Dub Code"})
     trailer_url = StringField("Trailer URL", validators=[Optional()])
     coming_soon = BooleanField('Is this Coming Soon?')
 
@@ -137,6 +138,7 @@ class EpisodeForm(FlaskForm):
     backup_link = StringField('Backup/Stream Link', validators=[Optional(), URL()])
     source = StringField("Source URL", validators=[Optional()])
     download_link = StringField("Download URL", validators=[Optional()])
+    dub_download_link = StringField("Download Code (Dub)", validators=[Optional()], render_kw={"placeholder": "Optional English Dub Code"})
     storage_server_id = SelectField(
         "Storage Server",
         coerce=int,

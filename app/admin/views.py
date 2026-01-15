@@ -145,6 +145,7 @@ def edit_video(video_id, prev):
         video.star_cast = form.star_cast.data
         video.source = form.source.data
         video.download_link = form.download_link.data
+        video.dub_download_link = form.dub_download_link.data
         video.image = form.image.data
         video.type = form.type.data
         video.trailer_url = form.trailer_url.data
@@ -255,6 +256,8 @@ def add_movie(prev):
             released_date=form.released_date.data,
             backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
+            download_link=form.download_link.data,
+            dub_download_link=form.dub_download_link.data,
             image=form.image.data,
             type=form.type.data,
             featured=form.featured.data,
@@ -319,6 +322,7 @@ def add_series(prev):
             star_cast=form.star_cast.data,
             source=form.source.data,
             download_link=form.download_link.data,
+            dub_download_link=form.dub_download_link.data,
             backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
             released_date=form.released_date.data,
@@ -402,82 +406,6 @@ def view_series():
     return render_template('admin/view_series.html', series_list=series_list, series=series, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
-@admin_bp.route('/series/<int:series_id>/edit', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_series(series_id):
-    series = Series.query.get_or_404(series_id)
-    video = AllVideo.query.get_or_404(series.all_video_id)
-    genres = Genre.query.order_by(Genre.name).all()
-    storage_servers = StorageServer.query.filter_by(active=True).all()
-
-    if request.method == 'POST':
-        data = request.form
-
-        # Helper: only set if non-empty (ignores empty inputs)
-        def set_if_present(obj, attr, value, cast=None):
-            if value is not None and value != '':
-                setattr(obj, attr, cast(value) if cast else value)
-
-        set_if_present(video, 'name', data.get('name'))
-        # slug: if empty, keep existing; else slugify if requested or use provided
-        slug_val = data.get('slug')
-        if slug_val:
-            video.slug = slugify(slug_val)
-        # other fields
-        set_if_present(video, 'image', data.get('image'))
-        set_if_present(video, 'description', data.get('description'))
-        set_if_present(video, 'length', data.get('length'))
-        set_if_present(video, 'year_produced', data.get('year_produced'), cast=int)
-        set_if_present(video, 'star_cast', data.get('star_cast'))
-        set_if_present(video, 'country', data.get('country'))
-        set_if_present(video, 'language', data.get('language'))
-        set_if_present(video, 'subtitles', data.get('subtitles'))
-        set_if_present(video, 'source', data.get('source'))
-        set_if_present(video, 'trailer_url', data.get('trailer_url'))
-        if data.get('rating') != '':
-            video.rating = float(data.get('rating')) if data.get('rating') else None
-        if data.get('num_votes') != '':
-            video.num_votes = int(data.get('num_votes')) if data.get('num_votes') else None
-
-        # boolean toggles: checkboxes submit 'on' or value; use presence to toggle
-        video.featured = bool(data.get('featured'))
-        video.trending = bool(data.get('trending'))
-        video.active = bool(data.get('active'))
-
-        # storage server
-        if data.get('storage_server_id'):
-            video.storage_server_id = int(data.get('storage_server_id'))
-
-        # video qualities (JSON)
-        vq = data.get('video_qualities')
-        if vq:
-            try:
-                parsed = json.loads(vq)
-                video.video_qualities = parsed
-            except Exception:
-                flash('Invalid JSON for video_qualities', 'error')
-                return redirect(url_for('admin.edit_series', series_id=series.id))
-
-        # genres
-        selected_genres = data.getlist('genres')
-        if selected_genres:
-            video.genres = Genre.query.filter(Genre.id.in_(selected_genres)).all()
-
-        # update Series-specific fields (num_seasons, num_episodes)
-        if data.get('num_seasons') != '':
-            series.num_seasons = int(data.get('num_seasons'))
-        if data.get('num_episodes') != '':
-            series.num_episodes = int(data.get('num_episodes'))
-
-        db.session.commit()
-        flash('Series updated.', 'success')
-        return redirect(url_for('admin.view_series'))
-
-    # GET: prefill form
-    return render_template('admin/edit_series.html',
-                           series=series, video=video,
-                           genres=genres, storage_servers=storage_servers)
 
 @admin_bp.route('/series/<int:series_id>/delete', methods=['POST'])
 @login_required

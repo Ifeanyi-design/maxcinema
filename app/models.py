@@ -33,6 +33,7 @@ class AllVideo(db.Model):
     image = db.Column(db.String(300))
     slug = db.Column(db.String(255), unique=True, nullable=True)
     download_link = db.Column(db.String(300))
+    dub_download_link = db.Column(db.String(200))
     # 👇 NEW COLUMN
     backup_link = db.Column(db.String(500), nullable=True)
     type = db.Column(db.String(10), nullable=False)  # 'movie' or 'series'
@@ -159,6 +160,7 @@ class Episode(db.Model):
     source = db.Column(db.String(300))
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     download_link = db.Column(db.String(300))
+    dub_download_link = db.Column(db.String(200))
     # 👇 NEW COLUMN
     backup_link = db.Column(db.String(500), nullable=True)
     downloads = db.Column(db.Integer, default=0)

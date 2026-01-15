@@ -612,74 +612,80 @@ def series_details(det, name, season, episode, id):
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
     BRAND_TAG = "[MaxCinema.name.ng]"
-    # --- Fetch video ---
+    
+    # --- 1. Fetch Media Object ---
     if type == "movie":
         video = AllVideo.query.filter_by(id=id, active=True).first_or_404()
-        # Generate Name: "Iron-Man.mp4"
-        clean_name = slugify(video.name)
-        full_clean_name = f"{BRAND_TAG}_{clean_name}"
+        base_name = slugify(video.name)
     
     elif type == "series":
         video = Episode.query.get_or_404(id)
-        # Generate Name: "The-Flash-S01E01.mp4"
-        series_name = slugify(video.season.series.all_video.name)
-        full_clean_name = f"{BRAND_TAG}_{series_name}_S{video.season.season_number:02d}E{video.episode_number:02d}"
+        # Hierarchy: Episode -> Season -> Series
+        series_title = video.season.series.all_video.name
+        base_name = f"{slugify(series_title)}_S{video.season.season_number:02d}E{video.episode_number:02d}"
     else:
         return "Invalid type", 400
 
-    
+    # --- 2. Determine Audio Type (Sub vs Dub) 🟢 ---
+    audio_type = request.args.get('audio') # Get ?audio=dub from URL
+    is_dub = (audio_type == 'dub')
 
+    if is_dub:
+        # Use the NEW column
+        target_link = video.dub_download_link
+        filename_suffix = "-ENG-DUB"
+    else:
+        # Use the STANDARD column
+        target_link = video.download_link
+        filename_suffix = ""
+
+    # --- 3. Validate Link Exists ---
+    if not target_link:
+        flash("This audio version is not available yet.", "error")
+        # Send user back to the movie page
+        if type == 'movie':
+            return redirect(url_for('main.detail', det='movie', name=video.name, id=video.id))
+        else:
+            return redirect(url_for('main.detail', det='series', name=video.season.series.all_video.name, id=video.season.series.all_video.id, season=season, episode=episode))
+
+    # --- 4. Generate Clean Filename ---
+    # Result: "[MaxCinema.name.ng]_Jujutsu-Kaisen-ENG-DUB.mp4"
+    full_clean_name = f"{BRAND_TAG}_{base_name}{filename_suffix}"
+
+    # --- 5. Increment Download Counters (Only once per click) ---
     try:
-        # 1. Increment the count for the specific item (Movie or Episode)
         video.downloads += 1
-
-        # 2. If it's a Series Episode, ALSO increment the main Series counter
-        # This makes the Series show up as "Popular" on the home page
         if type == "series":
-            # Hierarchy: Episode -> Season -> Series -> AllVideo
             video.season.series.all_video.downloads += 1
-        
         db.session.commit()
     except Exception as e:
-        # If the database is busy or fails, we rollback so the download still works
         db.session.rollback()
         print(f"Error tracking download: {e}")
 
+    # --- 6. Select Server ---
     # Get the assigned server (just to check the type)
     assigned_server = video.storage_server
-
     if not assigned_server or not assigned_server.active:
         return "Storage server not found or inactive", 404
 
-    if not video.download_link:
-        return "File not linked in database", 404
-
-    # Normalize type to lowercase for easy checking
     server_type = assigned_server.server_type.lower()
 
     # =====================================================
-    # 🚀 TELEGRAM LOAD BALANCER (The New Logic)
+    # 🚀 TELEGRAM LOAD BALANCER
     # =====================================================
     if server_type == "telegram":
-        # 1. Fetch ALL active Telegram servers from the DB
-        telegram_pool = StorageServer.query.filter_by(
-            server_type="telegram", 
-            active=True
-        ).all()
+        telegram_pool = StorageServer.query.filter_by(server_type="telegram", active=True).all()
 
         if not telegram_pool:
             return "No active Telegram servers available", 503
 
-        # 2. Pick one at random
+        # Pick random worker
         selected_server = telegram_pool[0]
 
-        # 3. Build the Link
-        # Pattern: {base_url}/watch/{hash}
-        # Example: https://worker-bot-1.koyeb.app/watch/Z2V0...
-        
         base = selected_server.base_url.rstrip("/")
-        file_hash = video.download_link.strip() # The hash (e.g., Z2V0...)
+        file_hash = target_link.strip() # 👈 Uses the selected link (Dub or Sub)
         
+        # Pass the smart filename to the bot
         final_url = f"{base}/watch/{file_hash}?name={full_clean_name}"
         
         return redirect(final_url)
@@ -688,29 +694,19 @@ def download_dispatcher(type, id, season=None, episode=None):
     # BYTESCALE
     # =====================================================
     elif server_type == "bytescale":
+        # Redirect to your bytescale handler
         if type == "movie":
-            return redirect(url_for(
-                "main.movie_start_download",
-                type="movie",
-                name=video.name,
-                id=id
-            ))
+            return redirect(url_for("main.movie_start_download", type="movie", name=video.name, id=id))
         else:
+            # Note: You might need to update movie_start_download to handle Dubs if you use Bytescale
             clean_name = f"{video.season.series.all_video.name}_S{season}E{episode}"
-            return redirect(url_for(
-                "main.movie_start_download",
-                type="series",
-                name=clean_name,
-                id=id,
-                season=season,
-                episode=episode
-            ))
+            return redirect(url_for("main.movie_start_download", type="series", name=clean_name, id=id, season=season, episode=episode))
 
     # =====================================================
-    # OTHER SERVERS (GoFile, TeraBox, StreamWish, etc.)
+    # OTHER SERVERS (Direct Redirects)
     # =====================================================
     elif server_type in ["gofile", "terabox", "streamwish", "doodstream"]:
-        link = video.download_link.strip()
+        link = target_link.strip()
         
         if link.startswith("http"):
             return redirect(link)
@@ -726,7 +722,7 @@ def download_dispatcher(type, id, season=None, episode=None):
     # =====================================================
     else:
         base = assigned_server.base_url.rstrip("/")
-        path = video.download_link.lstrip("/")
+        path = target_link.lstrip("/")
         final_url = f"{base}/{path}"
 
         return redirect(final_url)
