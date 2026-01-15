@@ -1201,12 +1201,12 @@ def sitemap():
     """
     host = "https://www.maxcinema.name.ng"
 
-    # 1. Define Static Pages
+    # 1. Define Static Pages (Manually add the host)
     static_urls = [
-        {'loc': f"{host}/"},
-        {'loc': f"{host}/trending/movie"},
-        {'loc': f"{host}/trending/series"},
-        {'loc': f"{host}/request/movie"},
+        {'loc': f"{host}/", 'priority': '1.0'},
+        {'loc': f"{host}/trending/movie", 'priority': '0.9'},
+        {'loc': f"{host}/trending/series", 'priority': '0.9'},
+        {'loc': f"{host}/request/movie", 'priority': '0.5'},
     ]
 
     # 2. Fetch Data (Limit to recent 2000 to keep it fast)
@@ -1229,7 +1229,6 @@ def sitemap():
     response = make_response(xml_content)
     response.headers["Content-Type"] = "application/xml"
 
-    response.headers["X-Robots-Tag"] = "noindex"
     return response
 
 @main_bp.route("/sitemap")

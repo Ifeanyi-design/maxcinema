@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block title %}
+    {% if page and page > 1 %}
+        MaxCinema - Latest Movies Page {{ page }}
+    {% else %}
+        MaxCinema - Download Latest Movies, Series & Anime (2026)
+    {% endif %}
+{% endblock %}
+{% block meta_description %}
+    {% if page and page > 1 %}
+        Browse page {{ page }} of the latest HD movies and series on MaxCinema. Download newly added content for free.
+    {% else %}
+        MaxCinema is the #1 site to download the latest Nollywood, Hollywood, and Anime movies in HD. Fast, free, and secure downloads updated daily.
+    {% endif %}
+{% endblock %}
+
 {% block content %}
 <h1 class="sr-only">MaxCinema - Download Latest Nollywood, Hollywood & Anime Movies</h1>
 

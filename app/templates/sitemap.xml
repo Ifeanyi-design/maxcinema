@@ -5,7 +5,7 @@
   <url>
     <loc>{{ url.loc }}</loc>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>{{ url.priority }}</priority>
   </url>
   {% endfor %}
 
@@ -14,7 +14,7 @@
     <loc>{{ host }}{{ url_for('main.detail', det='movie', name=movie.slug, id=movie.id, _external=False) }}</loc>
     <lastmod>{{ movie.date_added.strftime('%Y-%m-%d') if movie.date_added else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <priority>0.8</priority>
   </url>
   {% endfor %}
 
@@ -23,7 +23,7 @@
     <loc>{{ host }}{{ url_for('main.detail', det='series', name=item.slug, id=item.id, season=1, episode=1, _external=False) }}</loc>
     <lastmod>{{ item.date_added.strftime('%Y-%m-%d') if item.date_added else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   {% endfor %}
 
