@@ -1,5 +1,6 @@
 from datetime import datetime
 from sqlalchemy import or_, func
+from sqlalchemy.orm import aliased
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
 from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest, SearchTerm
@@ -1103,3 +1104,74 @@ def bulk_link_season(series_id, season_num):
             flash(f"Error saving links: {str(e)}", "error")
 
     return render_template('admin/bulk_links.html', series=series, season=season, episodes=episodes)
+
+
+
+@admin_bp.route('/admin/incomplete-series')
+@login_required
+@admin_required
+def view_incomplete_series():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    # --- Find "latest season" per series ---
+    latest_season_subq = (
+        db.session.query(
+            Season.series_id.label("series_id"),
+            func.max(Season.season_number).label("max_season_number")
+        )
+        .group_by(Season.series_id)
+        .subquery()
+    )
+
+    LatestSeason = aliased(Season)
+
+    # Join Series -> Latest season, then filter incomplete
+    rows = (
+        db.session.query(Series, AllVideo, LatestSeason)
+        .join(AllVideo, AllVideo.id == Series.all_video_id)
+        .join(latest_season_subq, latest_season_subq.c.series_id == Series.id)
+        .join(
+            LatestSeason,
+            (LatestSeason.series_id == Series.id)
+            & (LatestSeason.season_number == latest_season_subq.c.max_season_number)
+        )
+        .filter(AllVideo.type == 'series')
+        .filter(LatestSeason.completed == False)
+        .order_by(AllVideo.name.asc())
+        .all()
+    )
+
+    # Prepare clean dict list for template
+    incomplete = []
+    for series_obj, video_obj, season_obj in rows:
+        incomplete.append({
+            "series_id": video_obj.id,                # AllVideo id (used in your view_series_specific)
+            "slug": video_obj.slug,
+            "title": video_obj.name,
+            "season_id": season_obj.id,
+            "season_number": season_obj.season_number,
+            "season_eps_count": len(season_obj.episodes),
+            "season_num_episodes_field": season_obj.num_episodes,  # if you use this
+            "updated_at": season_obj.updated_at,
+        })
+
+    # Optional: count for badge in sidebar
+    incomplete_count = len(incomplete)
+
+    return render_template(
+        "admin/incomplete_series.html",
+        incomplete=incomplete,
+        incomplete_count=incomplete_count,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests
+    )
+
