@@ -125,6 +125,16 @@ class Series(db.Model):
     all_video = db.relationship('AllVideo', back_populates='series')
     seasons = db.relationship('Season', back_populates='series', cascade="all, delete-orphan", order_by="Season.season_number")
 
+    @property
+    def current_season(self):
+        # seasons is ordered by season_number because of order_by
+        return self.seasons[-1] if self.seasons else None
+
+    @property
+    def current_season_incomplete(self):
+        cs = self.current_season
+        return bool(cs and not cs.completed)
+
 # Season table
 class Season(db.Model):
     id = db.Column(db.Integer, primary_key=True)
