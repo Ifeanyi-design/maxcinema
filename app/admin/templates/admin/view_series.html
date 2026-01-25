@@ -15,7 +15,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for series in series_list %}
             <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
-                <img src="{{ series.image or '' }}" alt="{{ series.name }}" class="w-full aspect-[3/5] object-cover">
+                <img src="{{ series.image or '' }}" alt="{{ series.name }}" class="w-full aspect-[3/5] object-cover" loading="lazy" decoding="async">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-2 lg:p-3 pb-4 sm:pb-2 transition-opacity">
                     <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ series.name }}</h3>
                     

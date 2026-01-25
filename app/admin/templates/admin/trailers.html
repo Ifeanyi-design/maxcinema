@@ -19,7 +19,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for trailer in trailers %}
             <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
-                <img src="{{ trailer.image or '' }}" alt="{{ trailer.slug }}" class="w-full aspect-[3/5] object-cover">
+                <img src="{{ trailer.image or '' }}" alt="{{ trailer.slug }}" class="w-full aspect-[3/5] object-cover" loading="lazy" decoding="async">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 lg:p-3 pb-4 sm:pb-2transition-opacity">
                     <h3 class="text-2xl sm:text-sm lg:text-lg font-semibold text-white">{{ trailer.name }}</h3>
                     <div class="mt-2 flex gap-4 sm:gap-1">

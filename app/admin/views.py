@@ -63,9 +63,16 @@ def logout():
 # admin/__init__.py or admin/views.py (once)
 
 @admin_bp.app_context_processor
-def inject_admin_badges():
-    LatestSeason = aliased(Season)
+def inject_admin_sidebar_counts():
+    # Totals
+    total_movies = AllVideo.query.filter_by(type="movie").count()
+    total_series = AllVideo.query.filter_by(type="series").count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_requests = MovieRequest.query.filter_by(status="Pending").count()
 
+    # Incomplete series count (your existing logic)
+    LatestSeason = aliased(Season)
     latest_season_subq = (
         db.session.query(
             Season.series_id.label("series_id"),
@@ -84,12 +91,19 @@ def inject_admin_badges():
             (LatestSeason.series_id == Series.id) &
             (LatestSeason.season_number == latest_season_subq.c.max_season_number)
         )
-        .filter(AllVideo.type == 'series')
+        .filter(AllVideo.type == "series")
         .filter(LatestSeason.completed == False)
         .scalar()
     ) or 0
 
-    return dict(incomplete_series_count=incomplete_series_count)
+    return dict(
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_requests=total_requests,
+        incomplete_series_count=incomplete_series_count,
+    )
 
 
 
@@ -1261,3 +1275,47 @@ def set_season_incomplete(season_id):
     return redirect(request.referrer or url_for("admin.view_incomplete_series"))
 
 
+@admin_bp.route("/search")
+@login_required
+@admin_required
+def search():
+    q = (request.args.get("q") or "").strip()
+
+    # Always return a page (even empty) so template doesn't crash
+    if not q:
+        return render_template("admin/search.html", q=q, movies=[], series=[], trailers=[], users=[])
+
+    like = f"%{q}%"
+
+    movies = (AllVideo.query
+              .filter(AllVideo.type == "movie", AllVideo.name.ilike(like))
+              .order_by(AllVideo.created_at.desc())
+              .limit(20)
+              .all())
+
+    series = (AllVideo.query
+              .filter(AllVideo.type == "series", AllVideo.name.ilike(like))
+              .order_by(AllVideo.created_at.desc())
+              .limit(20)
+              .all())
+
+    trailers = (Trailer.query
+                .filter(Trailer.name.ilike(like))
+                .order_by(Trailer.date_added.desc())
+                .limit(20)
+                .all())
+
+    users = (User.query
+             .filter(User.username.ilike(like))
+             .order_by(User.date_created.desc())
+             .limit(20)
+             .all())
+
+    return render_template(
+        "admin/search.html",
+        q=q,
+        movies=movies,
+        series=series,
+        trailers=trailers,
+        users=users,
+    )

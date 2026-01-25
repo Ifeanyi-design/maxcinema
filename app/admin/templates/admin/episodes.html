@@ -32,7 +32,7 @@
             <div class="flex flex-col border">
                 <div class="flex w-full">
                     <div class="w-[30vw] lg:w-[20vw] bg-cover object-cover">
-                        <img class="episode-list-img w-full lg:aspect-square aspect-[1/2]" src="{% if season.image %} {{ season.image }} {% else %} {{season.series.all_video.image}}{% endif %} " alt="{{ season.series.all_video.slug }}">
+                        <img class="episode-list-img w-full lg:aspect-square aspect-[1/2]" src="{% if season.image %} {{ season.image }} {% else %} {{season.series.all_video.image}}{% endif %} " alt="{{ season.series.all_video.slug }}" loading="lazy" decoding="async">
                     </div>
                     <div class="flex flex-col w-[80%] border-2 border-gray-700 relative">
                         <div class="p-1 lg:p-3 flex lg:flex-row flex-col lg:justify-evenly border-b-2 border-gray-700 w-[100%] flex-shrink-0">
