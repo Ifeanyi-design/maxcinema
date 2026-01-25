@@ -13,13 +13,13 @@
         placeholder="Search series..."
         class="border rounded px-3 py-2 text-sm w-64"
       />
-      <select name="sort" class="border rounded px-2 py-2 text-sm">
+      <select name="sort" class="border rounded px-2 py-2 text-sm text-gray-700">
         <option value="updated" {% if sort=='updated' %}selected{% endif %}>Sort: Last Updated</option>
         <option value="name" {% if sort=='name' %}selected{% endif %}>Sort: Name</option>
         <option value="season" {% if sort=='season' %}selected{% endif %}>Sort: Season No.</option>
         <option value="eps" {% if sort=='eps' %}selected{% endif %}>Sort: Episodes</option>
       </select>
-      <select name="dir" class="border rounded px-2 py-2 text-sm">
+      <select name="dir" class="border rounded px-2 py-2 text-sm text-gray-700">
         <option value="desc" {% if direction=='desc' %}selected{% endif %}>Desc</option>
         <option value="asc" {% if direction=='asc' %}selected{% endif %}>Asc</option>
       </select>
@@ -42,15 +42,15 @@
       <tbody class="divide-y">
         {% for item in incomplete %}
         <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 font-medium">{{ item.title }}</td>
-          <td class="px-4 py-3">Season {{ item.season_number }}</td>
-          <td class="px-4 py-3">
+          <td class="px-4 py-3 font-medium text-gray-800">{{ item.title }}</td>
+          <td class="px-4 py-3 text-gray-800">Season {{ item.season_number }}</td>
+          <td class="px-4 py-3 text-gray-800">
             {{ item.season_eps_count }}
             {% if item.season_num_episodes_field %}
               / {{ item.season_num_episodes_field }}
             {% endif %}
           </td>
-          <td class="px-4 py-3">
+          <td class="px-4 py-3 text-gray-800">
             {% if item.updated_at %}{{ item.updated_at.strftime("%Y-%m-%d") }}{% else %}-{% endif %}
           </td>
 

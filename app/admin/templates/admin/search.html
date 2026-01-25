@@ -3,275 +3,279 @@
 {% block title %}Search{% endblock %}
 
 {% block content %}
-<div class="p-4 md:p-6">
-  <!-- Page Header -->
-  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">Search</h1>
-      <p class="text-sm text-gray-600">
-        Results for: <span class="font-semibold">{{ q or "..." }}</span>
-      </p>
-    </div>
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
 
-    <!-- Search bar (page-level) -->
-    <form action="{{ url_for('admin.search') }}" method="GET" class="w-full md:w-[420px]">
-      <div class="flex gap-2">
-        <input
-          type="text"
-          name="q"
-          value="{{ q }}"
-          placeholder="Search movies, series, trailers, users..."
-          class="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-        />
-        <button
-          type="submit"
-          class="px-4 py-2 rounded bg-yellow-500 text-black font-semibold hover:bg-yellow-400"
-        >
-          Search
-        </button>
-      </div>
-    </form>
-  </div>
-
-  {% if not q %}
-    <div class="bg-white border border-gray-200 rounded-lg p-6 text-gray-600">
-      Type something in the search bar to see results.
-    </div>
-  {% else %}
-
-    <!-- Summary -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="bg-white border rounded-lg p-4">
-        <p class="text-xs text-gray-500">Movies</p>
-        <p class="text-xl font-bold">{{ movies|length }}</p>
-      </div>
-      <div class="bg-white border rounded-lg p-4">
-        <p class="text-xs text-gray-500">Series</p>
-        <p class="text-xl font-bold">{{ series|length }}</p>
-      </div>
-      <div class="bg-white border rounded-lg p-4">
-        <p class="text-xs text-gray-500">Trailers</p>
-        <p class="text-xl font-bold">{{ trailers|length }}</p>
-      </div>
-      <div class="bg-white border rounded-lg p-4">
-        <p class="text-xs text-gray-500">Users</p>
-        <p class="text-xl font-bold">{{ users|length }}</p>
-      </div>
-    </div>
-
-    <!-- MOVIES -->
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
-      <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="font-bold text-gray-900">Movies</h2>
-        <span class="text-sm text-gray-500">{{ movies|length }} found</span>
-      </div>
-
-      {% if movies %}
-        <div class="divide-y">
-          {% for v in movies %}
-            <div class="p-4 flex items-center gap-4">
-              <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {% if v.image %}
-                  <img src="{{ v.image }}" alt="{{ v.name }}" class="w-full h-full object-cover">
-                {% endif %}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-900 truncate">{{ v.name }}</p>
-                <p class="text-xs text-gray-500">
-                  Type: <span class="font-semibold">Movie</span>
-                  {% if v.year_produced %} • Year: {{ v.year_produced }}{% endif %}
-                  {% if v.views is not none %} • Views: {{ v.views }}{% endif %}
-                </p>
-                {% if v.slug %}
-                  <p class="text-xs text-gray-500 truncate">Slug: {{ v.slug }}</p>
-                {% endif %}
-              </div>
-
-              <div class="flex gap-2">
-                <a
-                  href="{{ url_for('admin.edit_video', prev='dashboard', video_id=v.id) }}"
-                  class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
-                >
-                  Edit
-                </a>
-                <form action="{{ url_for('admin.delete_video', prev='dashboard', video_id=v.id) }}" method="POST"
-                      onsubmit="return confirm('Delete this movie and all related data?');">
-                  <button
-                    type="submit"
-                    class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
-                  >
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-          {% endfor %}
+    {% include 'admin/sidebar.html' %}
+    <div class="p-4 md:p-6">
+    <!-- Page Header -->
+    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+        <h1 class="text-2xl font-bold text-white">Search</h1>
+        <p class="text-sm text-gray-500">
+            Results for: <span class="font-semibold">{{ q or "..." }}</span>
+        </p>
         </div>
-      {% else %}
-        <div class="p-4 text-gray-600">No movies matched “{{ q }}”.</div>
-      {% endif %}
-    </div>
 
-    <!-- SERIES -->
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
-      <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="font-bold text-gray-900">Series</h2>
-        <span class="text-sm text-gray-500">{{ series|length }} found</span>
-      </div>
-
-      {% if series %}
-        <div class="divide-y">
-          {% for v in series %}
-            <div class="p-4 flex items-center gap-4">
-              <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {% if v.image %}
-                  <img src="{{ v.image }}" alt="{{ v.name }}" class="w-full h-full object-cover">
-                {% endif %}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-900 truncate">{{ v.name }}</p>
-                <p class="text-xs text-gray-500">
-                  Type: <span class="font-semibold">Series</span>
-                  {% if v.year_produced %} • Year: {{ v.year_produced }}{% endif %}
-                  {% if v.views is not none %} • Views: {{ v.views }}{% endif %}
-                  {% if v.series %}
-                    {% if v.series.num_seasons is not none %} • Seasons: {{ v.series.num_seasons }}{% endif %}
-                    {% if v.series.num_episodes is not none %} • Episodes: {{ v.series.num_episodes }}{% endif %}
-                  {% endif %}
-                </p>
-                {% if v.slug %}
-                  <p class="text-xs text-gray-500 truncate">Slug: {{ v.slug }}</p>
-                {% endif %}
-              </div>
-
-              <div class="flex gap-2">
-                <a
-                  href="{{ url_for('admin.view_series_specific', prev='series', name=v.slug, id=v.id) }}"
-                  class="px-3 py-2 rounded bg-gray-900 text-white text-sm hover:bg-gray-800"
-                >
-                  Open
-                </a>
-
-                <a
-                  href="{{ url_for('admin.edit_video', prev='series', video_id=v.id) }}"
-                  class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
-                >
-                  Edit
-                </a>
-              </div>
-            </div>
-          {% endfor %}
+        <!-- Search bar (page-level) -->
+        <form action="{{ url_for('admin.search') }}" method="GET" class="w-full md:w-[420px]">
+        <div class="flex gap-2">
+            <input
+            type="text"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search movies, series, trailers, users..."
+            class="w-full text-gray-900 px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+            <button
+            type="submit"
+            class="px-4 py-2 rounded bg-yellow-500 text-black font-semibold hover:bg-yellow-400"
+            >
+            Search
+            </button>
         </div>
-      {% else %}
-        <div class="p-4 text-gray-600">No series matched “{{ q }}”.</div>
-      {% endif %}
+        </form>
     </div>
 
-    <!-- TRAILERS -->
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
-      <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="font-bold text-gray-900">Trailers</h2>
-        <span class="text-sm text-gray-500">{{ trailers|length }} found</span>
-      </div>
-
-      {% if trailers %}
-        <div class="divide-y">
-          {% for t in trailers %}
-            <div class="p-4 flex items-center gap-4">
-              <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                {% if t.image %}
-                  <img src="{{ t.image }}" alt="{{ t.name }}" class="w-full h-full object-cover">
-                {% endif %}
-              </div>
-
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-900 truncate">{{ t.name }}</p>
-                <p class="text-xs text-gray-500">
-                  {% if t.release_year %}Year: {{ t.release_year }} • {% endif %}
-                  Views: {{ t.views or 0 }}
-                </p>
-                {% if t.slug %}
-                  <p class="text-xs text-gray-500 truncate">Slug: {{ t.slug }}</p>
-                {% endif %}
-              </div>
-
-              <div class="flex gap-2">
-                <a
-                  href="{{ url_for('admin.edit_trailer', prev='trailer', slug=t.slug, trailer_id=t.id) }}"
-                  class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
-                >
-                  Edit
-                </a>
-                <form action="{{ url_for('admin.delete_trailer', trailer_id=t.id) }}" method="POST"
-                      onsubmit="return confirm('Delete this trailer?');">
-                  <button
-                    type="submit"
-                    class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
-                  >
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-          {% endfor %}
+    {% if not q %}
+        <div class="bg-white border border-gray-200 rounded-lg p-6 text-gray-600">
+        Type something in the search bar to see results.
         </div>
-      {% else %}
-        <div class="p-4 text-gray-600">No trailers matched “{{ q }}”.</div>
-      {% endif %}
-    </div>
+    {% else %}
 
-    <!-- USERS -->
-    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      <div class="px-4 py-3 border-b flex items-center justify-between">
-        <h2 class="font-bold text-gray-900">Users</h2>
-        <span class="text-sm text-gray-500">{{ users|length }} found</span>
-      </div>
-
-      {% if users %}
-        <div class="divide-y">
-          {% for u in users %}
-            <div class="p-4 flex items-center justify-between gap-4">
-              <div class="min-w-0">
-                <p class="font-semibold text-gray-900 truncate">
-                  {{ u.username }}
-                  {% if u.is_admin %}
-                    <span class="ml-2 text-xs px-2 py-1 rounded bg-yellow-500 text-black">Admin</span>
-                  {% endif %}
-                </p>
-                <p class="text-xs text-gray-500 truncate">{{ u.email }}</p>
-                <p class="text-xs text-gray-500">
-                  Created: {{ u.date_created.strftime("%Y-%m-%d") if u.date_created else "—" }}
-                  • Last login: {{ u.last_login.strftime("%Y-%m-%d") if u.last_login else "—" }}
-                </p>
-              </div>
-
-              <div class="flex gap-2">
-                <a
-                  href="{{ url_for('admin.edit_user', user_id=u.id) }}"
-                  class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
-                >
-                  Edit
-                </a>
-                <form action="{{ url_for('admin.delete_user', user_id=u.id) }}" method="POST"
-                      onsubmit="return confirm('Delete this user?');">
-                  <button
-                    type="submit"
-                    class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
-                  >
-                    Delete
-                  </button>
-                </form>
-              </div>
-            </div>
-          {% endfor %}
+        <!-- Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white border rounded-lg p-4">
+            <p class="text-xs text-gray-500">Movies</p>
+            <p class="text-xl text-gray-900 font-bold">{{ movies|length }}</p>
         </div>
-      {% else %}
-        <div class="p-4 text-gray-600">No users matched “{{ q }}”.</div>
-      {% endif %}
-    </div>
+        <div class="bg-white border rounded-lg p-4">
+            <p class="text-xs text-gray-500">Series</p>
+            <p class="text-xl text-gray-900 font-bold">{{ series|length }}</p>
+        </div>
+        <div class="bg-white border rounded-lg p-4">
+            <p class="text-xs text-gray-500">Trailers</p>
+            <p class="text-xl text-gray-900 font-bold">{{ trailers|length }}</p>
+        </div>
+        <div class="bg-white border rounded-lg p-4">
+            <p class="text-xs text-gray-500">Users</p>
+            <p class="text-xl text-gray-900 font-bold">{{ users|length }}</p>
+        </div>
+        </div>
 
-  {% endif %}
+        <!-- MOVIES -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-900">Movies</h2>
+            <span class="text-sm text-gray-500">{{ movies|length }} found</span>
+        </div>
+
+        {% if movies %}
+            <div class="divide-y">
+            {% for v in movies %}
+                <div class="p-4 flex items-center gap-4">
+                <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    {% if v.image %}
+                    <img src="{{ v.image }}" alt="{{ v.name }}" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">{{ v.name }}</p>
+                    <p class="text-xs text-gray-500">
+                    Type: <span class="font-semibold">Movie</span>
+                    {% if v.year_produced %} • Year: {{ v.year_produced }}{% endif %}
+                    {% if v.views is not none %} • Views: {{ v.views }}{% endif %}
+                    </p>
+                    {% if v.slug %}
+                    <p class="text-xs text-gray-500 truncate">Slug: {{ v.slug }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-2">
+                    <a
+                    href="{{ url_for('admin.edit_video', prev='dashboard', video_id=v.id) }}"
+                    class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
+                    >
+                    Edit
+                    </a>
+                    <form action="{{ url_for('admin.delete_video', prev='dashboard', video_id=v.id) }}" method="POST"
+                        onsubmit="return confirm('Delete this movie and all related data?');">
+                    <button
+                        type="submit"
+                        class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
+                    >
+                        Delete
+                    </button>
+                    </form>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-4 text-gray-600">No movies matched “{{ q }}”.</div>
+        {% endif %}
+        </div>
+
+        <!-- SERIES -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-900">Series</h2>
+            <span class="text-sm text-gray-500">{{ series|length }} found</span>
+        </div>
+
+        {% if series %}
+            <div class="divide-y">
+            {% for v in series %}
+                <div class="p-4 flex items-center gap-4">
+                <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    {% if v.image %}
+                    <img src="{{ v.image }}" alt="{{ v.name }}" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">{{ v.name }}</p>
+                    <p class="text-xs text-gray-500">
+                    Type: <span class="font-semibold">Series</span>
+                    {% if v.year_produced %} • Year: {{ v.year_produced }}{% endif %}
+                    {% if v.views is not none %} • Views: {{ v.views }}{% endif %}
+                    {% if v.series %}
+                        {% if v.series.num_seasons is not none %} • Seasons: {{ v.series.num_seasons }}{% endif %}
+                        {% if v.series.num_episodes is not none %} • Episodes: {{ v.series.num_episodes }}{% endif %}
+                    {% endif %}
+                    </p>
+                    {% if v.slug %}
+                    <p class="text-xs text-gray-500 truncate">Slug: {{ v.slug }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-2">
+                    <a
+                    href="{{ url_for('admin.view_series_specific', prev='series', name=v.slug, id=v.id) }}"
+                    class="px-3 py-2 rounded bg-gray-900 text-white text-sm hover:bg-gray-800"
+                    >
+                    Open
+                    </a>
+
+                    <a
+                    href="{{ url_for('admin.edit_video', prev='series', video_id=v.id) }}"
+                    class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
+                    >
+                    Edit
+                    </a>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-4 text-gray-600">No series matched “{{ q }}”.</div>
+        {% endif %}
+        </div>
+
+        <!-- TRAILERS -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden mb-6">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-900">Trailers</h2>
+            <span class="text-sm text-gray-500">{{ trailers|length }} found</span>
+        </div>
+
+        {% if trailers %}
+            <div class="divide-y">
+            {% for t in trailers %}
+                <div class="p-4 flex items-center gap-4">
+                <div class="w-14 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                    {% if t.image %}
+                    <img src="{{ t.image }}" alt="{{ t.name }}" class="w-full h-full object-cover">
+                    {% endif %}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">{{ t.name }}</p>
+                    <p class="text-xs text-gray-500">
+                    {% if t.release_year %}Year: {{ t.release_year }} • {% endif %}
+                    Views: {{ t.views or 0 }}
+                    </p>
+                    {% if t.slug %}
+                    <p class="text-xs text-gray-500 truncate">Slug: {{ t.slug }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex gap-2">
+                    <a
+                    href="{{ url_for('admin.edit_trailer', prev='trailer', slug=t.slug, trailer_id=t.id) }}"
+                    class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
+                    >
+                    Edit
+                    </a>
+                    <form action="{{ url_for('admin.delete_trailer', trailer_id=t.id) }}" method="POST"
+                        onsubmit="return confirm('Delete this trailer?');">
+                    <button
+                        type="submit"
+                        class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
+                    >
+                        Delete
+                    </button>
+                    </form>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-4 text-gray-600">No trailers matched “{{ q }}”.</div>
+        {% endif %}
+        </div>
+
+        <!-- USERS -->
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b flex items-center justify-between">
+            <h2 class="font-bold text-gray-900">Users</h2>
+            <span class="text-sm text-gray-500">{{ users|length }} found</span>
+        </div>
+
+        {% if users %}
+            <div class="divide-y">
+            {% for u in users %}
+                <div class="p-4 flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">
+                    {{ u.username }}
+                    {% if u.is_admin %}
+                        <span class="ml-2 text-xs px-2 py-1 rounded bg-yellow-500 text-black">Admin</span>
+                    {% endif %}
+                    </p>
+                    <p class="text-xs text-gray-500 truncate">{{ u.email }}</p>
+                    <p class="text-xs text-gray-500">
+                    Created: {{ u.date_created.strftime("%Y-%m-%d") if u.date_created else "—" }}
+                    • Last login: {{ u.last_login.strftime("%Y-%m-%d") if u.last_login else "—" }}
+                    </p>
+                </div>
+
+                <div class="flex gap-2">
+                    <a
+                    href="{{ url_for('admin.edit_user', user_id=u.id) }}"
+                    class="px-3 py-2 rounded border border-gray-300 text-sm hover:bg-gray-50"
+                    >
+                    Edit
+                    </a>
+                    <form action="{{ url_for('admin.delete_user', user_id=u.id) }}" method="POST"
+                        onsubmit="return confirm('Delete this user?');">
+                    <button
+                        type="submit"
+                        class="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-500"
+                    >
+                        Delete
+                    </button>
+                    </form>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="p-4 text-gray-600">No users matched “{{ q }}”.</div>
+        {% endif %}
+        </div>
+
+    {% endif %}
+    </div>
 </div>
 {% endblock %}
