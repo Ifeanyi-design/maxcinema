@@ -1145,10 +1145,13 @@ def bulk_link_season(series_id, season_num):
 
 
 
+
+
 @admin_bp.route('/admin/incomplete-series')
 @login_required
 @admin_required
 def view_incomplete_series():
+    # Sidebar counters you already pass everywhere
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
@@ -1156,7 +1159,11 @@ def view_incomplete_series():
     total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
-    # --- Find "latest season" per series ---
+    q = (request.args.get("q") or "").strip()
+    sort = (request.args.get("sort") or "updated").strip()     # updated, name, season, eps
+    direction = (request.args.get("dir") or "desc").strip()    # asc/desc
+
+    # --- latest season per series ---
     latest_season_subq = (
         db.session.query(
             Season.series_id.label("series_id"),
@@ -1165,46 +1172,60 @@ def view_incomplete_series():
         .group_by(Season.series_id)
         .subquery()
     )
-
     LatestSeason = aliased(Season)
 
-    # Join Series -> Latest season, then filter incomplete
-    rows = (
+    base = (
         db.session.query(Series, AllVideo, LatestSeason)
         .join(AllVideo, AllVideo.id == Series.all_video_id)
         .join(latest_season_subq, latest_season_subq.c.series_id == Series.id)
         .join(
             LatestSeason,
-            (LatestSeason.series_id == Series.id)
-            & (LatestSeason.season_number == latest_season_subq.c.max_season_number)
+            (LatestSeason.series_id == Series.id) &
+            (LatestSeason.season_number == latest_season_subq.c.max_season_number)
         )
         .filter(AllVideo.type == 'series')
         .filter(LatestSeason.completed == False)
-        .order_by(AllVideo.name.asc())
-        .all()
     )
 
-    # Prepare clean dict list for template
+    if q:
+        base = base.filter(AllVideo.name.ilike(f"%{q}%"))
+
+    # Sorting
+    if sort == "name":
+        col = AllVideo.name
+    elif sort == "season":
+        col = LatestSeason.season_number
+    elif sort == "eps":
+        col = LatestSeason.num_episodes
+    else:
+        col = LatestSeason.updated_at  # default
+
+    if direction == "asc":
+        base = base.order_by(col.asc().nullslast(), AllVideo.name.asc())
+    else:
+        base = base.order_by(col.desc().nullslast(), AllVideo.name.asc())
+
+    rows = base.all()
+
     incomplete = []
     for series_obj, video_obj, season_obj in rows:
         incomplete.append({
-            "series_id": video_obj.id,                # AllVideo id (used in your view_series_specific)
+            "series_id": video_obj.id,
             "slug": video_obj.slug,
             "title": video_obj.name,
             "season_id": season_obj.id,
             "season_number": season_obj.season_number,
+            "season_num_episodes_field": season_obj.num_episodes or 0,
             "season_eps_count": len(season_obj.episodes),
-            "season_num_episodes_field": season_obj.num_episodes,  # if you use this
             "updated_at": season_obj.updated_at,
         })
-
-    # Optional: count for badge in sidebar
-    incomplete_count = len(incomplete)
 
     return render_template(
         "admin/incomplete_series.html",
         incomplete=incomplete,
-        incomplete_count=incomplete_count,
+        q=q,
+        sort=sort,
+        direction=direction,
         total_movies=total_movies,
         total_series=total_series,
         total_trailers=total_trailers,
@@ -1212,4 +1233,31 @@ def view_incomplete_series():
         total_views=total_views,
         total_requests=total_requests
     )
+
+
+@admin_bp.route('/admin/season/<int:season_id>/set-completed', methods=['POST'])
+@login_required
+@admin_required
+def set_season_completed(season_id):
+    season = Season.query.get_or_404(season_id)
+    season.completed = True
+    season.updated_at = datetime.utcnow()
+    db.session.commit()
+    flash(f"Season {season.season_number} marked as completed.", "success")
+
+    # keep user on same filtered list
+    return redirect(request.referrer or url_for("admin.view_incomplete_series"))
+
+
+@admin_bp.route('/admin/season/<int:season_id>/set-incomplete', methods=['POST'])
+@login_required
+@admin_required
+def set_season_incomplete(season_id):
+    season = Season.query.get_or_404(season_id)
+    season.completed = False
+    season.updated_at = datetime.utcnow()
+    db.session.commit()
+    flash(f"Season {season.season_number} marked as incomplete.", "success")
+    return redirect(request.referrer or url_for("admin.view_incomplete_series"))
+
 
