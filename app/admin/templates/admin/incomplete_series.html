@@ -1,86 +1,90 @@
 {% extends "admin/base.html" %}
 {% block content %}
-<div class="p-6">
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
 
-  <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
-    <h2 class="text-2xl font-bold">Incomplete Series (Current Season)</h2>
+    {% include 'admin/sidebar.html' %}
+  <div class="p-6">
 
-    <form method="GET" class="flex items-center gap-2">
-      <input
-        type="text"
-        name="q"
-        value="{{ q }}"
-        placeholder="Search series..."
-        class="border rounded px-3 py-2 text-sm w-64 text-gray-900"
-      />
-      <select name="sort" class="border rounded px-2 py-2 text-sm text-gray-700">
-        <option value="updated" {% if sort=='updated' %}selected{% endif %}>Sort: Last Updated</option>
-        <option value="name" {% if sort=='name' %}selected{% endif %}>Sort: Name</option>
-        <option value="season" {% if sort=='season' %}selected{% endif %}>Sort: Season No.</option>
-        <option value="eps" {% if sort=='eps' %}selected{% endif %}>Sort: Episodes</option>
-      </select>
-      <select name="dir" class="border rounded px-2 py-2 text-sm text-gray-700">
-        <option value="desc" {% if direction=='desc' %}selected{% endif %}>Desc</option>
-        <option value="asc" {% if direction=='asc' %}selected{% endif %}>Asc</option>
-      </select>
-      <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
-    </form>
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-4">
+      <h2 class="text-2xl font-bold">Incomplete Series (Current Season)</h2>
+
+      <form method="GET" class="flex items-center gap-2">
+        <input
+          type="text"
+          name="q"
+          value="{{ q }}"
+          placeholder="Search series..."
+          class="border rounded px-3 py-2 text-sm w-64 text-gray-900"
+        />
+        <select name="sort" class="border rounded px-2 py-2 text-sm text-gray-700">
+          <option value="updated" {% if sort=='updated' %}selected{% endif %}>Sort: Last Updated</option>
+          <option value="name" {% if sort=='name' %}selected{% endif %}>Sort: Name</option>
+          <option value="season" {% if sort=='season' %}selected{% endif %}>Sort: Season No.</option>
+          <option value="eps" {% if sort=='eps' %}selected{% endif %}>Sort: Episodes</option>
+        </select>
+        <select name="dir" class="border rounded px-2 py-2 text-sm text-gray-700">
+          <option value="desc" {% if direction=='desc' %}selected{% endif %}>Desc</option>
+          <option value="asc" {% if direction=='asc' %}selected{% endif %}>Asc</option>
+        </select>
+        <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
+      </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="text-left px-4 py-3">Series</th>
+            <th class="text-left px-4 py-3">Current Season</th>
+            <th class="text-left px-4 py-3">Episodes</th>
+            <th class="text-left px-4 py-3">Last Update</th>
+            <th class="text-right px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for item in incomplete %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">{{ item.title }}</td>
+            <td class="px-4 py-3 text-gray-800">Season {{ item.season_number }}</td>
+            <td class="px-4 py-3 text-gray-800">
+              {{ item.season_eps_count }}
+              {% if item.season_num_episodes_field %}
+                / {{ item.season_num_episodes_field }}
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-gray-800">
+              {% if item.updated_at %}{{ item.updated_at.strftime("%Y-%m-%d") }}{% else %}-{% endif %}
+            </td>
+
+            <td class="px-4 py-3 text-right space-x-2">
+              <a class="text-yellow-600 hover:underline"
+                href="{{ url_for('admin.view_series_specific', prev='series', name=item.slug, id=item.series_id) }}">
+                Open
+              </a>
+
+              <form method="POST"
+                    action="{{ url_for('admin.set_season_completed', season_id=item.season_id) }}"
+                    class="inline">
+                <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
+                  Mark Completed
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% if incomplete|length == 0 %}
+          <tr>
+            <td class="px-4 py-6 text-center text-gray-500" colspan="5">
+              No incomplete series found.
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
   </div>
-
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <table class="min-w-full text-sm">
-      <thead class="bg-gray-100 text-gray-700">
-        <tr>
-          <th class="text-left px-4 py-3">Series</th>
-          <th class="text-left px-4 py-3">Current Season</th>
-          <th class="text-left px-4 py-3">Episodes</th>
-          <th class="text-left px-4 py-3">Last Update</th>
-          <th class="text-right px-4 py-3">Actions</th>
-        </tr>
-      </thead>
-
-      <tbody class="divide-y">
-        {% for item in incomplete %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 font-medium text-gray-800">{{ item.title }}</td>
-          <td class="px-4 py-3 text-gray-800">Season {{ item.season_number }}</td>
-          <td class="px-4 py-3 text-gray-800">
-            {{ item.season_eps_count }}
-            {% if item.season_num_episodes_field %}
-              / {{ item.season_num_episodes_field }}
-            {% endif %}
-          </td>
-          <td class="px-4 py-3 text-gray-800">
-            {% if item.updated_at %}{{ item.updated_at.strftime("%Y-%m-%d") }}{% else %}-{% endif %}
-          </td>
-
-          <td class="px-4 py-3 text-right space-x-2">
-            <a class="text-yellow-600 hover:underline"
-               href="{{ url_for('admin.view_series_specific', prev='series', name=item.slug, id=item.series_id) }}">
-              Open
-            </a>
-
-            <form method="POST"
-                  action="{{ url_for('admin.set_season_completed', season_id=item.season_id) }}"
-                  class="inline">
-              <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
-                Mark Completed
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-
-        {% if incomplete|length == 0 %}
-        <tr>
-          <td class="px-4 py-6 text-center text-gray-500" colspan="5">
-            No incomplete series found.
-          </td>
-        </tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
-
+  {% endblock %}
 </div>
-{% endblock %}
