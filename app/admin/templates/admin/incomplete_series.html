@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between gap-4 flex-wrap mb-4 mt-8 lg:mt-0">
       <h2 class="text-2xl font-bold">Incomplete Series (Current Season)</h2>
 
-      <form method="GET" class="flex flex-col lg:flex-row items-center gap-2">
+      <form method="GET" class="hidden lg:flex items-center gap-2">
         <input
           type="text"
           name="q"
@@ -27,6 +27,28 @@
           <option value="asc" {% if direction=='asc' %}selected{% endif %}>Asc</option>
         </select>
         <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
+      </form>
+      <form method="GET" class="flex flex-col lg:hidden items-center gap-2">
+        <input
+          type="text"
+          name="q"
+          value="{{ q }}"
+          placeholder="Search series..."
+          class="border rounded px-3 py-2 text-sm w-64 text-gray-900"
+        />
+        <div class="flex gap-2">
+          <select name="sort" class="border rounded px-2 py-2 text-sm text-gray-700">
+            <option value="updated" {% if sort=='updated' %}selected{% endif %}>Sort: Last Updated</option>
+            <option value="name" {% if sort=='name' %}selected{% endif %}>Sort: Name</option>
+            <option value="season" {% if sort=='season' %}selected{% endif %}>Sort: Season No.</option>
+            <option value="eps" {% if sort=='eps' %}selected{% endif %}>Sort: Episodes</option>
+          </select>
+          <select name="dir" class="border rounded px-2 py-2 text-sm text-gray-700">
+            <option value="desc" {% if direction=='desc' %}selected{% endif %}>Desc</option>
+            <option value="asc" {% if direction=='asc' %}selected{% endif %}>Asc</option>
+          </select>
+          <button class="bg-gray-800 text-white px-4 py-2 rounded text-sm">Apply</button>
+        </div>
       </form>
     </div>
 
