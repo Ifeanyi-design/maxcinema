@@ -1,0 +1,54 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-bold">Incomplete Series (Current Season)</h2>
+    <p class="text-gray-500 text-sm">{{ incomplete|length }} found</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow overflow-hidden">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="text-left px-4 py-3">Series</th>
+          <th class="text-left px-4 py-3">Current Season</th>
+          <th class="text-left px-4 py-3">Episodes</th>
+          <th class="text-left px-4 py-3">Last Update</th>
+          <th class="text-right px-4 py-3">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for item in incomplete %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium">{{ item.title }}</td>
+          <td class="px-4 py-3">Season {{ item.season_number }}</td>
+          <td class="px-4 py-3">
+            {{ item.season_eps_count }}
+            {% if item.season_num_episodes_field %}
+              / {{ item.season_num_episodes_field }}
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            {% if item.updated_at %}{{ item.updated_at.strftime("%Y-%m-%d") }}{% else %}-{% endif %}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <a class="text-yellow-600 hover:underline"
+               href="{{ url_for('admin.view_series_specific', prev='series', name=item.slug, id=item.series_id) }}">
+              Open
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if incomplete|length == 0 %}
+        <tr>
+          <td class="px-4 py-6 text-center text-gray-500" colspan="5">
+            No incomplete current seasons found.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
