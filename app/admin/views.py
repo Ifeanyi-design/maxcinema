@@ -60,6 +60,39 @@ def logout():
     return redirect(url_for("admin.login"))
 
 
+# admin/__init__.py or admin/views.py (once)
+
+@admin_bp.app_context_processor
+def inject_admin_badges():
+    # count series whose current season is incomplete
+    latest_season_subq = (
+        db.session.query(
+            Season.series_id.label("series_id"),
+            func.max(Season.season_number).label("max_season_number")
+        )
+        .group_by(Season.series_id)
+        .subquery()
+    )
+    LatestSeason = aliased(Season)
+
+    incomplete_count = (
+        db.session.query(func.count(Series.id))
+        .join(AllVideo, AllVideo.id == Series.all_video_id)
+        .join(latest_season_subq, latest_season_subq.c.series_id == Series.id)
+        .join(
+            LatestSeason,
+            (LatestSeason.series_id == Series.id)
+            & (LatestSeason.season_number == latest_season_subq.c.max_season_number)
+        )
+        .filter(AllVideo.type == 'series')
+        .filter(LatestSeason.completed == False)
+        .scalar()
+    ) or 0
+
+    return dict(incomplete_count=incomplete_count)
+
+
+
 @admin_bp.route('/')
 @login_required
 @admin_required
