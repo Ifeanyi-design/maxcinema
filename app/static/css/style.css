@@ -5336,6 +5336,10 @@ iframe {
     margin-top: 6rem;
   }
 
+  .lg\:mt-0 {
+    margin-top: 0px;
+  }
+
   .lg\:flex {
     display: flex;
   }
