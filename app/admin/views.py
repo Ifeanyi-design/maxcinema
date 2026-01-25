@@ -660,9 +660,14 @@ def delete_episode(name, id, prev, season_id, episode_id):
     db.session.commit()
     season = Season.query.get_or_404(season_id)
     serie = AllVideo.query.get_or_404(id)
-    episode_count = len(season.episodes)
-    serie.series.num_episodes = episode_count
-    season.num_episodes = episode_count
+    season.num_episodes = Episode.query.filter_by(season_id=season.id).count()
+
+    # total across all seasons:
+    total_eps = 0
+    for s in serie.series.seasons:
+        total_eps += len(s.episodes)
+    serie.series.num_episodes = total_eps
+
     db.session.commit()
     flash('Season deleted.', 'success')
     return redirect(url_for('admin.view_episodes', prev=prev, name=name, season_id=season_id, ns=season.season_number))
