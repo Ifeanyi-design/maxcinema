@@ -1,12 +1,14 @@
-<div class="w-full flex justify-center items-center my-4">
-    <script>
-      atOptions = {
-        'key' : '407326082951f8d6aed08aed6566455f',
-        'format' : 'iframe',
-        'height' : 90,
-        'width' : 728,
-        'params' : {}
-      };
-    </script>
-    <script src="https://www.highperformanceformat.com/407326082951f8d6aed08aed6566455f/invoke.js"></script>
-</div>
+{% if ads.banner and ads.banner.key %}
+    <div class="w-full flex justify-center items-center my-4">
+        <script>
+          atOptions = {
+            'key' : '{{ ads.banner.key }}',
+            'format' : 'iframe',
+            'height' : 90,
+            'width' : 728,
+            'params' : {}
+          };
+        </script>
+        <script src="https://www.{{ ads.iframe_domain }}/{{ ads.banner.key }}/invoke.js"></script>
+    </div>
+{% endif %}
