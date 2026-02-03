@@ -6,31 +6,35 @@
 
     <div class="hidden md:block py-2">
         <div class="inline-block">
-            <script type="text/javascript">
-                atOptions = {
-                    'key' : '407326082951f8d6aed08aed6566455f',
-                    'format' : 'iframe',
-                    'height' : 90,
-                    'width' : 728,
-                    'params' : {}
-                };
-            </script>
-            <script src="https://www.highperformanceformat.com/407326082951f8d6aed08aed6566455f/invoke.js"></script>
+            {% if ads.sticky_desktop and ads.sticky_desktop.key %}
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : '{{ ads.sticky_desktop.key }}',
+                        'format' : 'iframe',
+                        'height' : 90,
+                        'width' : 728,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.{{ ads.iframe_domain }}/{{ ads.sticky_desktop.key }}/invoke.js"></script>
+            {% endif %}
         </div>
     </div>
 
     <div class="block md:hidden py-2">
         <div class="inline-block">
-            <script type="text/javascript">
-                atOptions = {
-                    'key' : 'd15feb189697bb79e54314a369d7acb7',
-                    'format' : 'iframe',
-                    'height' : 50,
-                    'width' : 320,
-                    'params' : {}
-                };
-            </script>
-            <script src="https://www.highperformanceformat.com/d15feb189697bb79e54314a369d7acb7/invoke.js"></script>
+            {% if ads.sticky_mobile and ads.sticky_mobile.key %}
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : '{{ ads.sticky_mobile.key }}',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://www.{{ ads.iframe_domain }}/{{ ads.sticky_mobile.key }}/invoke.js"></script>
+            {% endif %}
 
         </div>
     </div>
