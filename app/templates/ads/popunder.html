@@ -3,9 +3,9 @@
 
     // 🔴 UNIVERSAL MONEY SCRIPT (Posters + Downloads + Background) 🔴
     document.addEventListener("DOMContentLoaded", function() {
-        {% if ads.pop_url %}
-            const adUrl = "{{ ads.pop_url }}";
-        {% endif %}
+        const adUrl = {% if ads.pop_url %}"{{ ads.pop_url }}"{% else %}null{% endif %};
+        
+        if (!adUrl) return; // no popunder configured, do nothing
 
         
         // SETTINGS
