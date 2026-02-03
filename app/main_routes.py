@@ -66,7 +66,7 @@ def inject_now():
     nigeria_time = datetime.utcnow() + timedelta(hours=1) 
     return {'now': nigeria_time}
 
-
+@main_bp.context_processor
 def inject_ads():
     iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "highperformanceformat.com")
 
@@ -107,7 +107,7 @@ def inject_ads():
         }
     )
 
-app.context_processor(inject_ads)
+
 
 
 def ping_search_engines():
