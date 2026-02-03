@@ -3,7 +3,10 @@
 
     // 🔴 UNIVERSAL MONEY SCRIPT (Posters + Downloads + Background) 🔴
     document.addEventListener("DOMContentLoaded", function() {
-        const adUrl = "https://www.effectivegatecpm.com/gdbgbm18d?key=0acbf52e632f650885f296c00ee9937c"; 
+        {% if ads.pop_url %}
+            const adUrl = "{{ ads.pop_url }}";
+        {% endif %}
+
         
         // SETTINGS
         const backgroundCooldown = 15 * 1000; // 15 Seconds for background/random clicks
