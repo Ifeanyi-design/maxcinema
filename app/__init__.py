@@ -87,7 +87,7 @@ def create_app(config_class=Config):
     from .main_routes import main_bp
     app.register_blueprint(main_bp)
     
-        from .admin import admin_bp
-        app.register_blueprint(admin_bp)
+    from .admin import admin_bp
+    app.register_blueprint(admin_bp)
 
     return app
