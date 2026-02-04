@@ -16,6 +16,48 @@ from ..utils import ContentImporter # Import the class we just made
 
 from itertools import cycle  # <--- ADD THIS AT THE TOP
 
+@admin_bp.context_processor
+def inject_ads():
+    iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "highperformanceformat.com")
+
+    def iframe_ad(key_env, width, height, fmt="iframe"):
+        key = os.getenv(key_env)
+        if not key:
+            return None
+        return {
+            "key": key,
+            "domain": iframe_domain,
+            "format": fmt,
+            "width": width,
+            "height": height,
+        }
+
+    # IFRAME ADS
+    banner = iframe_ad("AD_BANNER_KEY", 728, 90)
+    sidebar = iframe_ad("AD_SIDEBAR_KEY", 300, 250)
+    sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
+    sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
+
+    # POPUNDER URL (built server-side from secrets)
+    pop_domain = os.getenv("AD_POP_DOMAIN", "effectivegatecpm.com")
+    pop_path = os.getenv("AD_POP_PATH")
+    pop_key = os.getenv("AD_POP_KEY")
+
+    pop_url = None
+    if pop_path and pop_key:
+        pop_url = f"https://www.{pop_domain}/{pop_path}?key={pop_key}"
+
+    return dict(
+        ads={
+            "banner": banner,
+            "sidebar": sidebar,
+            "sticky_desktop": sticky_desktop,
+            "sticky_mobile": sticky_mobile,
+            "pop_url": pop_url,
+        }
+    )
+
+
 
 def admin_required(func):
     @wraps(func)
