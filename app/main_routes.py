@@ -597,16 +597,19 @@ def series_details(det, name, season, episode, id):
 
     # 5. Get the requested episode
     current_episode = Episode.query.filter_by(
-        season_id=current_season.id,
-        episode_number=episode
-    ).first_or_404()
+    season_id=current_season.id,
+    episode_number=episode
+    ).first()
 
-    # Fallback: if episode number doesn't exist in that season, go to first episode
     if not current_episode:
-        current_episode = Episode.query.filter_by(season_id=current_season.id)\
-        .order_by(Episode.episode_number.asc())\
-        .first_or_404()
-    episode = current_episode.episode_numbe
+        current_episode = (Episode.query
+            .filter_by(season_id=current_season.id)
+            .order_by(Episode.episode_number.asc())
+            .first_or_404()
+        )
+        episode = current_episode.episode_number
+    else:
+        episode = current_episode.episode_number
 
     try:
         # Assuming you already fetched 'current_episode' above
