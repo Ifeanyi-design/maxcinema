@@ -11,6 +11,7 @@ from .forms import AllVideoForm, StorageServerForm, SeasonForm, TrailerForm, Epi
 from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_login import login_required, current_user, login_user, logout_user
+import os
 
 from ..utils import ContentImporter # Import the class we just made
 
