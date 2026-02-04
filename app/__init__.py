@@ -41,12 +41,6 @@ def create_app(config_class=Config):
     if os.environ.get('SPACE_ID'):
         app.wsgi_app = ForceHostMiddleware(app.wsgi_app, 'maxcinema.name.ng')
 
-    # Register blueprints
-    from .main_routes import main_bp
-    app.register_blueprint(main_bp)
-
-    from .admin import admin_bp
-    app.register_blueprint(admin_bp)
 
     @app.context_processor
     def inject_ads():
@@ -88,5 +82,12 @@ def create_app(config_class=Config):
                 "pop_url": pop_url,
             }
         )
+
+    # Register blueprints
+    from .main_routes import main_bp
+    app.register_blueprint(main_bp)
+    
+        from .admin import admin_bp
+        app.register_blueprint(admin_bp)
 
     return app
