@@ -434,16 +434,23 @@
                 </h3>
                 <div class="flex flex-wrap gap-2">
                     {% for s in seasons %}
-                        <a href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=s.season_number, episode=episode) }}" 
-                           class="px-5 py-2 rounded-lg font-bold text-xs uppercase border transition-all 
-                           {% if s.season_number == current_season.season_number %} 
-                               bg-[#830506] border-[#830506] text-white shadow-md
-                           {% else %} 
-                               border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] bg-white
-                           {% endif %}">
-                            Season {{ s.season_number }}
+                        {% set first_ep = (s.episodes | sort(attribute='episode_number') | first) %}
+                        <a href="{{ url_for('main.detail',
+                        det=video.type,
+                        name=video.name,
+                        id=video.id,
+                        season=s.season_number,
+                        episode=(first_ep.episode_number if first_ep else 1)
+                        ) }}"
+                        class="px-5 py-2 rounded-lg font-bold text-xs uppercase border transition-all 
+                        {% if s.season_number == current_season.season_number %} 
+                            bg-[#830506] border-[#830506] text-white shadow-md
+                        {% else %} 
+                            border-gray-200 text-gray-500 hover:border-[#830506] hover:text-[#830506] bg-white
+                        {% endif %}">
+                          Season {{ s.season_number }}
                         </a>
-                    {% endfor %}
+                     {% endfor %}
                 </div>
             </div>
 
