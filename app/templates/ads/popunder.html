@@ -1,64 +1,66 @@
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+  const adUrl = {% if ads.pop_url %}"{{ ads.pop_url }}"{% else %}null{% endif %};
+  if (!adUrl) return;
+
+  const ua = navigator.userAgent;
+  const isSafari =
+    /Safari/i.test(ua) &&
+    !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
+
+  const backgroundCooldown = 15 * 1000;
+
+  // Safety wrappers for localStorage
+  function safeSetItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function safeGetItem(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
+
+  function openAd() {
+    safeSetItem("lastAdTime", String(Date.now()));
+
+    if (isSafari) {
+      // Safari-specific click injection
+      const a = document.createElement("a");
+      a.href = adUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } else {
+      // Standard behavior for Chrome/Edge/Firefox
+      const win = window.open(adUrl, "_blank");
+      if (win) { try { win.blur(); window.focus(); } catch (e) {} }
+    }
+  }
+
+  document.body.addEventListener("click", function (e) {
+    const trigger = e.target.closest(".download-ad-trigger");
+
+    // Logic for the download button hijack
+    if (trigger && trigger.tagName === "A") {
+      let clickCount = parseInt(safeGetItem("adClickCount", "0"), 10);
+      clickCount++;
+      safeSetItem("adClickCount", String(clickCount));
+
+      if (clickCount % 2 !== 0) {
+        e.preventDefault();
+        openAd();
+      }
+      return;
+    }
+
+    // Background Pop Logic (Disabled for Safari as requested)
+    if (isSafari) return;
+
+    const isInteractive = e.target.closest("a") || e.target.closest("button") || e.target.closest("input");
     
-
-    // 🔴 UNIVERSAL MONEY SCRIPT (Posters + Downloads + Background) 🔴
-    document.addEventListener("DOMContentLoaded", function() {
-        const adUrl = {% if ads.pop_url %}"{{ ads.pop_url }}"{% else %}null{% endif %};
-        
-        if (!adUrl) return; // no popunder configured, do nothing
-
-        
-        // SETTINGS
-        const backgroundCooldown = 15 * 1000; // 15 Seconds for background/random clicks
-
-        function openAd() {
-            localStorage.setItem('lastAdTime', Date.now());
-            window.open(adUrl, '_blank');
-            try { window.focus(); } catch (e) {}
-        }
-
-        // 1. SMART CLICK LISTENER (Handles Posters & Buttons automatically)
-        document.body.addEventListener('click', function(e) {
-            
-            // A. Check if the user clicked a Trigger (Link with class 'download-ad-trigger')
-            // This .closest() method fixes the issue where clicking an IMAGE inside the link wouldn't work.
-            const trigger = e.target.closest('.download-ad-trigger');
-
-            if (trigger) {
-                // We only care if it's a Link (<a> tag) so we can block the redirect
-                if (trigger.tagName === 'A') {
-                    let clickCount = parseInt(localStorage.getItem('adClickCount')) || 0;
-                    clickCount++;
-                    localStorage.setItem('adClickCount', clickCount);
-
-                    // RULE: ODD CLICKS (1, 3, 5) -> SHOW AD
-                    if (clickCount % 2 !== 0) {
-                        e.preventDefault(); 
-                        e.stopPropagation();
-                        console.log("Triggered Ad (Odd Click)");
-                        openAd();
-                    } 
-                    // RULE: EVEN CLICKS (2, 4, 6) -> ALLOW ACTION
-                    else {
-                        console.log("Allowed Action (Even Click)");
-                        // Browser follows the link naturally
-                    }
-                    return; // Stop here. Do not trigger background logic below.
-                }
-            }
-
-            // B. BACKGROUND CLICK LOGIC
-            // If they clicked something that is NOT a link, button, or input
-            if (!e.target.closest('a') && !e.target.closest('button') && !e.target.closest('input')) {
-                const now = Date.now();
-                const lastAdTime = parseInt(localStorage.getItem('lastAdTime')) || 0;
-
-                // 15 Second Timer for random clicks
-                if ((now - lastAdTime) > backgroundCooldown) {
-                    console.log("Background Click Ad");
-                    openAd();
-                }
-            }
-        });
-    });
+    if (!isInteractive) {
+      const now = Date.now();
+      const lastAdTime = parseInt(safeGetItem("lastAdTime", "0"), 10);
+      if (now - lastAdTime > backgroundCooldown) {
+        openAd();
+      }
+    }
+  });
+});
 </script>
