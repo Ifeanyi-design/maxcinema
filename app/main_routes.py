@@ -104,7 +104,6 @@ def inject_ads():
             "sticky_desktop": sticky_desktop,
             "sticky_mobile": sticky_mobile,
             "pop_url": pop_url,
-            "monetag_multitag_key": os.getenv("MONETAG_KEY"),
         }
     )
 
