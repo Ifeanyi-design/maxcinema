@@ -1,0 +1,27 @@
+{# app/templates/ads/monetag_head.html #}
+
+{# 1) Monetag In-Page Push (recommended) #}
+{% if ads.monetag_inpage_zone %}
+<script>
+  (function (s) {
+    s.dataset.zone = '{{ ads.monetag_inpage_zone }}';
+    s.src = 'https://nap5k.com/tag.min.js';
+  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+</script>
+{% endif %}
+
+{# 2) Monetag Vignette (optional) #}
+{% if ads.monetag_vignette_zone %}
+<script>
+  (function (s) {
+    s.dataset.zone = '{{ ads.monetag_vignette_zone }}';
+    s.src = 'https://gizokraijaw.net/vignette.min.js';
+  })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+</script>
+{% endif %}
+
+{# 3) Monetag Push Notifications (optional) #}
+{% if ads.monetag_push_zone %}
+<script src="https://5gvci.com/act/files/tag.min.js?z={{ ads.monetag_push_zone }}"
+        data-cfasync="false" async></script>
+{% endif %}
