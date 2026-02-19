@@ -104,6 +104,9 @@ def inject_ads():
             "sticky_desktop": sticky_desktop,
             "sticky_mobile": sticky_mobile,
             "pop_url": pop_url,
+            "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
+            "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
+            "monetag_push_zone": os.getenv("MONETAG_PUSH_ZONE"),
         }
     )
 
