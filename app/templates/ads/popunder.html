@@ -1,16 +1,28 @@
 <script>
+  window.__CC__ = "{{ country|e }}";
+</script>
+<script>
 document.addEventListener("DOMContentLoaded", function () {
   const adUrl = {% if ads.pop_url %}"{{ ads.pop_url }}"{% else %}null{% endif %};
   if (!adUrl) return;
+
+  const cc = (window.__CC__ || "XX").toUpperCase();
+
+  const TIER1 = new Set([
+    "US","GB","CA","AU","DE","FR","NL","NO","SE","FI","BE","CH","AT","IE","NZ","DK"
+  ]);
+
+  const isTier1 = TIER1.has(cc);
 
   const ua = navigator.userAgent;
   const isSafari =
     /Safari/i.test(ua) &&
     !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
 
-  const backgroundCooldown = 15 * 1000;
+  // Tier logic
+  const backgroundCooldown = isTier1 ? (365 * 24 * 60 * 60 * 1000) : (60 * 1000); // Tier1: effectively off, Tier3: 60s
+  const downloadMod = isTier1 ? 3 : 2; // Tier1: 1 in 3; Tier3: every other click
 
-  // Safety wrappers for localStorage
   function safeSetItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function safeGetItem(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
 
@@ -18,7 +30,6 @@ document.addEventListener("DOMContentLoaded", function () {
     safeSetItem("lastAdTime", String(Date.now()));
 
     if (isSafari) {
-      // Safari-specific click injection
       const a = document.createElement("a");
       a.href = adUrl;
       a.target = "_blank";
@@ -27,7 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
       a.click();
       a.remove();
     } else {
-      // Standard behavior for Chrome/Edge/Firefox
       const win = window.open(adUrl, "_blank");
       if (win) { try { win.blur(); window.focus(); } catch (e) {} }
     }
@@ -36,24 +46,29 @@ document.addEventListener("DOMContentLoaded", function () {
   document.body.addEventListener("click", function (e) {
     const trigger = e.target.closest(".download-ad-trigger");
 
-    // Logic for the download button hijack
+    // Download button logic
     if (trigger && trigger.tagName === "A") {
       let clickCount = parseInt(safeGetItem("adClickCount", "0"), 10);
       clickCount++;
       safeSetItem("adClickCount", String(clickCount));
 
-      if (clickCount % 2 !== 0) {
+      // Show ad on clicks that are NOT divisible by downloadMod
+      // (Tier1: show on 1st & 2nd, allow on 3rd; Tier3: show on 1st, allow on 2nd)
+      if (clickCount % downloadMod !== 0) {
         e.preventDefault();
         openAd();
       }
       return;
     }
 
-    // Background Pop Logic (Disabled for Safari as requested)
+    // Background pops:
+    // - Disabled for Safari
+    // - Effectively disabled for Tier1 by huge cooldown
     if (isSafari) return;
 
-    const isInteractive = e.target.closest("a") || e.target.closest("button") || e.target.closest("input");
-    
+    const isInteractive =
+      e.target.closest("a") || e.target.closest("button") || e.target.closest("input");
+
     if (!isInteractive) {
       const now = Date.now();
       const lastAdTime = parseInt(safeGetItem("lastAdTime", "0"), 10);
@@ -63,4 +78,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-</script>
+  </script>
