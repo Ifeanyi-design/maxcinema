@@ -86,6 +86,24 @@ def create_app(config_class=Config):
             }
         )
 
+    def get_country_code() -> str:
+        # Cloudflare header (best)
+        cc = request.headers.get("CF-IPCountry")
+        if cc and len(cc) == 2:
+            return cc.upper()
+
+        # Fallbacks (in case Vercel/middlewares rename it later)
+        cc = request.headers.get("X-Country") or request.headers.get("X-Vercel-IP-Country")
+        if cc and len(cc) == 2:
+            return cc.upper()
+
+        return "XX"
+
+    @main_bp.context_processor
+    def inject_country():
+        return {"country": get_country_code()}
+    
+
     # Register blueprints
     from .main_routes import main_bp
     app.register_blueprint(main_bp)
