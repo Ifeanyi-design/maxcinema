@@ -2,7 +2,7 @@
 from .models import User, Genre, AllVideo, Movie, Series, Season, Episode, Comment, Rating, Trailer, StorageServer, RecentItem
 import json
 import os
-from flask import Flask
+from flask import Flask, request
 from .config import Config
 from werkzeug.middleware.proxy_fix import ProxyFix
 from .extensions import db, migrate, login_manager
