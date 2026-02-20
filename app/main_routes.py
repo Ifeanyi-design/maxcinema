@@ -112,7 +112,19 @@ def inject_ads():
 
 
 
+def get_country_code() -> str:
+    # Cloudflare header (best)
+    cc = request.headers.get("CF-IPCountry")
+    if cc and len(cc) == 2:
+        return cc.upper()
 
+    # Fallbacks (in case Vercel/middlewares rename it later)
+    cc = request.headers.get("X-Country") or request.headers.get("X-Vercel-IP-Country")
+    if cc and len(cc) == 2:
+        return cc.upper()
+
+    return "XX"
+    
 def ping_search_engines():
     sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
     try:
@@ -540,6 +552,7 @@ def movie_details(det, name, id):
         video_id=movie.id,
         parent_id=None
     ).count()
+    country = get_country_code()
     comments = Comment.query.filter_by(video_id=movie.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
@@ -576,7 +589,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", country=country, num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
@@ -603,6 +616,8 @@ def series_details(det, name, season, episode, id):
     season_id=current_season.id,
     episode_number=episode
     ).first()
+
+    country = get_country_code()
 
     if not current_episode:
         current_episode = (Episode.query
@@ -661,7 +676,7 @@ def series_details(det, name, season, episode, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", country=country, num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 
 @main_bp.route("/download/<type>/<int:id>")
