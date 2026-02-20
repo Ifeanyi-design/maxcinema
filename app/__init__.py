@@ -99,7 +99,7 @@ def create_app(config_class=Config):
 
         return "XX"
 
-    @main_bp.context_processor
+    @app.context_processor
     def inject_country():
         return {"country": get_country_code()}
     
