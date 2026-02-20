@@ -124,6 +124,10 @@ def get_country_code() -> str:
         return cc.upper()
 
     return "XX"
+
+@main_bp.context_processor
+def inject_country():
+    return {"country": get_country_code()}
     
 def ping_search_engines():
     sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
