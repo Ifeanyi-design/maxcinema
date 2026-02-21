@@ -66,68 +66,6 @@ def inject_now():
     nigeria_time = datetime.utcnow() + timedelta(hours=1) 
     return {'now': nigeria_time}
 
-@main_bp.context_processor
-def inject_ads():
-    iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "highperformanceformat.com")
-
-    def iframe_ad(key_env, width, height, fmt="iframe"):
-        key = os.getenv(key_env)
-        if not key:
-            return None
-        return {
-            "key": key,
-            "domain": iframe_domain,
-            "format": fmt,
-            "width": width,
-            "height": height,
-        }
-
-    # IFRAME ADS
-    banner = iframe_ad("AD_BANNER_KEY", 728, 90)
-    sidebar = iframe_ad("AD_SIDEBAR_KEY", 300, 250)
-    sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
-    sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
-
-    # POPUNDER URL (built server-side from secrets)
-    pop_domain = os.getenv("AD_POP_DOMAIN", "effectivegatecpm.com")
-    pop_path = os.getenv("AD_POP_PATH")
-    pop_key = os.getenv("AD_POP_KEY")
-
-    pop_url = None
-    if pop_path and pop_key:
-        pop_url = f"https://www.{pop_domain}/{pop_path}?key={pop_key}"
-
-    return dict(
-        ads={
-            "banner": banner,
-            "sidebar": sidebar,
-            "sticky_desktop": sticky_desktop,
-            "sticky_mobile": sticky_mobile,
-            "pop_url": pop_url,
-            "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
-            "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
-            "monetag_push_zone": os.getenv("MONETAG_PUSH_ZONE"),
-        }
-    )
-
-
-
-def get_country_code() -> str:
-    # Cloudflare header (best)
-    cc = request.headers.get("CF-IPCountry")
-    if cc and len(cc) == 2:
-        return cc.upper()
-
-    # Fallbacks (in case Vercel/middlewares rename it later)
-    cc = request.headers.get("X-Country") or request.headers.get("X-Vercel-IP-Country")
-    if cc and len(cc) == 2:
-        return cc.upper()
-
-    return "XX"
-
-@main_bp.context_processor
-def inject_country():
-    return {"country": get_country_code()}
     
 def ping_search_engines():
     sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
