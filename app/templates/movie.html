@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% set show_top_banner = true %}
+{% set show_top_banner = false %}
 {# --- FIX 1: Dynamic Title & Meta Description for SEO --- #}
 {% block title %}
     {% if video.type == 'series' %}
@@ -537,7 +537,7 @@
                 </div>
             </div>
 
-            <div class="w-full my-8">
+            <div class="w-full my-8 hidden">
                 {% include 'ads/banner.html' %}
             </div>
 
