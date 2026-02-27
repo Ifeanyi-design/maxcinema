@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
 
   // Tier logic
-  const backgroundCooldown = isTier1 ? (365 * 24 * 60 * 60 * 1000) : (60 * 1000); // Tier1: effectively off, Tier3: 60s
+  const backgroundCooldown = isTier1 ? (15 * 60 * 1000) : (60 * 1000);
   const downloadMod = isTier1 ? 3 : 2; // Tier1: 1 in 3; Tier3: every other click
 
   function safeSetItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
