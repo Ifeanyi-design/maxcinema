@@ -1,9 +1,10 @@
 <script>
-  window.__CC__ = "{{ country|e }}";
+  window.__CC__ = {{ (country or "XX")|tojson }};
 </script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const adUrl = {% if ads.pop_url %}"{{ ads.pop_url }}"{% else %}null{% endif %};
+  const adUrl = {{ (ads.pop_url if ads and ads.pop_url else None)|tojson }};
   if (!adUrl) return;
 
   const cc = (window.__CC__ || "XX").toUpperCase();
@@ -21,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Tier logic
   const backgroundCooldown = isTier1 ? (15 * 60 * 1000) : (60 * 1000);
-  const downloadMod = isTier1 ? 3 : 2; // Tier1: 1 in 3; Tier3: every other click
+  const downloadMod = isTier1 ? 3 : 2;
 
   function safeSetItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function safeGetItem(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
@@ -52,8 +53,6 @@ document.addEventListener("DOMContentLoaded", function () {
       clickCount++;
       safeSetItem("adClickCount", String(clickCount));
 
-      // Show ad on clicks that are NOT divisible by downloadMod
-      // (Tier1: show on 1st & 2nd, allow on 3rd; Tier3: show on 1st, allow on 2nd)
       if (clickCount % downloadMod !== 0) {
         e.preventDefault();
         openAd();
@@ -61,9 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Background pops:
-    // - Disabled for Safari
-    // - Effectively disabled for Tier1 by huge cooldown
+    // Background pops
     if (isSafari) return;
 
     const isInteractive =
@@ -78,4 +75,4 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
-  </script>
+</script>
