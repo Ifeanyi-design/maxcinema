@@ -1364,6 +1364,7 @@ def search():
     )
 
 @admin_bp.route('/search-terms')
+@admin_required
 @login_required
 def search_terms_page():
     if not current_user.is_admin:
