@@ -1362,3 +1362,21 @@ def search():
         trailers=trailers,
         users=users,
     )
+
+@admin_bp.route('/search-terms')
+@login_required
+def search_terms_page():
+    if not current_user.is_admin:
+        abort(403)
+
+    page = request.args.get('page', 1, type=int)
+
+    search_terms = SearchTerm.query.order_by(
+        SearchTerm.count.desc(),
+        SearchTerm.last_searched.desc()
+    ).paginate(page=page, per_page=20, error_out=False)
+
+    return render_template(
+        'admin/search_terms.html',
+        search_terms=search_terms
+    )
