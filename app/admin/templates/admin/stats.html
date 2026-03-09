@@ -106,7 +106,13 @@
         </div>
 
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-10">
-            <h3 class="text-xl font-bold mb-4 text-gray-200">🔍 Most Searched Terms</h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-200">🔍 Most Searched Terms</h3>
+                <a href="{{ url_for('admin.search_terms_page') }}"
+                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
+                    See More
+                </a>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
