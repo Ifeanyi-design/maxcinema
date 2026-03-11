@@ -154,7 +154,9 @@ def inject_admin_sidebar_counts():
 @login_required
 @admin_required
 def dashboard():
-    # Basic stats
+    page = request.args.get('page', 1, type=int)
+    per_page = 24
+
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
@@ -162,7 +164,6 @@ def dashboard():
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
-    # Storage info
     storage_servers = StorageServer.query.all()
     storage_info = []
     for server in storage_servers:
@@ -172,10 +173,14 @@ def dashboard():
             'available': server.available_storage()
         })
 
-    # Fetch all videos for Netflix-style grid
-    all_videos = AllVideo.query.order_by(AllVideo.created_at.desc()).all()
+    videos_page = (
+        AllVideo.query
+        .order_by(AllVideo.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
     all_videos_dict = []
-    for v in all_videos:
+    for v in videos_page.items:
         all_videos_dict.append({
             'id': v.id,
             'name': v.name,
@@ -183,6 +188,7 @@ def dashboard():
             'description': v.description,
             'poster_url': v.image,
             'views': v.views,
+            'downloads': v.downloads,
             'slug': v.slug
         })
 
@@ -195,9 +201,9 @@ def dashboard():
         total_views=total_views,
         storage_info=storage_info,
         all_videos=all_videos_dict,
+        videos_page=videos_page,
         total_requests=total_requests
     )
-
 
 import json
 
@@ -454,16 +460,35 @@ def add_series(prev):
 @login_required
 @admin_required
 def view_movies():
-    movie=True
+    movie = True
+    page = request.args.get('page', 1, type=int)
+    per_page = 24
+
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
     total_users = User.query.count()
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
-    movies = AllVideo.query.filter_by(type='movie').order_by(AllVideo.created_at.desc()).all()
-    return render_template('admin/view_movies.html', movies=movies, movie=movie, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
+    movies = (
+        AllVideo.query
+        .filter_by(type='movie')
+        .order_by(AllVideo.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    return render_template(
+        'admin/view_movies.html',
+        movies=movies,
+        movie=movie,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests
+    )
 
 @admin_bp.route("/series/viewspec/<prev>/<name>/<id>")
 @login_required
@@ -493,7 +518,15 @@ def view_series():
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
     # show series entries (joining with AllVideo)
     series=True
-    series_list = AllVideo.query.filter_by(type="series").order_by(AllVideo.created_at.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = 24
+    
+    series_list = (
+        AllVideo.query
+        .filter_by(type="series")
+        .order_by(AllVideo.created_at.desc())
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
     return render_template('admin/view_series.html', series_list=series_list, series=series, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
