@@ -37,28 +37,57 @@ main_bp = Blueprint("main", __name__)
 # def load_user(user_id):
 #     return User.query.get(int(user_id))
 
+def get_sidebar_data_safe():
+    try:
+        series_trend = AllVideo.query.filter_by(
+            trending=True, type="series", active=True
+        ).order_by(AllVideo.views.desc()).limit(6).all()
+
+        movie_trend = AllVideo.query.filter_by(
+            trending=True, type="movie", active=True
+        ).order_by(AllVideo.views.desc()).limit(6).all()
+
+        trending_trailers = Trailer.query.order_by(
+            Trailer.views.desc()
+        ).limit(5).all()
+
+        return series_trend, movie_trend, trending_trailers
+    except Exception as e:
+        db.session.rollback()
+        print(f"Sidebar load failed: {e}")
+        return [], [], []
+
 @main_bp.app_errorhandler(404)
 def page_not_found(e):
-    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template("404.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 404
+    series_trend, movie_trend, trending_trailers = get_sidebar_data_safe()
+    return render_template(
+        "404.html",
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    ), 404
+
 
 @main_bp.app_errorhandler(500)
 def internal_server_error(e):
-    # This happens if your server crashes (like the "Delete Series" bug earlier)
-    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template('500.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 500
+    series_trend, movie_trend, trending_trailers = get_sidebar_data_safe()
+    return render_template(
+        "500.html",
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    ), 500
+
 
 @main_bp.app_errorhandler(403)
 def access_forbidden(e):
-    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
-    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template('403.html', trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers), 403
-
+    series_trend, movie_trend, trending_trailers = get_sidebar_data_safe()
+    return render_template(
+        "403.html",
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    ), 403
 
 @main_bp.context_processor
 def inject_now():
@@ -570,12 +599,12 @@ def series_details(det, name, season, episode, id):
         episode = current_episode.episode_number
 
     try:
-        # Assuming you already fetched 'current_episode' above
         if current_episode:
-            current_episode.views += 1
+            current_episode.views = (current_episode.views or 0) + 1
             db.session.commit()
-    except:
-        pass
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating episode views: {e}")
 
     num_comment = Comment.query.filter_by(
         video_id=series.id,
@@ -665,9 +694,12 @@ def download_dispatcher(type, id, season=None, episode=None):
 
     # --- 5. Increment Download Counters (Only once per click) ---
     try:
-        video.downloads += 1
+        video.downloads = (video.downloads or 0) + 1
+    
         if type == "series":
-            video.season.series.all_video.downloads += 1
+            parent_video = video.season.series.all_video
+            parent_video.downloads = (parent_video.downloads or 0) + 1
+    
         db.session.commit()
     except Exception as e:
         db.session.rollback()
