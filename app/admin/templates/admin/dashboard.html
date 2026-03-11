@@ -247,6 +247,23 @@
             <p class="text-gray-400">No videos available yet.</p>
             {% endfor %}
         </div>
+        {% if videos_page.pages > 1 %}
+        <div class="flex gap-2 mt-8 flex-wrap">
+            {% if videos_page.has_prev %}
+                <a href="{{ url_for('admin.dashboard', page=videos_page.prev_num) }}"
+                   class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Previous</a>
+            {% endif %}
+        
+            <span class="px-4 py-2 bg-yellow-500 text-black rounded">
+                Page {{ videos_page.page }} of {{ videos_page.pages }}
+            </span>
+        
+            {% if videos_page.has_next %}
+                <a href="{{ url_for('admin.dashboard', page=videos_page.next_num) }}"
+                   class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
