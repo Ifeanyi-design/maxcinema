@@ -1126,13 +1126,26 @@ def rate_video(video_id):
 @main_bp.route('/comment/add/<int:video_id>', methods=['POST'])
 @main_bp.route('/comment/add/<int:video_id>/<string:type>', methods=['POST'])
 def add_comment(video_id, type="video"):
-    name = request.form.get('name')
-    email = request.form.get('email')
-    text = request.form.get('text')
+    name = (request.form.get('name') or '').strip()
+    email = (request.form.get('email') or '').strip()
+    text = (request.form.get('text') or '').strip()
+    is_admin_user = current_user.is_authenticated and getattr(current_user, "is_admin", False)
 
     # Basic Validation
-    if not all([name, email, text]):
-        return jsonify({'success': False, 'error': 'All fields required'}), 400
+    if not is_admin_user and not all([name, text]):
+        return jsonify({'success': False, 'error': 'Name and comment are required'}), 400
+
+    if is_admin_user:
+        admin_name = (current_user.username or 'Admin').strip()
+        name = f"[ADMIN] {admin_name}"
+        email = (current_user.email or email).strip()
+    elif name.upper().startswith('[ADMIN]'):
+        # Prevent non-admin impersonation via name prefix.
+        name = name[7:].strip() or "Guest"
+
+    # Keep DB compatibility (Comment.email is non-nullable) while making email optional in UI.
+    if not email:
+        email = f"anonymous+{int(time.time() * 1000)}-{random.randint(1000, 9999)}@maxcinema.local"
 
     video_obj = None
     comment = None
@@ -1183,13 +1196,27 @@ def add_comment(video_id, type="video"):
 @main_bp.route('/comment/reply/<int:video_id>', methods=['POST'])
 @main_bp.route('/comment/reply/<int:video_id>/<string:type>', methods=['POST'])
 def reply_comment(video_id, type="video"):
-    name = request.form.get('name')
-    email = request.form.get('email')
-    text = request.form.get('text')
-    parent_id = request.form.get('parent_id')
+    name = (request.form.get('name') or '').strip()
+    email = (request.form.get('email') or '').strip()
+    text = (request.form.get('text') or '').strip()
+    parent_id = request.form.get('parent_id', type=int)
+    is_admin_user = current_user.is_authenticated and getattr(current_user, "is_admin", False)
 
-    if not all([name, email, text]):
-        return jsonify({'success': False, 'error': 'All fields are required'})
+    if not is_admin_user and not all([name, text]):
+        return jsonify({'success': False, 'error': 'Name and reply are required'}), 400
+
+    if not parent_id:
+        return jsonify({'success': False, 'error': 'Invalid parent comment'}), 400
+
+    if is_admin_user:
+        admin_name = (current_user.username or 'Admin').strip()
+        name = f"[ADMIN] {admin_name}"
+        email = (current_user.email or email).strip()
+    elif name.upper().startswith('[ADMIN]'):
+        name = name[7:].strip() or "Guest"
+
+    if not email:
+        email = f"anonymous+{int(time.time() * 1000)}-{random.randint(1000, 9999)}@maxcinema.local"
 
     video_obj = None
     reply = None
@@ -1198,19 +1225,23 @@ def reply_comment(video_id, type="video"):
         reply = Comment(
             trailer_id=video_id,
             name=name, email=email, text=text,
-            parent_id=parent_id if parent_id else None
+            parent_id=parent_id
         )
         video_obj = Trailer.query.get_or_404(video_id)
     else:
         reply = Comment(
             video_id=video_id,
             name=name, email=email, text=text,
-            parent_id=parent_id if parent_id else None
+            parent_id=parent_id
         )
         video_obj = AllVideo.query.get_or_404(video_id)
 
-    db.session.add(reply)
-    db.session.commit()
+    try:
+        db.session.add(reply)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
     # 👇 THIS IS THE FIX 👇
     if type == 'trailer':

@@ -120,9 +120,7 @@
                 <div id="trailer-comments-container" class="space-y-6 mb-12">
                     {% if comments %}
                         {% for comment in comments %}
-                            <div class="bg-gray-50 dark:bg-[#222] p-6 rounded-2xl border border-gray-100 dark:border-white/5">
-                                {% include 'dark_comments.html' %}
-                            </div>
+                            {% include 'dark_comments.html' %}
                         {% endfor %}
                     {% else %}
                         <div class="text-center py-10 border-2 border-dashed border-gray-100 dark:border-white/5 rounded-3xl">
@@ -149,8 +147,8 @@
                                        class="w-full bg-gray-50 dark:bg-[#222] border-2 border-transparent focus:border-[#830506] rounded-2xl h-14 px-6 outline-none transition-all font-bold dark:text-white">
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-4">Email Address</label>
-                                <input type="email" name="email" required placeholder="john@example.com"
+                                <label class="text-[10px] font-black uppercase text-gray-400 tracking-widest ml-4">Email Address (Optional)</label>
+                                <input type="email" name="email" placeholder="john@example.com"
                                        class="w-full bg-gray-50 dark:bg-[#222] border-2 border-transparent focus:border-[#830506] rounded-2xl h-14 px-6 outline-none transition-all font-bold dark:text-white">
                             </div>
                         </div>

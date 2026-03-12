@@ -843,6 +843,16 @@ video {
   margin-bottom: 2rem;
 }
 
+.my-3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.my-1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 .-ml-5 {
   margin-left: -1.25rem;
 }
@@ -997,6 +1007,10 @@ video {
 
 .mt-auto {
   margin-top: auto;
+}
+
+.ml-0 {
+  margin-left: 0px;
 }
 
 .line-clamp-1 {
@@ -1438,6 +1452,10 @@ video {
 }
 
 .flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.shrink-0 {
   flex-shrink: 0;
 }
 
@@ -1979,6 +1997,10 @@ video {
   border-top-width: 4px;
 }
 
+.border-l-2 {
+  border-left-width: 2px;
+}
+
 .border-dashed {
   border-style: dashed;
 }
@@ -2131,6 +2153,10 @@ video {
 .border-yellow-500 {
   --tw-border-opacity: 1;
   border-color: rgb(234 179 8 / var(--tw-border-opacity));
+}
+
+.border-gray-300\/70 {
+  border-color: rgb(209 213 219 / 0.7);
 }
 
 .border-b-\[\#830506\] {
@@ -2476,6 +2502,10 @@ video {
 
 .bg-yellow-500\/20 {
   background-color: rgb(234 179 8 / 0.2);
+}
+
+.bg-\[\#830506\]\/15 {
+  background-color: rgb(131 5 6 / 0.15);
 }
 
 .bg-opacity-50 {
@@ -4620,6 +4650,12 @@ iframe {
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
+.hover\:shadow-md:hover {
+  --tw-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
 .hover\:shadow-\[\#830506\]\/10:hover {
   --tw-shadow-color: rgb(131 5 6 / 0.1);
   --tw-shadow: var(--tw-shadow-colored);
@@ -4962,6 +4998,14 @@ iframe {
     margin-top: 6rem;
   }
 
+  .md\:ml-5 {
+    margin-left: 1.25rem;
+  }
+
+  .md\:ml-7 {
+    margin-left: 1.75rem;
+  }
+
   .md\:block {
     display: block;
   }
@@ -5235,6 +5279,10 @@ iframe {
 
   .md\:pt-0 {
     padding-top: 0px;
+  }
+
+  .md\:pl-4 {
+    padding-left: 1rem;
   }
 
   .md\:text-left {
@@ -5691,6 +5739,10 @@ iframe {
 
   .dark\:border-white\/5 {
     border-color: rgb(255 255 255 / 0.05);
+  }
+
+  .dark\:border-white\/10 {
+    border-color: rgb(255 255 255 / 0.1);
   }
 
   .dark\:bg-\[\#0a0a0a\] {

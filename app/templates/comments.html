@@ -1,37 +1,65 @@
-<div class="flex flex-col bg-white border-l-4 border-gray-200 hover:border-[#830506] transition-colors mb-4 rounded-r-lg shadow-sm">
-    <div class="flex items-center gap-3 p-3">
-        <div class="relative">
-            <img src="https://ui-avatars.com/api/?name={{ comment.name }}&background=830506&color=fff" 
-                 alt="User Profile"
-                 class="w-12 h-12 rounded-full object-cover border-2 border-gray-100 shadow-sm">
-            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-        </div>
-        <div>
-            <p class="font-bold text-gray-900 leading-tight">{{ comment.name }}</p>
-            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                {{ comment.date_added.strftime('%b %d, %Y') }} • {{ comment.date_added.strftime('%I:%M %p') }}
+﻿{% set level = depth|default(0)|int %}
+{% set visual_level = 2 if level > 2 else level %}
+{% set is_reply = visual_level > 0 %}
+{% set level_spacing = 'ml-0' if visual_level == 0 else ('ml-3 md:ml-5' if visual_level == 1 else 'ml-5 md:ml-7') %}
+{% set is_admin_comment = comment.name.startswith('[ADMIN] ') %}
+{% set display_name = comment.name[8:] if is_admin_comment else comment.name %}
+{% set parent_name = comment.parent.name if comment.parent else '' %}
+{% set parent_is_admin = parent_name.startswith('[ADMIN] ') if parent_name else false %}
+{% set parent_display_name = parent_name[8:] if parent_is_admin else parent_name %}
+
+<div class="comment-card {{ level_spacing }} mb-3">
+    <article class="group bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+        <header class="flex items-center justify-between gap-2 px-3 md:px-4 py-3 border-b border-gray-100">
+            <div class="flex items-center gap-3 min-w-0">
+                <img src="https://ui-avatars.com/api/?name={{ display_name }}&background=830506&color=fff"
+                     alt="User Profile"
+                     class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm">
+                <div class="min-w-0">
+                    <p class="font-bold text-gray-900 leading-tight truncate">{{ display_name }}</p>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                        {{ comment.date_added.strftime('%b %d, %Y') }} - {{ comment.date_added.strftime('%I:%M %p') }}
+                    </p>
+                </div>
+            </div>
+
+            {% if is_admin_comment %}
+            <span class="shrink-0 px-2 py-1 rounded-full bg-black text-white text-[9px] font-black uppercase tracking-wider">
+                Admin
+            </span>
+            {% elif is_reply %}
+            <span class="shrink-0 px-2 py-1 rounded-full bg-[#830506]/10 text-[#830506] text-[9px] font-black uppercase tracking-wider">
+                Reply
+            </span>
+            {% endif %}
+        </header>
+
+        <div class="px-3 md:px-4 py-3">
+            {% if is_reply and comment.parent %}
+            <p class="text-[10px] font-black uppercase tracking-wider text-[#830506] mb-2">
+                Replying to @{{ parent_display_name }}
+            </p>
+            {% endif %}
+            <p class="text-gray-700 leading-relaxed font-medium text-sm md:text-base">
+                {{ comment.text }}
             </p>
         </div>
-    </div>
 
-    <div class="px-4 md:px-6 pb-2">
-        <p class="text-gray-700 leading-relaxed font-medium text-sm md:text-base italic">
-            "{{ comment.text }}"
-        </p>
-    </div>
-
-    <div class="px-4 pb-3">
-        <button data-id="{{ comment.id }}" data-video="{{ video.id }}" 
-                class="reply-btn flex items-center gap-2 text-xs font-black text-[#830506] hover:text-black transition-colors uppercase tracking-tighter cursor-pointer">
-            <i class="fa-solid fa-reply-all"></i>
-            Reply to {{ comment.name.split(' ')[0] }}
-        </button>
-    </div>
+        <div class="px-3 md:px-4 pb-3">
+            <button data-id="{{ comment.id }}" data-video="{{ video.id }}"
+                    class="reply-btn flex items-center gap-2 text-[11px] font-black text-[#830506] hover:text-black transition-colors uppercase tracking-wider cursor-pointer">
+                <i class="fa-solid fa-reply"></i>
+                Reply
+            </button>
+        </div>
+    </article>
 
     {% if comment.replies %}
-    <div class="replies-container ml-4 md:ml-8 border-l border-gray-100 mt-2 bg-gray-50/50 rounded-bl-lg">
+    <div class="replies-container mt-3 pl-3 md:pl-4 border-l-2 border-gray-200 space-y-3">
         {% for reply in comment.replies %}
+            {% set next_depth = level + 1 %}
             {% set comment = reply %}
+            {% set depth = next_depth %}
             {% include 'comments.html' %}
         {% endfor %}
     </div>

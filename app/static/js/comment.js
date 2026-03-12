@@ -75,23 +75,30 @@ document.addEventListener('click', function(e) {
         let parentId = btn.dataset.id;
         let videoId = btn.dataset.video;
         let isTrailer = btn.classList.contains('trailer-reply-btn');
+        let commentCard = btn.closest('.comment-card');
         
         // Dark mode styles for input
-        let inputBg = isTrailer ? 'bg-gray-200 dark:bg-gray-700 dark:text-white' : 'bg-gray-200';
+        let inputBg = isTrailer ? 'bg-gray-100 dark:bg-gray-700 dark:text-white' : 'bg-gray-100';
         // Class to identify the box later
         let boxClass = isTrailer ? 'trailer-reply-box' : 'reply-box';
 
+        // Keep one reply box per comment card.
+        let existingBox = commentCard ? commentCard.querySelector(`.${boxClass}`) : null;
+        if (existingBox) {
+            existingBox.querySelector('.r-name')?.focus();
+            return;
+        }
+
         // HTML Template for the reply box
-        // FIX: Cancel button is now Light Gray with Black text so it's visible in Dark Mode
         let replyHtml = `
-            <div class="${boxClass} px-5 mt-4 flex flex-col gap-5 slide-fade-enter">
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Name</legend><input type="text" class="r-name w-full ${inputBg} text-black rounded-md h-[7vh] p-2" placeholder="Name"></div>
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Email</legend><input type="email" class="r-email w-full ${inputBg} text-black rounded-md h-[7vh] p-2" placeholder="Email"></div>
-                <div><legend class="${isTrailer ? 'dark:text-white' : ''}">Comment</legend><textarea class="r-text w-full ${inputBg} text-black rounded-md h-[20vh] p-2" placeholder="Reply..."></textarea></div>
-                <div class="flex gap-3">
-                    <button class="do-reply py-2 w-40 bg-red-600 rounded-lg text-white hover:bg-red-700" 
+            <div class="${boxClass} mt-3 rounded-xl border border-gray-200 ${isTrailer ? 'dark:border-white/10' : ''} bg-white ${isTrailer ? 'dark:bg-[#171717]' : ''} p-3 md:p-4 flex flex-col gap-3 slide-fade-enter">
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Name</label><input type="text" class="r-name mt-1 w-full ${inputBg} text-black rounded-lg h-11 px-3" placeholder="Your name"></div>
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Email (optional)</label><input type="email" class="r-email mt-1 w-full ${inputBg} text-black rounded-lg h-11 px-3" placeholder="you@example.com"></div>
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Reply</label><textarea class="r-text mt-1 w-full ${inputBg} text-black rounded-lg min-h-28 p-3" placeholder="Write your reply..."></textarea></div>
+                <div class="flex gap-2">
+                    <button class="do-reply py-2.5 px-4 bg-[#830506] rounded-lg text-white hover:bg-black text-xs font-black uppercase tracking-wider" 
                         data-parent="${parentId}" data-video="${videoId}" data-trailer="${isTrailer}">Send</button>
-                    <button class="cancel-reply py-2 w-40 bg-gray-300 rounded-lg text-black hover:bg-gray-400 font-semibold">Cancel</button>
+                    <button class="cancel-reply py-2.5 px-4 bg-gray-200 rounded-lg text-black hover:bg-gray-300 text-xs font-black uppercase tracking-wider">Cancel</button>
                 </div>
             </div>`;
 
@@ -116,9 +123,14 @@ document.addEventListener('click', function(e) {
         let isTrailer = btn.dataset.trailer === 'true';
         let box = btn.closest('div[class*="reply-box"]');
 
-        let name = box.querySelector('.r-name').value;
-        let email = box.querySelector('.r-email').value;
-        let text = box.querySelector('.r-text').value;
+        let name = box.querySelector('.r-name').value.trim();
+        let email = box.querySelector('.r-email').value.trim();
+        let text = box.querySelector('.r-text').value.trim();
+
+        if (!name || !text) {
+            alert('Name and reply are required.');
+            return;
+        }
 
         let typePath = isTrailer ? '/trailer' : '';
 
@@ -133,15 +145,22 @@ document.addEventListener('click', function(e) {
                 // Find parent container to append reply
                 let btnSelector = isTrailer ? `.trailer-reply-btn[data-id='${parentId}']` : `.reply-btn[data-id='${parentId}']`;
                 let parentBtn = document.querySelector(btnSelector);
-                let parentCard = parentBtn.closest('div.flex.flex-col');
+                if (!parentBtn) {
+                    showNotification("Reply posted! Refresh to view.", isTrailer ? 'trailer' : 'normal');
+                    box.remove();
+                    return;
+                }
+                let parentCard = parentBtn.closest('.comment-card');
                 
                 // Find or create replies container
-                let repliesDivClass = isTrailer ? 'trailer-replies' : 'replies';
+                let repliesDivClass = isTrailer ? 'trailer-replies' : 'replies-container';
                 let repliesDiv = parentCard.querySelector('.' + repliesDivClass);
                 
                 if (!repliesDiv) {
                     repliesDiv = document.createElement('div');
-                    repliesDiv.className = `${repliesDivClass} ml-6 flex flex-col gap-2`;
+                    repliesDiv.className = isTrailer
+                        ? 'trailer-replies mt-3 pl-3 md:pl-4 border-l-2 border-gray-300/70 dark:border-white/10 space-y-3'
+                        : 'replies-container mt-3 pl-3 md:pl-4 border-l-2 border-gray-200 space-y-3';
                     parentCard.appendChild(repliesDiv);
                 }
 

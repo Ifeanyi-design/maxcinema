@@ -60,6 +60,7 @@ def create_app(config_class=Config):
     
         # IFRAME ADS
         banner = iframe_ad("AD_BANNER_KEY", 728, 90)
+        banner_mobile = iframe_ad("AD_BANNER_MOBILE_KEY", 320, 50)
         sidebar = iframe_ad("AD_SIDEBAR_KEY", 300, 250)
         sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
         sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
@@ -76,6 +77,7 @@ def create_app(config_class=Config):
         return dict(
             ads={
                 "banner": banner,
+                "banner_mobile": banner_mobile,
                 "sidebar": sidebar,
                 "sticky_desktop": sticky_desktop,
                 "sticky_mobile": sticky_mobile,

@@ -1,14 +1,44 @@
-{% if ads.banner and ads.banner.key %}
-    <div class="w-full flex justify-center items-center my-4">
-        <script>
-          atOptions = {
-            'key' : '{{ ads.banner.key }}',
-            'format' : 'iframe',
-            'height' : 90,
-            'width' : 728,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.{{ ads.banner.domain }}/{{ ads.banner.key }}/invoke.js"></script>
+{% if ads %}
+  {% if ads.banner and ads.banner.key %}
+    <div class="hidden md:flex w-full justify-center items-center my-4">
+      <script>
+        atOptions = {
+          'key': '{{ ads.banner.key }}',
+          'format': '{{ ads.banner.format or "iframe" }}',
+          'height': {{ ads.banner.height or 90 }},
+          'width': {{ ads.banner.width or 728 }},
+          'params': {}
+        };
+      </script>
+      <script src="https://www.{{ ads.banner.domain }}/{{ ads.banner.key }}/invoke.js"></script>
     </div>
+  {% endif %}
+
+  {% if ads.banner_mobile and ads.banner_mobile.key %}
+    <div class="md:hidden w-full flex justify-center items-center my-3">
+      <script>
+        atOptions = {
+          'key': '{{ ads.banner_mobile.key }}',
+          'format': '{{ ads.banner_mobile.format or "iframe" }}',
+          'height': {{ ads.banner_mobile.height or 50 }},
+          'width': {{ ads.banner_mobile.width or 320 }},
+          'params': {}
+        };
+      </script>
+      <script src="https://www.{{ ads.banner_mobile.domain }}/{{ ads.banner_mobile.key }}/invoke.js"></script>
+    </div>
+  {% elif ads.banner and ads.banner.key %}
+    <div class="md:hidden w-full flex justify-center items-center my-3 overflow-x-auto">
+      <script>
+        atOptions = {
+          'key': '{{ ads.banner.key }}',
+          'format': '{{ ads.banner.format or "iframe" }}',
+          'height': {{ ads.banner.height or 90 }},
+          'width': {{ ads.banner.width or 728 }},
+          'params': {}
+        };
+      </script>
+      <script src="https://www.{{ ads.banner.domain }}/{{ ads.banner.key }}/invoke.js"></script>
+    </div>
+  {% endif %}
 {% endif %}

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% set show_top_banner = true %}
-{% set top_banner_mobile_only = true %}
 {# --- FIX 1: Dynamic Title & Meta Description for SEO --- #}
 {% block title %}
     {% if video.type == 'series' %}
@@ -173,6 +172,14 @@
                 <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
                     {% include 'ads/banner.html' %}
+                </div>
+            </div>
+
+            <div class="w-full my-4 md:hidden">
+                <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
+                <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100 flex justify-center">
+                    {% set sidebar_ad_compact = true %}
+                    {% include 'ads/sidebar.html' %}
                 </div>
             </div>
 
@@ -561,10 +568,10 @@
                 <div class="bg-white p-4 md:p-8 rounded-b-2xl border border-gray-100 shadow-xl">
                     <h4 class="font-black text-gray-900 uppercase text-lg md:text-xl mb-6 tracking-tighter italic border-b-2 border-[#830506] inline-block">Leave a Reply</h4>
                     <form id="main-comment-form" class="text-black flex flex-col gap-6" data-video-id="{{ video.id }}">
-                        <textarea name="text" placeholder="Write your comment..." class="w-full p-4 md:p-5 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 md:h-40 font-medium text-gray-700"></textarea>
+                        <textarea name="text" placeholder="Write your comment..." class="w-full p-4 md:p-5 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-2xl outline-none transition-all h-32 md:h-40 font-medium text-gray-700" required></textarea>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                             <input type="text" name="name" placeholder="Full Name" class="text-black w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
-                            <input type="email" name="email" placeholder="Email Address" class="text-black w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold" required>
+                            <input type="email" name="email" placeholder="Email Address (optional)" class="text-black w-full p-3 md:p-4 bg-gray-50 border-2 border-transparent focus:border-[#830506] rounded-xl outline-none transition-all font-bold">
                         </div>
                         <button type="submit" class="w-full md:w-fit px-12 py-4 bg-[#830506] text-white font-black uppercase rounded-full hover:bg-black transition-all shadow-lg self-end flex items-center justify-center gap-2">
                             Post <i class="fa-solid fa-paper-plane text-xs"></i>

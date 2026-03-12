@@ -1,5 +1,5 @@
 {% if ads.sidebar and ads.sidebar.key %}
-    <div class="w-full flex justify-center items-center my-4">
+    <div class="w-full flex justify-center items-center {% if sidebar_ad_compact %}my-1{% else %}my-4{% endif %}">
         <script>
           atOptions = {
             'key' : '{{ ads.sidebar.key }}',
