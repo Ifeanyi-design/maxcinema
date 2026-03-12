@@ -13,6 +13,7 @@ import requests
 from datetime import datetime, timedelta
 from functools import wraps
 from slugify import slugify
+import hashlib
 from . import listeners
 from .extensions import db, login_manager
 from .models import (
@@ -1084,11 +1085,26 @@ def navbar(nav, page=1):
 recent_requests=recent_requests)
 
 
-@main_bp.route('/rate/<int:video_id>', methods=['POST'])
+@main_bp.route('/rate/<int:video_id>', methods=['GET', 'POST'])
 def rate_video(video_id):
     video = AllVideo.query.get_or_404(video_id)
-    ip_address = request.remote_addr
-    data = request.get_json()
+    ip_address = request.remote_addr or "0.0.0.0"
+
+    if request.method == 'GET':
+        avg = db.session.query(func.avg(Rating.rating)).filter(Rating.video_id == video.id).scalar() or 0
+        count = db.session.query(func.count(Rating.id)).filter(Rating.video_id == video.id).scalar() or 0
+        breakdown = {}
+        for i in range(1, 6):
+            breakdown[i] = db.session.query(func.count(Rating.id)).filter(
+                Rating.video_id == video.id, Rating.rating == i
+            ).scalar()
+        return jsonify({
+            'average_rating': round(float(avg), 2),
+            'num_votes': count,
+            'breakdown': breakdown
+        })
+
+    data = request.get_json(silent=True) or {}
     new_rating = int(data.get('rating', 0))
 
     if new_rating < 1 or new_rating > 5:
@@ -1123,6 +1139,40 @@ def rate_video(video_id):
         'breakdown': breakdown
     })  
 
+
+def _comment_spam_guard(scope: str, text: str):
+    """
+    Lightweight session-based anti-spam:
+    - 12s cooldown between submissions in same scope.
+    - duplicate message blocked for 10 minutes in same scope.
+    """
+    now_ts = int(time.time())
+    min_interval = 12
+    duplicate_window = 600
+    clean_text = (text or "").strip().lower()
+    text_hash = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
+
+    last_ts_key = f"{scope}_last_ts"
+    last_hash_key = f"{scope}_last_hash"
+    last_hash_ts_key = f"{scope}_last_hash_ts"
+
+    last_ts = session.get(last_ts_key, 0)
+    last_hash = session.get(last_hash_key)
+    last_hash_ts = session.get(last_hash_ts_key, 0)
+
+    if now_ts - last_ts < min_interval:
+        wait_for = min_interval - (now_ts - last_ts)
+        return f"Please wait {wait_for}s before posting again."
+
+    if last_hash == text_hash and (now_ts - last_hash_ts) < duplicate_window:
+        return "Duplicate message detected. Please post a different message."
+
+    session[last_ts_key] = now_ts
+    session[last_hash_key] = text_hash
+    session[last_hash_ts_key] = now_ts
+    session.modified = True
+    return None
+
 @main_bp.route('/comment/add/<int:video_id>', methods=['POST'])
 @main_bp.route('/comment/add/<int:video_id>/<string:type>', methods=['POST'])
 def add_comment(video_id, type="video"):
@@ -1146,6 +1196,10 @@ def add_comment(video_id, type="video"):
     # Keep DB compatibility (Comment.email is non-nullable) while making email optional in UI.
     if not email:
         email = f"anonymous+{int(time.time() * 1000)}-{random.randint(1000, 9999)}@maxcinema.local"
+
+    spam_error = _comment_spam_guard(f"comment_add_{type}_{video_id}", text)
+    if spam_error:
+        return jsonify({'success': False, 'error': spam_error}), 429
 
     video_obj = None
     comment = None
@@ -1217,6 +1271,10 @@ def reply_comment(video_id, type="video"):
 
     if not email:
         email = f"anonymous+{int(time.time() * 1000)}-{random.randint(1000, 9999)}@maxcinema.local"
+
+    spam_error = _comment_spam_guard(f"comment_reply_{type}_{video_id}_{parent_id}", text)
+    if spam_error:
+        return jsonify({'success': False, 'error': spam_error}), 429
 
     video_obj = None
     reply = None

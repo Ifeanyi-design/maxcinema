@@ -32,7 +32,9 @@ function toggleMenu(){
         showMe = false;
     }
 }
-menuBtn.addEventListener("click", toggleMenu);
+if (menuBtn) {
+    menuBtn.addEventListener("click", toggleMenu);
+}
 
 const toggleGenreMenu = ()=>{
     gerneModal.classList.toggle("hiddennav");
@@ -48,23 +50,25 @@ const closeGenreMenu = () =>{
     gerneModal.classList.add("pointer-events-none");
 }
 
-gerneBtn.addEventListener("mouseenter", toggleGenreMenu);
+if (gerneBtn && gerneModal) {
+    gerneBtn.addEventListener("mouseenter", toggleGenreMenu);
 
-gerneBtn.addEventListener("mouseleave", (e)=>{
-    setTimeout(()=>{
-        if(!gerneModal.matches(":hover") && !gerneBtn.matches(":hover")){
-            closeGenreMenu();
-        }
-    }, 100);
-})
+    gerneBtn.addEventListener("mouseleave", () => {
+        setTimeout(() => {
+            if(!gerneModal.matches(":hover") && !gerneBtn.matches(":hover")){
+                closeGenreMenu();
+            }
+        }, 100);
+    });
 
-gerneModal.addEventListener("mouseleave", (e)=>{
-    setTimeout(()=>{
-        if(!gerneModal.matches(":hover") && !gerneBtn.matches(":hover")){
-            closeGenreMenu();
-        }
-    }, 100);
-})
+    gerneModal.addEventListener("mouseleave", () => {
+        setTimeout(() => {
+            if(!gerneModal.matches(":hover") && !gerneBtn.matches(":hover")){
+                closeGenreMenu();
+            }
+        }, 100);
+    });
+}
 
 
 // Safe scrolling handlers: only wire up if the expected elements exist
@@ -104,30 +108,43 @@ if (featureContainer && (scrollLeft || scrollRight)) {
 
 
 
-searchBtn.addEventListener("click", ()=>{
-    desksearchContainer.classList.toggle("hidden");
-    desksearchContainer.classList.toggle("flex");
-    desksearchInput.focus();
-});
-MobileSearchBtn.addEventListener("click", ()=>{
-    MobileSearch.classList.toggle("hidden");
-    MobileSearch.classList.toggle("flex");
-    MobileSearchInput.focus();
-});
+if (searchBtn && desksearchContainer && desksearchInput) {
+    searchBtn.addEventListener("click", ()=>{
+        desksearchContainer.classList.toggle("hidden");
+        desksearchContainer.classList.toggle("flex");
+        desksearchInput.focus();
+    });
+}
+if (MobileSearchBtn && MobileSearch && MobileSearchInput) {
+    MobileSearchBtn.addEventListener("click", ()=>{
+        MobileSearch.classList.toggle("hidden");
+        MobileSearch.classList.toggle("flex");
+        MobileSearchInput.focus();
+    });
+}
 
 document.addEventListener("click", (e)=>{
-    if(!searchBtn.contains(e.target) && !desksearchContainer.contains(e.target) && !desksearchInput.contains(e.target)){
+    if(
+        searchBtn &&
+        desksearchContainer &&
+        desksearchInput &&
+        !searchBtn.contains(e.target) &&
+        !desksearchContainer.contains(e.target) &&
+        !desksearchInput.contains(e.target)
+    ){
         desksearchContainer.classList.add("hidden");
         desksearchContainer.classList.remove("flex");
     }
 })
 
 
-genreNav.scrollTo({ left: 60, behavior: 'smooth' });
-setTimeout(() => genreNav.scrollTo({ left: 0, behavior: 'smooth' }), 500);
+if (genreNav) {
+    genreNav.scrollTo({ left: 60, behavior: 'smooth' });
+    setTimeout(() => genreNav.scrollTo({ left: 0, behavior: 'smooth' }), 500);
+}
 
 document.addEventListener("click", (e)=>{
-    if(!menuBtn.contains(e.target) && !nav.contains(e.target)){
+    if(menuBtn && nav && hamburger && navMenu && !menuBtn.contains(e.target) && !nav.contains(e.target)){
         hamburger.classList.remove("open")
         nav.classList.remove("open")
         navMenu.classList.remove("open")
@@ -136,11 +153,9 @@ document.addEventListener("click", (e)=>{
 });
 
 document.addEventListener("click", (e) => {
-    const mobileSearch = document.getElementById("MobileSearch");
-    const mobileSearchInput = document.getElementById("MobileSearchInput");
-    const searchIcon = document.getElementById("MobileSearchBtn"); // if you have a search icon button
-
     if (
+        MobileSearch &&
+        MobileSearchBtn &&
         !MobileSearch.contains(e.target) &&
         !MobileSearchBtn.contains(e.target)
     ) {

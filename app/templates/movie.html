@@ -645,6 +645,29 @@
 
 {% block script %}
     <script>
+        (function saveRecentlyViewed() {
+            const item = {
+                title: {{ video.name|tojson }},
+                url: window.location.href,
+                image: {{ video.image|tojson }},
+                type: {{ video.type|tojson }},
+                year: {{ (video.year_produced or '')|tojson }}
+            };
+            const key = "maxcinema_recently_viewed";
+            let list = [];
+            try {
+                list = JSON.parse(localStorage.getItem(key) || "[]");
+            } catch (e) {
+                list = [];
+            }
+
+            list = Array.isArray(list) ? list.filter(x => x && x.url !== item.url) : [];
+            list.unshift(item);
+            list = list.slice(0, 20);
+            localStorage.setItem(key, JSON.stringify(list));
+        })();
+    </script>
+    <script>
 document.addEventListener('DOMContentLoaded', function() {
     const shareBtn = document.getElementById('shareVideoBtn');
 
