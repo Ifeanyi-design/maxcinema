@@ -324,10 +324,20 @@ def index(page=1):
             "episode": None,
         })
 
+    nearest_episode_by_series = {}
     for ep in upcoming_episode_rows:
         season_obj = ep.season
         if not season_obj or not season_obj.series or not season_obj.series.all_video:
             continue
+        parent_video = season_obj.series.all_video
+        parent_id = parent_video.id
+        prev = nearest_episode_by_series.get(parent_id)
+        if prev and prev.released_date and ep.released_date and prev.released_date <= ep.released_date:
+            continue
+        nearest_episode_by_series[parent_id] = ep
+
+    for ep in nearest_episode_by_series.values():
+        season_obj = ep.season
         parent_video = season_obj.series.all_video
         season_no = season_obj.season_number
         episode_no = ep.episode_number
