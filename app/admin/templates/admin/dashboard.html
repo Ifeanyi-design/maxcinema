@@ -188,6 +188,77 @@
             <h1 class="text-4xl lg:text-3xl font-bold">Admin Dashboard</h1>
         </div>
 
+        <section class="mb-8 bg-gray-800 border border-gray-700 rounded-xl p-4">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-300 mb-3">Ads Health</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                <div class="rounded-lg border border-gray-700 p-3">
+                    <p class="text-gray-400 text-[10px] font-black uppercase">Banner Desktop</p>
+                    <p class="{% if ads.banner and ads.banner.key %}text-green-400{% else %}text-red-400{% endif %} font-bold">
+                        {% if ads.banner and ads.banner.key %}Configured{% else %}Missing{% endif %}
+                    </p>
+                </div>
+                <div class="rounded-lg border border-gray-700 p-3">
+                    <p class="text-gray-400 text-[10px] font-black uppercase">Banner Mobile</p>
+                    <p class="{% if ads.banner_mobile and ads.banner_mobile.key %}text-green-400{% else %}text-yellow-400{% endif %} font-bold">
+                        {% if ads.banner_mobile and ads.banner_mobile.key %}Configured{% else %}Optional / Missing{% endif %}
+                    </p>
+                </div>
+                <div class="rounded-lg border border-gray-700 p-3">
+                    <p class="text-gray-400 text-[10px] font-black uppercase">Sticky Desktop</p>
+                    <p class="{% if ads.sticky_desktop and ads.sticky_desktop.key %}text-green-400{% else %}text-red-400{% endif %} font-bold">
+                        {% if ads.sticky_desktop and ads.sticky_desktop.key %}Configured{% else %}Missing{% endif %}
+                    </p>
+                </div>
+                <div class="rounded-lg border border-gray-700 p-3">
+                    <p class="text-gray-400 text-[10px] font-black uppercase">Sticky Mobile</p>
+                    <p class="{% if ads.sticky_mobile and ads.sticky_mobile.key %}text-green-400{% else %}text-red-400{% endif %} font-bold">
+                        {% if ads.sticky_mobile and ads.sticky_mobile.key %}Configured{% else %}Missing{% endif %}
+                    </p>
+                </div>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-3">If top banner is blank, verify <span class="font-bold text-white">AD_BANNER_KEY</span> and matching <span class="font-bold text-white">AD_IFRAME_DOMAIN</span>.</p>
+        </section>
+
+        <section class="mb-10 bg-gray-800 border border-gray-700 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-black uppercase tracking-wider text-gray-300">Recent Analytics Events</h2>
+                <span class="text-[10px] uppercase font-bold text-gray-500">Last 20</span>
+            </div>
+
+            {% if not analytics_available %}
+            <div class="text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                Analytics table not available yet. Run DB migration to enable this panel.
+            </div>
+            {% else %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
+                        <tr>
+                            <th class="py-2 pr-2">Time</th>
+                            <th class="py-2 pr-2">Event</th>
+                            <th class="py-2 pr-2">Target</th>
+                            <th class="py-2">Page</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-200">
+                        {% for ev in recent_analytics %}
+                        <tr class="border-b border-gray-700/60">
+                            <td class="py-2 pr-2 whitespace-nowrap">{{ ev.date_added.strftime('%b %d %H:%M') }}</td>
+                            <td class="py-2 pr-2 font-bold text-green-400">{{ ev.event }}</td>
+                            <td class="py-2 pr-2 max-w-[220px] truncate">{{ ev.target or '-' }}</td>
+                            <td class="py-2 max-w-[320px] truncate">{{ ev.page or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="py-4 text-gray-500">No events captured yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+
         <h2 class="text-3xl lg:text-2xl font-bold mb-4 mt-10">Manage Content</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {% for video in all_videos %}

@@ -3,7 +3,7 @@ from sqlalchemy import or_, func
 from sqlalchemy.orm import aliased
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
-from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest, SearchTerm
+from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest, SearchTerm, AnalyticsEvent
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
@@ -194,6 +194,19 @@ def dashboard():
             'slug': v.slug
         })
 
+    recent_analytics = []
+    analytics_available = True
+    try:
+        recent_analytics = (
+            AnalyticsEvent.query
+            .order_by(AnalyticsEvent.date_added.desc())
+            .limit(20)
+            .all()
+        )
+    except Exception:
+        analytics_available = False
+        recent_analytics = []
+
     return render_template(
         'admin/dashboard.html',
         total_movies=total_movies,
@@ -204,7 +217,9 @@ def dashboard():
         storage_info=storage_info,
         all_videos=all_videos_dict,
         videos_page=videos_page,
-        total_requests=total_requests
+        total_requests=total_requests,
+        recent_analytics=recent_analytics,
+        analytics_available=analytics_available
     )
 
 import json

@@ -107,6 +107,7 @@
     <script src="{{ url_for('static', filename='js/trending.js') }}"></script>
     <script src="{{ url_for('static', filename='js/comment.js') }}"></script>
     <script src="{{ url_for('static', filename='js/recent.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
     
     <script>
         function setHeaderPadding() {
@@ -239,5 +240,15 @@
     {% include 'ads/popunder.html' %}
     <script src="https://pl28314200.effectivegatecpm.com/81/d2/13/81d2132d6afc8317fc42e3a20b663e83.js"></script>
     {% include 'ads/stickyads.html' %}
+    <script>
+        // Global image fallback to avoid broken poster boxes.
+        document.addEventListener('error', function(e) {
+            const target = e.target;
+            if (!(target instanceof HTMLImageElement)) return;
+            if (target.dataset.fallbackApplied === '1') return;
+            target.dataset.fallbackApplied = '1';
+            target.src = 'https://res.cloudinary.com/da4thsw5a/image/upload/v1768031437/android-chrome-192x192_juadt7.png';
+        }, true);
+    </script>
 </body>
 </html>

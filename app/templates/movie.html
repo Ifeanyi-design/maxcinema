@@ -553,6 +553,18 @@
                 <div class="w-full bg-[#830506] text-white font-black p-4 text-center rounded-t-2xl uppercase tracking-tighter text-lg shadow-md">
                     <i class="fa-solid fa-comments mr-2"></i> {{ num_comment }} Conversation{{ 's' if num_comment != 1 else '' }}
                 </div>
+                {% if pinned_admin_comment %}
+                {% set pinned_name = pinned_admin_comment.name[8:] if pinned_admin_comment.name.startswith('[ADMIN] ') else pinned_admin_comment.name %}
+                <div class="bg-black text-white p-4 border-x border-gray-900">
+                    <div class="flex items-start gap-3">
+                        <span class="shrink-0 px-2 py-1 rounded-full bg-[#830506] text-[10px] font-black uppercase tracking-wider">Admin Note</span>
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-400 font-bold uppercase">{{ pinned_name }} • {{ pinned_admin_comment.date_added.strftime('%b %d, %Y %I:%M %p') }}</p>
+                            <p class="text-sm md:text-base text-gray-100 mt-1 leading-relaxed">{{ pinned_admin_comment.text }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 <div id="comments-container" class="bg-gray-50/50 p-3 md:p-4 border-x border-gray-100 space-y-4">
                     {% if comments %}
                         {% for comment in comments %}

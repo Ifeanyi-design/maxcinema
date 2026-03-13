@@ -18,7 +18,7 @@ from . import listeners
 from .extensions import db, login_manager
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
-    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm
+    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent
 )
 
 main_bp = Blueprint("main", __name__)
@@ -525,6 +525,11 @@ def movie_details(det, name, id):
         parent_id=None
     ).count()
     comments = Comment.query.filter_by(video_id=movie.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    pinned_admin_comment = (Comment.query
+        .filter_by(video_id=movie.id, parent_id=None)
+        .filter(Comment.name.like('[ADMIN] %'))
+        .order_by(Comment.date_added.desc())
+        .first())
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
@@ -560,7 +565,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
@@ -612,6 +617,11 @@ def series_details(det, name, season, episode, id):
         parent_id=None
     ).count()
     comments = Comment.query.filter_by(video_id=series.id, parent_id=None).order_by(Comment.date_added.desc()).all()    
+    pinned_admin_comment = (Comment.query
+        .filter_by(video_id=series.id, parent_id=None)
+        .filter(Comment.name.like('[ADMIN] %'))
+        .order_by(Comment.date_added.desc())
+        .first())
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
@@ -646,7 +656,7 @@ def series_details(det, name, season, episode, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
 
 
 @main_bp.route("/download/<type>/<int:id>")
@@ -899,11 +909,17 @@ def watch_trailer(det="trailer_watch", name=None):
         trailer_id=trailer.id,
         parent_id=None
     ).order_by(Comment.date_added.desc()).all()
+    pinned_admin_comment = (Comment.query
+        .filter_by(trailer_id=trailer.id, parent_id=None)
+        .filter(Comment.name.like('[ADMIN] %'))
+        .order_by(Comment.date_added.desc())
+        .first())
 
     return render_template(
         f"{det}.html",
         trailer=trailer,
         comments=comments,
+        pinned_admin_comment=pinned_admin_comment,
         dark=dark,
         up_next=up_next,
         num_comment=num_comment,
@@ -1449,6 +1465,47 @@ def ping():
     # This is CRITICAL for the Free Tier (saves your 100 hours).
     # =========================================================
     return "App is awake (DB Sleeping)", 200
+
+
+@main_bp.route('/track/event', methods=['POST'])
+def track_event():
+    payload = request.get_json(silent=True) or {}
+    event = (payload.get('event') or '').strip().lower()
+    target = (payload.get('target') or '').strip()[:120]
+    page = (payload.get('page') or '').strip()[:240]
+
+    allowed = {
+        'download_click',
+        'search_submit',
+        'request_submit',
+        'share_click'
+    }
+    if event not in allowed:
+        return jsonify({'success': False, 'error': 'Invalid event'}), 400
+
+    current_app.logger.info(
+        "analytics_event event=%s target=%s page=%s ip=%s ua=%s",
+        event,
+        target,
+        page,
+        request.remote_addr,
+        request.headers.get('User-Agent', '')[:180]
+    )
+
+    # Persist when table exists; keep endpoint resilient if migration is pending.
+    try:
+        db.session.add(AnalyticsEvent(
+            event=event,
+            target=target,
+            page=page,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent', '')[:180]
+        ))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    return jsonify({'success': True}), 200
 
 
     # =========================================================

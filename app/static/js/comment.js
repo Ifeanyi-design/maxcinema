@@ -78,7 +78,8 @@ document.addEventListener('click', function(e) {
         let commentCard = btn.closest('.comment-card');
         
         // Dark mode styles for input
-        let inputBg = isTrailer ? 'bg-gray-100 dark:bg-gray-700 dark:text-white' : 'bg-gray-100';
+        let inputBg = isTrailer ? 'bg-gray-100 dark:bg-gray-700' : 'bg-gray-100';
+        let textColor = isTrailer ? 'text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-300' : 'text-black placeholder-gray-500';
         // Class to identify the box later
         let boxClass = isTrailer ? 'trailer-reply-box' : 'reply-box';
 
@@ -92,9 +93,9 @@ document.addEventListener('click', function(e) {
         // HTML Template for the reply box
         let replyHtml = `
             <div class="${boxClass} mt-3 rounded-xl border border-gray-200 ${isTrailer ? 'dark:border-white/10' : ''} bg-white ${isTrailer ? 'dark:bg-[#171717]' : ''} p-3 md:p-4 flex flex-col gap-3 slide-fade-enter">
-                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Name</label><input type="text" class="r-name mt-1 w-full ${inputBg} text-black rounded-lg h-11 px-3" placeholder="Your name"></div>
-                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Email (optional)</label><input type="email" class="r-email mt-1 w-full ${inputBg} text-black rounded-lg h-11 px-3" placeholder="you@example.com"></div>
-                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Reply</label><textarea class="r-text mt-1 w-full ${inputBg} text-black rounded-lg min-h-28 p-3" placeholder="Write your reply..."></textarea></div>
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Name</label><input type="text" class="r-name mt-1 w-full ${inputBg} ${textColor} rounded-lg h-11 px-3" placeholder="Your name"></div>
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Email (optional)</label><input type="email" class="r-email mt-1 w-full ${inputBg} ${textColor} rounded-lg h-11 px-3" placeholder="you@example.com"></div>
+                <div><label class="text-[10px] uppercase font-black tracking-wider text-gray-500 ${isTrailer ? 'dark:text-gray-300' : ''}">Reply</label><textarea class="r-text mt-1 w-full ${inputBg} ${textColor} rounded-lg min-h-28 p-3" placeholder="Write your reply..."></textarea></div>
                 <div class="flex gap-2">
                     <button class="do-reply py-2.5 px-4 bg-[#830506] rounded-lg text-white hover:bg-black text-xs font-black uppercase tracking-wider" 
                         data-parent="${parentId}" data-video="${videoId}" data-trailer="${isTrailer}">Send</button>

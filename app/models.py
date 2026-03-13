@@ -333,3 +333,15 @@ class SearchTerm(db.Model):
 
     def __repr__(self):
         return f"<Search {self.term}: {self.count}>"
+
+
+class AnalyticsEvent(db.Model):
+    __tablename__ = "analytics_event"
+
+    id = db.Column(db.Integer, primary_key=True)
+    event = db.Column(db.String(50), nullable=False, index=True)
+    target = db.Column(db.String(120), nullable=True)
+    page = db.Column(db.String(240), nullable=True)
+    ip_address = db.Column(db.String(64), nullable=True)
+    user_agent = db.Column(db.String(180), nullable=True)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
