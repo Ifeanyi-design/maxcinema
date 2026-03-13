@@ -1,4 +1,4 @@
-﻿{% extends "admin/base.html" %}
+{% extends "admin/base.html" %}
 {% block content %}
 <div class="flex h-screen bg-gray-900 text-white overflow-hidden">
     {% include 'admin/sidebar.html' %}
@@ -7,41 +7,46 @@
         <div class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight">Site Analytics</h1>
-                <p class="text-xs md:text-sm text-gray-400">Traffic, engagement, requests, storage, and search demand in one view.</p>
+                <p class="text-xs md:text-sm text-gray-400">Ad slots, search demand, request funnel, and content performance in one view.</p>
             </div>
             <div class="text-[11px] text-gray-400 uppercase tracking-wider font-bold">Live Snapshot</div>
         </div>
 
-        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4 mb-8">
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8 gap-4 mb-8">
             <article class="rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-cyan-300 tracking-wider">Total Content</p>
                 <p class="text-2xl font-black mt-1">{{ total_content }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">Movies + series + trailers</p>
             </article>
             <article class="rounded-2xl border border-blue-500/20 bg-gradient-to-b from-blue-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-blue-300 tracking-wider">Total Users</p>
                 <p class="text-2xl font-black mt-1">{{ total_users }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">Registered accounts</p>
             </article>
             <article class="rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-emerald-300 tracking-wider">Total Views</p>
                 <p class="text-2xl font-black mt-1">{{ total_views }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">Content page views</p>
             </article>
             <article class="rounded-2xl border border-purple-500/20 bg-gradient-to-b from-purple-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-purple-300 tracking-wider">Downloads</p>
                 <p class="text-2xl font-black mt-1">{{ total_downloads }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">Movie + episode total</p>
             </article>
             <article class="rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-amber-300 tracking-wider">Pending Requests</p>
                 <p class="text-2xl font-black mt-1">{{ pending_requests }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">Needs upload action</p>
             </article>
             <article class="rounded-2xl border border-green-500/20 bg-gradient-to-b from-green-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-green-300 tracking-wider">Fill Rate</p>
                 <p class="text-2xl font-black mt-1">{{ fill_rate }}%</p>
-                <p class="text-[11px] text-gray-400 mt-1">{{ req_filled }} of {{ req_total }} requests</p>
+                <p class="text-[11px] text-gray-400 mt-1">{{ req_filled }} / {{ req_total }}</p>
+            </article>
+            <article class="rounded-2xl border border-pink-500/20 bg-gradient-to-b from-pink-500/15 to-gray-800 p-4">
+                <p class="text-[10px] font-black uppercase text-pink-300 tracking-wider">Ad Views (30d)</p>
+                <p class="text-2xl font-black mt-1">{{ ad_total_views }}</p>
+                <p class="text-[11px] text-gray-400 mt-1">CTR {{ ad_overall_ctr }}%</p>
+            </article>
+            <article class="rounded-2xl border border-indigo-500/20 bg-gradient-to-b from-indigo-500/15 to-gray-800 p-4">
+                <p class="text-[10px] font-black uppercase text-indigo-300 tracking-wider">New Requests (7d)</p>
+                <p class="text-2xl font-black mt-1">{{ req_7d }}</p>
+                <p class="text-[11px] text-gray-400 mt-1">30d: {{ req_30d }}</p>
             </article>
         </section>
 
@@ -69,7 +74,7 @@
                     <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Request Status Split</h2>
                     <span class="text-[10px] font-bold text-gray-500 uppercase">Pending/Filled/Rejected</span>
                 </div>
-                <div class="h-[280px]"><canvas id="requestChart"></canvas></div>
+                <div class="h-[260px]"><canvas id="requestChart"></canvas></div>
                 <div class="grid grid-cols-3 gap-2 mt-3 text-center">
                     <div class="rounded-lg bg-amber-500/10 border border-amber-500/20 py-2">
                         <p class="text-[10px] uppercase text-amber-300 font-black">Pending</p>
@@ -88,61 +93,211 @@
 
             <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-2">
                 <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Storage Server Health</h2>
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">Capacity Monitor</span>
+                    <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Request Funnel Trend (14d)</h2>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Backlog: {{ stale_pending }} stale pending</span>
                 </div>
-                <div class="space-y-4">
-                    {% for server in server_stats %}
-                    <div class="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <p class="text-sm font-bold text-gray-100">{{ server.name }}</p>
-                            <p class="text-xs font-bold text-gray-400">{{ server.used }}GB / {{ server.total }}GB ({{ server.percent }}%)</p>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-                            {% set bar_color = 'bg-emerald-500' %}
-                            {% if server.percent > 90 %}
-                                {% set bar_color = 'bg-red-600' %}
-                            {% elif server.percent > 70 %}
-                                {% set bar_color = 'bg-amber-500' %}
-                            {% endif %}
-                            <div class="{{ bar_color }} h-3 rounded-full transition-all duration-700" style="width: {{ server.percent }}%"></div>
-                        </div>
+                <div class="h-[260px] mb-4"><canvas id="requestTrendChart"></canvas></div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+                    <div class="rounded-lg bg-sky-500/10 border border-sky-500/20 py-2">
+                        <p class="text-[10px] uppercase text-sky-300 font-black">Requests (7d)</p>
+                        <p class="text-sm font-black">{{ req_7d }}</p>
                     </div>
-                    {% else %}
-                    <p class="text-gray-500 text-sm">No storage servers configured yet.</p>
-                    {% endfor %}
+                    <div class="rounded-lg bg-indigo-500/10 border border-indigo-500/20 py-2">
+                        <p class="text-[10px] uppercase text-indigo-300 font-black">Requests (30d)</p>
+                        <p class="text-sm font-black">{{ req_30d }}</p>
+                    </div>
+                    <div class="rounded-lg bg-rose-500/10 border border-rose-500/20 py-2">
+                        <p class="text-[10px] uppercase text-rose-300 font-black">Stale Pending (&gt;7d)</p>
+                        <p class="text-sm font-black">{{ stale_pending }}</p>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-8">
+            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-2">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Ad Performance by Placement (30d)</h2>
+                    <span class="text-[10px] font-bold text-gray-500 uppercase">Mobile share: {{ ad_mobile_share }}%</span>
+                </div>
+                <div class="h-[280px]"><canvas id="adPlacementChart"></canvas></div>
+            </article>
+            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-1">
+                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200 mb-3">Ad KPIs</h2>
+                <div class="space-y-3">
+                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
+                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Tracked Views</p>
+                        <p class="text-lg font-black text-white">{{ ad_total_views }}</p>
+                    </div>
+                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
+                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Tracked Clicks</p>
+                        <p class="text-lg font-black text-white">{{ ad_total_clicks }}</p>
+                    </div>
+                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
+                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Overall CTR</p>
+                        <p class="text-lg font-black text-white">{{ ad_overall_ctr }}%</p>
+                    </div>
                 </div>
             </article>
         </section>
 
         <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-8">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Most Searched Terms</h2>
-                <a href="{{ url_for('admin.search_terms_page') }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase rounded-lg transition">View Full List</a>
+                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Ad Placement Breakdown</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs md:text-sm">
                     <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
                         <tr>
-                            <th class="py-2 pr-3">#</th>
-                            <th class="py-2 pr-3">Term</th>
-                            <th class="py-2 pr-3">Count</th>
-                            <th class="py-2">Last Searched</th>
+                            <th class="py-2 pr-3">Placement</th>
+                            <th class="py-2 pr-3">Views</th>
+                            <th class="py-2 pr-3">Clicks</th>
+                            <th class="py-2 pr-3">CTR</th>
+                            <th class="py-2 pr-3">Mobile Views</th>
+                            <th class="py-2">Desktop Views</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-200 divide-y divide-gray-700/80">
-                        {% for search in top_searches %}
+                        {% for row in ad_placement_rows %}
                         <tr class="hover:bg-gray-700/30 transition-colors">
-                            <td class="py-2 pr-3">{{ loop.index }}</td>
-                            <td class="py-2 pr-3 font-bold capitalize">{{ search.term }}</td>
-                            <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full bg-gray-700 text-[11px] font-black">{{ search.count }}</span></td>
-                            <td class="py-2 text-gray-400">{{ search.last_searched.strftime('%Y-%m-%d') }}</td>
+                            <td class="py-2 pr-3 font-bold">{{ row.placement.replace('_', ' ') }}</td>
+                            <td class="py-2 pr-3">{{ row.views }}</td>
+                            <td class="py-2 pr-3">{{ row.clicks }}</td>
+                            <td class="py-2 pr-3">{{ row.ctr }}%</td>
+                            <td class="py-2 pr-3">{{ row.mobile_views }}</td>
+                            <td class="py-2">{{ row.desktop_views }}</td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="4" class="py-4 text-center text-gray-500">No search data yet.</td></tr>
+                        <tr><td colspan="6" class="py-4 text-center text-gray-500">No ad slot analytics yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-8">
+            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Most Searched Terms</h2>
+                    <a href="{{ url_for('admin.search_terms_page') }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase rounded-lg transition">View Full List</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                        <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
+                            <tr>
+                                <th class="py-2 pr-3">#</th>
+                                <th class="py-2 pr-3">Term</th>
+                                <th class="py-2 pr-3">Count</th>
+                                <th class="py-2">Last Searched</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-200 divide-y divide-gray-700/80">
+                            {% for search in top_searches %}
+                            <tr class="hover:bg-gray-700/30 transition-colors">
+                                <td class="py-2 pr-3">{{ loop.index }}</td>
+                                <td class="py-2 pr-3 font-bold capitalize">{{ search.term }}</td>
+                                <td class="py-2 pr-3"><span class="px-2 py-0.5 rounded-full bg-gray-700 text-[11px] font-black">{{ search.count }}</span></td>
+                                <td class="py-2 text-gray-400">{{ search.last_searched.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="py-4 text-center text-gray-500">No search data yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-1">
+                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200 mb-3">Search Insights</h2>
+                <div class="mb-4">
+                    <p class="text-[10px] uppercase text-gray-400 font-black tracking-wider mb-2">Recent Searches</p>
+                    <div class="space-y-1.5">
+                        {% for s in recent_searches %}
+                        <div class="rounded-lg bg-gray-900/40 border border-gray-700 px-2 py-1.5 text-xs flex justify-between gap-2">
+                            <span class="truncate">{{ s.term }}</span>
+                            <span class="text-gray-400">{{ s.last_searched.strftime('%m-%d') }}</span>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500 text-xs">No recent searches.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase text-gray-400 font-black tracking-wider mb-2">Likely Missing Content Terms</p>
+                    <div class="space-y-1.5">
+                        {% for s in likely_no_result_terms %}
+                        <div class="rounded-lg bg-rose-500/10 border border-rose-500/20 px-2 py-1.5 text-xs flex justify-between gap-2">
+                            <span class="truncate">{{ s.term }}</span>
+                            <span class="font-black">{{ s.count }}</span>
+                        </div>
+                        {% else %}
+                        <p class="text-gray-500 text-xs">No likely gaps detected.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Top Content Performance</h2>
+                <span class="text-[10px] font-bold text-gray-500 uppercase">Views + Downloads + Comments</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs md:text-sm">
+                    <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
+                        <tr>
+                            <th class="py-2 pr-3">Title</th>
+                            <th class="py-2 pr-3">Type</th>
+                            <th class="py-2 pr-3">Views</th>
+                            <th class="py-2 pr-3">Downloads</th>
+                            <th class="py-2 pr-3">Comments</th>
+                            <th class="py-2">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-200 divide-y divide-gray-700/80">
+                        {% for row in top_content_rows %}
+                        <tr class="hover:bg-gray-700/30 transition-colors">
+                            <td class="py-2 pr-3 font-bold">{{ row.name }}</td>
+                            <td class="py-2 pr-3 uppercase">{{ row.type }}</td>
+                            <td class="py-2 pr-3">{{ row.views }}</td>
+                            <td class="py-2 pr-3">{{ row.downloads }}</td>
+                            <td class="py-2 pr-3">{{ row.comments }}</td>
+                            <td class="py-2"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-black">{{ row.score }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="py-4 text-center text-gray-500">No content metrics yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Storage Server Health</h2>
+                <span class="text-[10px] font-bold text-gray-500 uppercase">Capacity Monitor</span>
+            </div>
+            <div class="space-y-4">
+                {% for server in server_stats %}
+                <div class="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm font-bold text-gray-100">{{ server.name }}</p>
+                        <p class="text-xs font-bold text-gray-400">{{ server.used }}GB / {{ server.total }}GB ({{ server.percent }}%)</p>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                        {% set bar_color = 'bg-emerald-500' %}
+                        {% if server.percent > 90 %}
+                            {% set bar_color = 'bg-red-600' %}
+                        {% elif server.percent > 70 %}
+                            {% set bar_color = 'bg-amber-500' %}
+                        {% endif %}
+                        <div class="{{ bar_color }} h-3 rounded-full transition-all duration-700" style="width: {{ server.percent }}%"></div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No storage servers configured yet.</p>
+                {% endfor %}
             </div>
         </section>
     </div>
@@ -219,6 +374,70 @@
                     position: 'bottom',
                     labels: { color: '#9CA3AF', boxWidth: 12, boxHeight: 12 }
                 }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('requestTrendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ req_trend_labels | tojson }},
+            datasets: [{
+                label: 'New Requests',
+                data: {{ req_trend_counts | tojson }},
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.2)',
+                borderWidth: 2,
+                pointRadius: 2,
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#9CA3AF' } }
+            },
+            scales: {
+                x: { ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } },
+                y: { beginAtZero: true, ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('adPlacementChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ ad_labels | tojson }},
+            datasets: [
+                {
+                    label: 'Views',
+                    data: {{ ad_views_series | tojson }},
+                    backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Clicks',
+                    data: {{ ad_clicks_series | tojson }},
+                    backgroundColor: 'rgba(236, 72, 153, 0.75)',
+                    borderColor: '#ec4899',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#9CA3AF' } }
+            },
+            scales: {
+                x: { ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } },
+                y: { beginAtZero: true, ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } }
             }
         }
     });

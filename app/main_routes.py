@@ -1478,7 +1478,9 @@ def track_event():
         'download_click',
         'search_submit',
         'request_submit',
-        'share_click'
+        'share_click',
+        'ad_slot_view',
+        'ad_slot_click'
     }
     if event not in allowed:
         return jsonify({'success': False, 'error': 'Invalid event'}), 400

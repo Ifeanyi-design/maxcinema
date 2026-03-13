@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import defaultdict
 from sqlalchemy import or_, func
 from sqlalchemy.orm import aliased
 from os import name
@@ -1153,6 +1154,77 @@ def stats_dashboard():
 
     # --- 5. SEARCH TERMS ---
     top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+    recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(8).all()
+
+    # Heuristic: "no result" opportunities based on no active title match.
+    likely_no_result_terms = []
+    search_candidates = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(40).all()
+    for st in search_candidates:
+        has_match = AllVideo.query.filter(
+            AllVideo.active.is_(True),
+            AllVideo.name.ilike(f"%{st.term}%")
+        ).first()
+        if not has_match:
+            likely_no_result_terms.append(st)
+        if len(likely_no_result_terms) >= 8:
+            break
+
+    # --- 5b. AD PERFORMANCE (LAST 30 DAYS) ---
+    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    ad_events = AnalyticsEvent.query.filter(
+        AnalyticsEvent.date_added >= thirty_days_ago,
+        AnalyticsEvent.event.in_(["ad_slot_view", "ad_slot_click"])
+    ).all()
+
+    placement_stats_map = defaultdict(lambda: {
+        "views": 0,
+        "clicks": 0,
+        "mobile_views": 0,
+        "desktop_views": 0
+    })
+
+    for ev in ad_events:
+        raw_target = (ev.target or "").strip().lower()
+        parts = raw_target.split("|")
+        placement = parts[0] if parts and parts[0] else "unknown"
+        device = parts[1] if len(parts) > 1 and parts[1] else "unknown"
+
+        if ev.event == "ad_slot_view":
+            placement_stats_map[placement]["views"] += 1
+            if device == "mobile":
+                placement_stats_map[placement]["mobile_views"] += 1
+            elif device == "desktop":
+                placement_stats_map[placement]["desktop_views"] += 1
+        elif ev.event == "ad_slot_click":
+            placement_stats_map[placement]["clicks"] += 1
+
+    ad_placement_rows = []
+    for placement, stat in placement_stats_map.items():
+        views = stat["views"]
+        clicks = stat["clicks"]
+        ctr = round((clicks / views) * 100, 2) if views else 0.0
+        ad_placement_rows.append({
+            "placement": placement,
+            "views": views,
+            "clicks": clicks,
+            "ctr": ctr,
+            "mobile_views": stat["mobile_views"],
+            "desktop_views": stat["desktop_views"]
+        })
+
+    ad_placement_rows.sort(key=lambda x: x["views"], reverse=True)
+    ad_placement_rows = ad_placement_rows[:8]
+
+    ad_total_views = sum(r["views"] for r in ad_placement_rows)
+    ad_total_clicks = sum(r["clicks"] for r in ad_placement_rows)
+    ad_overall_ctr = round((ad_total_clicks / ad_total_views) * 100, 2) if ad_total_views else 0.0
+    ad_mobile_share = round(
+        (sum(r["mobile_views"] for r in ad_placement_rows) / ad_total_views) * 100, 1
+    ) if ad_total_views else 0
+
+    ad_labels = [r["placement"].replace("_", " ").title() for r in ad_placement_rows]
+    ad_views_series = [r["views"] for r in ad_placement_rows]
+    ad_clicks_series = [r["clicks"] for r in ad_placement_rows]
 
     # --- 6. NEW: STORAGE HEALTH ---
     servers = StorageServer.query.all()
@@ -1165,6 +1237,47 @@ def stats_dashboard():
             'percent': round(percent, 1),
             'used': round(s.used_storage_gb, 1),
             'total': s.max_storage_gb
+        })
+
+    # --- 7. REQUEST FUNNEL + TREND ---
+    now_utc = datetime.utcnow()
+    req_7d = MovieRequest.query.filter(MovieRequest.date_added >= (now_utc - timedelta(days=7))).count()
+    req_30d = MovieRequest.query.filter(MovieRequest.date_added >= (now_utc - timedelta(days=30))).count()
+    stale_pending = MovieRequest.query.filter(
+        MovieRequest.status == 'Pending',
+        MovieRequest.date_added < (now_utc - timedelta(days=7))
+    ).count()
+
+    # Trend: new requests per day (last 14 days)
+    trend_days = [now_utc.date() - timedelta(days=i) for i in range(13, -1, -1)]
+    trend_index = {d.isoformat(): 0 for d in trend_days}
+    req_trend_rows = MovieRequest.query.filter(
+        MovieRequest.date_added >= (now_utc - timedelta(days=14))
+    ).all()
+
+    for row in req_trend_rows:
+        dkey = row.date_added.date().isoformat()
+        if dkey in trend_index:
+            trend_index[dkey] += 1
+
+    req_trend_labels = [d.strftime('%b %d') for d in trend_days]
+    req_trend_counts = [trend_index[d.isoformat()] for d in trend_days]
+
+    # --- 8. EXTRA: TOP CONTENT PERFORMANCE ---
+    content_rows = AllVideo.query.filter(AllVideo.active.is_(True)).order_by(AllVideo.views.desc()).limit(12).all()
+    top_content_rows = []
+    for video in content_rows:
+        comments = video.total_comment or 0
+        downloads = video.downloads or 0
+        views = video.views or 0
+        perf_score = (views * 1.0) + (downloads * 2.0) + (comments * 4.0)
+        top_content_rows.append({
+            "name": video.name,
+            "type": video.type,
+            "views": views,
+            "downloads": downloads,
+            "comments": comments,
+            "score": int(perf_score)
         })
 
     return render_template('admin/stats.html',
@@ -1184,7 +1297,23 @@ def stats_dashboard():
                            top_series_downloads=top_series_downloads,
                            req_stats=[req_pending, req_filled, req_rejected],
                            top_searches=top_searches,
-                           server_stats=server_stats
+                           recent_searches=recent_searches,
+                           likely_no_result_terms=likely_no_result_terms,
+                           server_stats=server_stats,
+                           ad_total_views=ad_total_views,
+                           ad_total_clicks=ad_total_clicks,
+                           ad_overall_ctr=ad_overall_ctr,
+                           ad_mobile_share=ad_mobile_share,
+                           ad_labels=ad_labels,
+                           ad_views_series=ad_views_series,
+                           ad_clicks_series=ad_clicks_series,
+                           ad_placement_rows=ad_placement_rows,
+                           req_7d=req_7d,
+                           req_30d=req_30d,
+                           stale_pending=stale_pending,
+                           req_trend_labels=req_trend_labels,
+                           req_trend_counts=req_trend_counts,
+                           top_content_rows=top_content_rows
                            )
 
 

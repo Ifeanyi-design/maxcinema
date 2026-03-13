@@ -328,6 +328,7 @@
 
                     <div class="w-full my-6">
                         <p class="text-xs text-gray-500 mb-1 text-center">SPONSORED</p>
+                        {% set banner_ad_slot = 'stream_inline_banner' %}
                         {% include 'ads/banner.html' %}
                     </div>
 
@@ -468,13 +469,16 @@
 
         <section id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-6">
             <div class="md:hidden lg:flex w-full">
+                {% set sidebar_ad_slot = 'stream_sidebar_primary' %}
                 {% include 'ads/sidebar.html' %}
             </div>
             <div class="hidden md:flex lg:hidden">
                 <div class="w-full">
+                    {% set sidebar_ad_slot = 'stream_sidebar_secondary' %}
                     {% include 'ads/sidebar.html' %}
                 </div>
                 <div class="w-full">
+                    {% set sidebar_ad_slot = 'stream_sidebar_tertiary' %}
                     {% include 'ads/sidebar.html' %}
                 </div>
             </div>
