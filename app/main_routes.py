@@ -412,28 +412,75 @@ def release_calendar():
     next_month = (start_month + timedelta(days=32)).replace(day=1)
     after_next_month = (next_month + timedelta(days=32)).replace(day=1)
 
-    current_month_items = (
-        AllVideo.query
-        .filter(
-            AllVideo.active.is_(True),
-            AllVideo.coming_soon.is_(True),
-            AllVideo.released_date >= start_month,
-            AllVideo.released_date < next_month
+    def _calendar_items_between(date_from, date_to, limit=120):
+        video_rows = (
+            AllVideo.query
+            .filter(
+                AllVideo.active.is_(True),
+                AllVideo.coming_soon.is_(True),
+                AllVideo.released_date.isnot(None),
+                AllVideo.released_date >= date_from,
+                AllVideo.released_date < date_to
+            )
+            .order_by(AllVideo.released_date.asc())
+            .limit(limit)
+            .all()
         )
-        .order_by(AllVideo.released_date.asc())
-        .all()
-    )
-    next_month_items = (
-        AllVideo.query
-        .filter(
-            AllVideo.active.is_(True),
-            AllVideo.coming_soon.is_(True),
-            AllVideo.released_date >= next_month,
-            AllVideo.released_date < after_next_month
+        episode_rows = (
+            Episode.query
+            .join(Season, Episode.season_id == Season.id)
+            .join(Series, Season.series_id == Series.id)
+            .join(AllVideo, Series.all_video_id == AllVideo.id)
+            .filter(
+                AllVideo.active.is_(True),
+                Episode.coming_soon.is_(True),
+                Episode.released_date.isnot(None),
+                Episode.released_date >= date_from,
+                Episode.released_date < date_to
+            )
+            .order_by(Episode.released_date.asc())
+            .limit(limit)
+            .all()
         )
-        .order_by(AllVideo.released_date.asc())
-        .all()
-    )
+
+        merged = []
+        for v in video_rows:
+            merged.append({
+                "id": v.id,
+                "name": v.slug or v.name,
+                "title": v.name,
+                "type": v.type,
+                "display_type": (v.type or "").upper(),
+                "image": v.image,
+                "released_date": v.released_date,
+                "season": None,
+                "episode": None,
+            })
+
+        for ep in episode_rows:
+            season_obj = ep.season
+            if not season_obj or not season_obj.series or not season_obj.series.all_video:
+                continue
+            parent_video = season_obj.series.all_video
+            season_no = season_obj.season_number
+            episode_no = ep.episode_number
+            merged.append({
+                "id": parent_video.id,
+                "name": parent_video.slug or parent_video.name,
+                "title": f"{parent_video.name} S{season_no}E{episode_no}",
+                "type": "series",
+                "display_type": "EPISODE",
+                "image": season_obj.image or parent_video.image,
+                "released_date": ep.released_date,
+                "season": season_no,
+                "episode": episode_no,
+            })
+
+        merged.sort(key=lambda x: (x["released_date"], x["title"]))
+        return merged[:limit]
+
+    current_month_items = _calendar_items_between(start_month, next_month)
+    next_month_items = _calendar_items_between(next_month, after_next_month)
 
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()

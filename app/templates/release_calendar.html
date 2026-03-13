@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}MaxCinema Release Calendar{% endblock %}
-{% block meta_description %}Track upcoming movie and series drops on MaxCinema release calendar.{% endblock %}
+{% block meta_description %}Track upcoming movie, series, and episode drops on MaxCinema release calendar.{% endblock %}
 
 {% block content %}
 <section class="mx-auto my-8 px-2 lg:px-4 max-w-[1600px]">
@@ -16,15 +16,15 @@
                 <h2 class="text-sm md:text-base font-black uppercase text-gray-900 mb-3">{{ month_label }}</h2>
                 <div class="space-y-2">
                     {% for item in current_month_items %}
-                    <a href="{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
-                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
+                    <a href="{% if item.type == 'series' and item.season and item.episode %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season=item.season, episode=item.episode) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}{% endif %}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
+                        <img src="{{ item.image }}" alt="{{ item.title }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
                         <div class="min-w-0">
-                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
-                            <p class="text-[11px] text-gray-500 font-bold">{{ item.type|upper }} • {{ item.released_date.strftime('%b %d, %Y') }}</p>
+                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.title }}</p>
+                            <p class="text-[11px] text-gray-500 font-bold">{{ item.display_type }} | {{ item.released_date.strftime('%b %d, %Y') }}</p>
                         </div>
                     </a>
                     {% else %}
-                    <p class="text-sm text-gray-500">No upcoming titles for this month.</p>
+                    <p class="text-sm text-gray-500">No upcoming releases for this month.</p>
                     {% endfor %}
                 </div>
             </section>
@@ -33,15 +33,15 @@
                 <h2 class="text-sm md:text-base font-black uppercase text-gray-900 mb-3">{{ next_month_label }}</h2>
                 <div class="space-y-2">
                     {% for item in next_month_items %}
-                    <a href="{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
-                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
+                    <a href="{% if item.type == 'series' and item.season and item.episode %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id, season=item.season, episode=item.episode) }}{% else %}{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}{% endif %}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
+                        <img src="{{ item.image }}" alt="{{ item.title }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
                         <div class="min-w-0">
-                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
-                            <p class="text-[11px] text-gray-500 font-bold">{{ item.type|upper }} • {{ item.released_date.strftime('%b %d, %Y') }}</p>
+                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.title }}</p>
+                            <p class="text-[11px] text-gray-500 font-bold">{{ item.display_type }} | {{ item.released_date.strftime('%b %d, %Y') }}</p>
                         </div>
                     </a>
                     {% else %}
-                    <p class="text-sm text-gray-500">No upcoming titles for next month.</p>
+                    <p class="text-sm text-gray-500">No upcoming releases for next month.</p>
                     {% endfor %}
                 </div>
             </section>
