@@ -202,6 +202,10 @@
             </div>
 
             {# --- DOWNLOAD SECTION START --- #}
+            {% set genre_text = (video.genres | map(attribute='name') | join(' ') | lower) %}
+            {% set country_text = ((video.country or '') | string | lower) %}
+            {% set language_text = ((video.language or '') | string | lower) %}
+            {% set is_anime = ('anime' in genre_text) or ('japan' in country_text) or ('japanese' in language_text) %}
             <div class="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 mb-2 p-4 md:p-6 bg-gray-50 rounded-2xl border border-gray-100 items-center justify-center shadow-inner">
 
                 {# --- LOGIC: Setup Variables --- #}
@@ -314,7 +318,7 @@
                            class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-[#830506] hover:bg-black text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20 transition-all hover:-translate-y-1">
                             <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-bolt text-lg"></i></div>
                             <div class="flex flex-col text-left leading-none">
-                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Japanese (Sub)</span>
+                                <span class="text-[9px] opacity-80 font-bold uppercase mb-1">{{ 'Japanese (Sub)' if is_anime else 'Primary Audio' }}</span>
                                 <span class="text-sm md:text-base">Fast Download</span>
                             </div>
                         </a>
@@ -329,7 +333,7 @@
                                class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-500/20 transition-all hover:-translate-y-1 border-2 border-green-500">
                                 <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-microphone-alt text-lg"></i></div>
                                 <div class="flex flex-col text-left leading-none">
-                                    <span class="text-[9px] opacity-90 font-bold uppercase mb-1 text-green-100">English (Dub)</span>
+                                    <span class="text-[9px] opacity-90 font-bold uppercase mb-1 text-green-100">{{ 'English (Dub)' if is_anime else 'Alternate Audio' }}</span>
                                     <span class="text-sm md:text-base">Fast Download</span>
                                 </div>
                             </a>
@@ -346,7 +350,7 @@
                             <div class="bg-white/20 p-2 rounded-full"><i class="fa-brands fa-telegram text-lg"></i></div>
                             <div class="flex flex-col text-left leading-none">
                                 <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Telegram</span>
-                                <span class="text-sm md:text-base">Get Sub</span>
+                                <span class="text-sm md:text-base">Get Download Link</span>
                             </div>
                         </a>
 
@@ -391,7 +395,7 @@
                                 <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-cloud-download-alt text-lg"></i></div>
                                 <div class="flex flex-col text-left leading-none">
                                     <span class="text-[9px] opacity-80 font-bold uppercase mb-1">Direct Link</span>
-                                    <span class="text-sm md:text-base">Download Sub</span>
+                                    <span class="text-sm md:text-base">Download File</span>
                                 </div>
                             </a>
                         {% else %}
@@ -412,7 +416,7 @@
                                class="download-ad-trigger flex-grow w-full md:w-auto group flex items-center justify-center gap-3 px-5 py-4 bg-green-600 hover:bg-green-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-500/20 transition-all hover:-translate-y-1 border-2 border-green-500">
                                 <div class="bg-white/20 p-2 rounded-full"><i class="fas fa-microphone-alt text-lg"></i></div>
                                 <div class="flex flex-col text-left leading-none">
-                                    <span class="text-[9px] opacity-90 font-bold uppercase mb-1 text-green-100">English (Dub)</span>
+                                    <span class="text-[9px] opacity-90 font-bold uppercase mb-1 text-green-100">{{ 'English (Dub)' if is_anime else 'Alternate Audio' }}</span>
                                     <span class="text-sm md:text-base">Direct Link</span>
                                 </div>
                             </a>

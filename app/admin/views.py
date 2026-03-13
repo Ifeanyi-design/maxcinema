@@ -17,10 +17,144 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from functools import wraps
 from flask_login import login_required, current_user, login_user, logout_user
 import os
+import smtplib
+import requests
+from email.message import EmailMessage
 
 from ..utils import ContentImporter # Import the class we just made
 
 from itertools import cycle  # <--- ADD THIS AT THE TOP
+
+
+def _has_download_payload(video):
+    return bool((video.download_link or "").strip() or (video.dub_download_link or "").strip() or (video.backup_link or "").strip())
+
+
+def _send_release_notifications(video):
+    """
+    Send notifications to watchers for a released title.
+    Supports:
+    - SMTP email (if SMTP env vars set)
+    - Telegram Bot API (if TELEGRAM_BOT_TOKEN set)
+    """
+    rows = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).all()
+    if not rows:
+        return {"queued": 0, "emailed": 0, "telegram": 0, "marked": 0, "errors": []}
+
+    site_url = os.getenv("SITE_BASE_URL", "https://maxcinema.name.ng")
+    release_url = f"{site_url.rstrip('/')}/download/{video.type}/{video.slug or video.name}/{video.id}"
+    plain_text = (
+        f"Good news! '{video.name}' is now available on MaxCinema.\n\n"
+        f"Open: {release_url}\n\n"
+        "You requested this notification."
+    )
+
+    # SMTP config (optional)
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587") or 587)
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASS", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", smtp_user or "noreply@maxcinema.local").strip()
+    smtp_enabled = bool(smtp_host and smtp_user and smtp_pass)
+
+    # Telegram config (optional)
+    tg_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    tg_default_chat = os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "").strip()
+    tg_enabled = bool(tg_bot_token)
+
+    emailed = 0
+    telegram = 0
+    marked = 0
+    errors = []
+
+    smtp_server = None
+    try:
+        if smtp_enabled:
+            smtp_server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
+            smtp_server.starttls()
+            smtp_server.login(smtp_user, smtp_pass)
+
+        for row in rows:
+            sent_any = False
+
+            if smtp_enabled and row.email:
+                try:
+                    msg = EmailMessage()
+                    msg["Subject"] = f"Now Available: {video.name}"
+                    msg["From"] = smtp_from
+                    msg["To"] = row.email
+                    msg.set_content(plain_text)
+                    smtp_server.send_message(msg)
+                    emailed += 1
+                    sent_any = True
+                except Exception as e:
+                    errors.append(f"email:{row.email}:{e}")
+
+            if tg_enabled:
+                try:
+                    tg_target = (row.telegram or "").strip()
+                    # If user provided direct chat id, use it. Else fallback to configured channel/chat.
+                    if tg_target and tg_target.lstrip("-").isdigit():
+                        chat_id = tg_target
+                    elif tg_default_chat:
+                        mention = f"@{tg_target.lstrip('@')}" if tg_target and not tg_target.lstrip("-").isdigit() else ""
+                        chat_id = tg_default_chat
+                        plain_with_mention = f"{mention} {plain_text}".strip()
+                        payload = {"chat_id": chat_id, "text": plain_with_mention, "disable_web_page_preview": False}
+                        resp = requests.post(
+                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
+                            json=payload,
+                            timeout=15
+                        )
+                        if resp.ok:
+                            telegram += 1
+                            sent_any = True
+                        else:
+                            errors.append(f"telegram:{tg_target or 'default'}:{resp.text[:120]}")
+                        if sent_any:
+                            row.notified = True
+                            marked += 1
+                        continue
+                    else:
+                        chat_id = None
+
+                    if chat_id:
+                        payload = {"chat_id": chat_id, "text": plain_text, "disable_web_page_preview": False}
+                        resp = requests.post(
+                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
+                            json=payload,
+                            timeout=15
+                        )
+                        if resp.ok:
+                            telegram += 1
+                            sent_any = True
+                        else:
+                            errors.append(f"telegram:{chat_id}:{resp.text[:120]}")
+                except Exception as e:
+                    errors.append(f"telegram:{row.telegram}:{e}")
+
+            if sent_any:
+                row.notified = True
+                marked += 1
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        errors.append(f"fatal:{e}")
+    finally:
+        if smtp_server:
+            try:
+                smtp_server.quit()
+            except Exception:
+                pass
+
+    return {
+        "queued": len(rows),
+        "emailed": emailed,
+        "telegram": telegram,
+        "marked": marked,
+        "errors": errors[:8]
+    }
 
 @admin_bp.context_processor
 def inject_ads():
@@ -234,6 +368,7 @@ import json
 @login_required
 def edit_video(video_id, prev):
     video = AllVideo.query.get_or_404(video_id)
+    was_coming_soon = bool(video.coming_soon)
 
     form = AllVideoForm(obj=video)   # preload current video data
 
@@ -283,6 +418,13 @@ def edit_video(video_id, prev):
         video.storage_server_id = form.storage_server_id.data
         print("Hello")
         db.session.commit()
+        if was_coming_soon and (not video.coming_soon) and _has_download_payload(video):
+            summary = _send_release_notifications(video)
+            if summary["queued"] > 0:
+                flash(
+                    f"Release notifications sent: email {summary['emailed']}, telegram {summary['telegram']}, marked {summary['marked']}/{summary['queued']}.",
+                    "info"
+                )
         flash("Video updated successfully!", "success")
         return redirect(url_for("admin.dashboard"))
 
@@ -1467,6 +1609,24 @@ def delete_poll(poll_id):
         db.session.rollback()
         flash(f'Failed to delete poll: {e}', 'error')
     return redirect(url_for('admin.manage_polls'))
+
+
+@admin_bp.route('/admin/release-notify/<int:video_id>')
+@login_required
+@admin_required
+def release_notify(video_id):
+    video = AllVideo.query.get_or_404(video_id)
+    summary = _send_release_notifications(video)
+    if summary["queued"] == 0:
+        flash("No pending subscribers to notify for this title.", "warning")
+    else:
+        flash(
+            f"Notification run complete: email {summary['emailed']}, telegram {summary['telegram']}, marked {summary['marked']}/{summary['queued']}.",
+            "success"
+        )
+        if summary["errors"]:
+            flash(f"Some notifications failed ({len(summary['errors'])}). Check SMTP/Telegram config.", "warning")
+    return redirect(request.referrer or url_for('admin.view_movies'))
 
 
 

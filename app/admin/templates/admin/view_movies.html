@@ -26,6 +26,7 @@
                     <p class="text-xl sm:text-[8px] lg:text-sm text-gray-400 mt-1">{{ movie.genres | map(attribute='name') | join(', ') }}</p>
                     <div class="mt-2 flex gap-4 sm:gap-1">
                         <a href="{{ url_for('admin.edit_video', video_id=movie.id, prev='movie') }}" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 sm:py-[0.8px] sm:px-1 lg:py-1 lg:px-3 rounded text-lg sm:text-[10px] lg:text-sm">Edit</a>
+                        <a href="{{ url_for('admin.release_notify', video_id=movie.id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-black py-1 px-3 sm:py-[0.8px] sm:px-1 lg:py-1 lg:px-3 rounded text-lg sm:text-[10px] lg:text-sm font-bold">Notify</a>
 
                         <form method="POST" action="{{ url_for('admin.delete_video', prev='movie', video_id=movie.id) }}" onsubmit="return confirm('Are you sure you want to delete this movie?');">
                             <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 sm:py-[0.8px] sm:px-1 lg:py-1 lg:px-3 rounded text-lg sm:text-[10px] lg:text-sm">
