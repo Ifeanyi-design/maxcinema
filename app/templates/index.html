@@ -89,14 +89,14 @@
     </div>
     <div class="flex overflow-x-auto gap-3 p-3 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth">
         {% for u in upcoming_titles %}
-        <a href="{{ url_for('main.detail', det=u.type, name=u.name, id=u.id) }}"
+        <a href="{% if u.type == 'series' and u.season and u.episode %}{{ url_for('main.detail', det=u.type, name=u.name, id=u.id, season=u.season, episode=u.episode) }}{% else %}{{ url_for('main.detail', det=u.type, name=u.name, id=u.id) }}{% endif %}"
            class="download-ad-trigger group flex-none w-[140px] md:w-[170px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-0.5 overflow-hidden">
             <div class="relative aspect-[2/3] bg-gray-100">
                 <img src="{{ u.image }}" alt="{{ u.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
-                <span class="absolute top-2 right-2 bg-black/75 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ u.type }}</span>
+                <span class="absolute top-2 right-2 bg-black/75 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ u.badge or u.type }}</span>
             </div>
             <div class="p-2">
-                <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-tight min-h-[30px]">{{ u.name }}</p>
+                <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-tight min-h-[30px]">{{ u.title or u.name }}</p>
                 <p class="text-[9px] text-gray-500 font-bold mt-1">Release: {{ u.released_date.strftime('%b %d, %Y') }}</p>
                 <p class="countdown-timer mt-1 text-[10px] font-black text-[#830506] uppercase tracking-wide"
                    data-release-date="{{ u.released_date.isoformat() }}">

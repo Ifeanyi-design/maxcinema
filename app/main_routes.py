@@ -282,7 +282,7 @@ def index(page=1):
 
     data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
     videos = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).all()
-    upcoming_titles = (
+    upcoming_video_rows = (
         AllVideo.query
         .filter(
             AllVideo.active.is_(True),
@@ -291,9 +291,59 @@ def index(page=1):
             AllVideo.released_date >= today
         )
         .order_by(AllVideo.released_date.asc())
-        .limit(8)
+        .limit(20)
         .all()
     )
+    upcoming_episode_rows = (
+        Episode.query
+        .join(Season, Episode.season_id == Season.id)
+        .join(Series, Season.series_id == Series.id)
+        .join(AllVideo, Series.all_video_id == AllVideo.id)
+        .filter(
+            AllVideo.active.is_(True),
+            Episode.coming_soon.is_(True),
+            Episode.released_date.isnot(None),
+            Episode.released_date >= today
+        )
+        .order_by(Episode.released_date.asc())
+        .limit(20)
+        .all()
+    )
+
+    upcoming_titles = []
+    for v in upcoming_video_rows:
+        upcoming_titles.append({
+            "id": v.id,
+            "name": v.slug or v.name,
+            "title": v.name,
+            "type": v.type,
+            "badge": v.type,
+            "image": v.image,
+            "released_date": v.released_date,
+            "season": None,
+            "episode": None,
+        })
+
+    for ep in upcoming_episode_rows:
+        season_obj = ep.season
+        if not season_obj or not season_obj.series or not season_obj.series.all_video:
+            continue
+        parent_video = season_obj.series.all_video
+        season_no = season_obj.season_number
+        episode_no = ep.episode_number
+        upcoming_titles.append({
+            "id": parent_video.id,
+            "name": parent_video.slug or parent_video.name,
+            "title": f"{parent_video.name} S{season_no}E{episode_no}",
+            "type": "series",
+            "badge": "Episode",
+            "image": season_obj.image or parent_video.image,
+            "released_date": ep.released_date,
+            "season": season_no,
+            "episode": episode_no,
+        })
+
+    upcoming_titles = sorted(upcoming_titles, key=lambda x: x["released_date"])[:8]
     active_poll = get_active_poll()
     poll_total_votes = 0
     if active_poll:
