@@ -271,6 +271,9 @@
                         </p>
 
                         <form id="notifyMeForm" class="mt-4 max-w-xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-2 relative z-10">
+                            <p class="md:col-span-3 text-[11px] text-yellow-100 font-bold">
+                                Enter your Email or Telegram to get notified when it drops (one is enough).
+                            </p>
                             <input type="text" name="name" placeholder="Name (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
                             <input type="email" name="email" placeholder="Email (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
                             <input type="text" name="telegram" placeholder="Telegram @username" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
@@ -790,6 +793,12 @@
             const msg = document.getElementById('notifyMeMsg');
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const email = (form.querySelector('input[name=\"email\"]')?.value || '').trim();
+                const telegram = (form.querySelector('input[name=\"telegram\"]')?.value || '').trim();
+                if (!email && !telegram) {
+                    msg.textContent = 'Enter email or Telegram (one is enough).';
+                    return;
+                }
                 msg.textContent = 'Submitting...';
                 try {
                     const data = new FormData(form);
