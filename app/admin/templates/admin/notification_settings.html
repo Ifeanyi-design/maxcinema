@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto pt-[70px] p-4 md:p-8">
+        <div class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight">Notification Settings</h1>
+            <p class="text-xs md:text-sm text-gray-400">Test email and Telegram notifications from admin UI.</p>
+        </div>
+
+        {% if test_result %}
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-bold {% if test_result.ok %}border-emerald-500/40 bg-emerald-500/10 text-emerald-300{% else %}border-red-500/40 bg-red-500/10 text-red-300{% endif %}">
+            {{ test_result.message }}
+        </div>
+        {% endif %}
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-6">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Current Config Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs md:text-sm">
+                <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-3">
+                    <p class="text-gray-400 uppercase text-[10px] font-black">SMTP</p>
+                    <p class="font-bold {% if smtp_enabled %}text-emerald-300{% else %}text-red-300{% endif %}">
+                        {% if smtp_enabled %}Configured{% else %}Missing{% endif %}
+                    </p>
+                    <p class="text-gray-400 mt-1">Host: {{ smtp_host or '-' }} | Port: {{ smtp_port }}</p>
+                    <p class="text-gray-400">User: {{ smtp_user or '-' }}</p>
+                    <p class="text-gray-400">From: {{ smtp_from or '-' }}</p>
+                    <p class="text-gray-400">SSL: {{ 'Yes' if smtp_use_ssl else 'No' }} | TLS: {{ 'Yes' if smtp_use_tls else 'No' }}</p>
+                </div>
+                <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-3">
+                    <p class="text-gray-400 uppercase text-[10px] font-black">Telegram</p>
+                    <p class="font-bold {% if tg_enabled %}text-emerald-300{% else %}text-red-300{% endif %}">
+                        {% if tg_enabled %}Configured{% else %}Missing{% endif %}
+                    </p>
+                    <p class="text-gray-400 mt-1">Default Chat: {{ tg_default_chat or '-' }}</p>
+                    <p class="text-gray-500 mt-2 text-[11px]">Use numeric chat id (recommended). Username-based DM is not supported by Telegram bot API.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-6">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Test Email</h2>
+            <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input type="hidden" name="action" value="test_email">
+                <input type="email" name="test_email" placeholder="you@example.com" class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white md:col-span-2" required>
+                <button type="submit" class="h-11 px-4 rounded-lg bg-yellow-400 text-black text-xs font-black uppercase tracking-wider hover:bg-yellow-300 transition">
+                    Send Test Email
+                </button>
+            </form>
+        </section>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Test Telegram</h2>
+            <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input type="hidden" name="action" value="test_telegram">
+                <input type="text" name="test_telegram_chat" placeholder="Chat ID (e.g. -1001234567890)" class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white md:col-span-2">
+                <button type="submit" class="h-11 px-4 rounded-lg bg-cyan-500 text-black text-xs font-black uppercase tracking-wider hover:bg-cyan-400 transition">
+                    Send Telegram Test
+                </button>
+            </form>
+            <p class="mt-2 text-[11px] text-gray-500">If left blank, system will use TELEGRAM_NOTIFY_CHAT_ID from .env.</p>
+        </section>
+    </div>
+</div>
+{% endblock %}

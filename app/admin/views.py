@@ -1525,6 +1525,107 @@ def mark_watchlist_notified(row_id):
     return redirect(url_for('admin.watchlist_notify_page'))
 
 
+@admin_bp.route('/admin/notification-settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def notification_settings():
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587") or 587)
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASS", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", smtp_user or "noreply@maxcinema.local").strip()
+    smtp_use_ssl = os.getenv("SMTP_USE_SSL", "0").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_use_tls = os.getenv("SMTP_USE_TLS", "1").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_enabled = bool(smtp_host and smtp_user and smtp_pass)
+
+    tg_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    tg_default_chat = os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "").strip()
+    tg_enabled = bool(tg_bot_token)
+
+    test_result = None
+
+    if request.method == 'POST':
+        action = (request.form.get('action') or '').strip()
+        now_tag = datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
+
+        if action == 'test_email':
+            target_email = (request.form.get('test_email') or '').strip()
+            if not target_email:
+                test_result = {"ok": False, "message": "Enter an email address for test send."}
+            elif not smtp_enabled:
+                test_result = {"ok": False, "message": "SMTP is not configured. Set SMTP_HOST/SMTP_USER/SMTP_PASS first."}
+            else:
+                smtp_server = None
+                try:
+                    if smtp_use_ssl:
+                        smtp_server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
+                    else:
+                        smtp_server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
+                        if smtp_use_tls:
+                            smtp_server.starttls()
+
+                    smtp_server.login(smtp_user, smtp_pass)
+                    msg = EmailMessage()
+                    msg["Subject"] = "MaxCinema Notification Test"
+                    msg["From"] = smtp_from
+                    msg["To"] = target_email
+                    msg.set_content(
+                        f"This is a test notification from MaxCinema admin settings.\n\nTime: {now_tag}\n\nIf you got this, SMTP works."
+                    )
+                    smtp_server.send_message(msg)
+                    test_result = {"ok": True, "message": f"Test email sent to {target_email}."}
+                except Exception as e:
+                    test_result = {"ok": False, "message": f"Email test failed: {e}"}
+                finally:
+                    if smtp_server:
+                        try:
+                            smtp_server.quit()
+                        except Exception:
+                            pass
+
+        elif action == 'test_telegram':
+            if not tg_enabled:
+                test_result = {"ok": False, "message": "Telegram bot is not configured. Set TELEGRAM_BOT_TOKEN first."}
+            else:
+                target_chat = (request.form.get('test_telegram_chat') or '').strip() or tg_default_chat
+                if not target_chat:
+                    test_result = {"ok": False, "message": "Enter a Telegram chat id/username or set TELEGRAM_NOTIFY_CHAT_ID."}
+                else:
+                    try:
+                        payload = {
+                            "chat_id": target_chat,
+                            "text": f"MaxCinema Telegram test notification ({now_tag}).",
+                            "disable_web_page_preview": True
+                        }
+                        resp = requests.post(
+                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
+                            json=payload,
+                            timeout=15
+                        )
+                        if resp.ok:
+                            test_result = {"ok": True, "message": f"Telegram test sent to {target_chat}."}
+                        else:
+                            test_result = {"ok": False, "message": f"Telegram test failed: {resp.text[:180]}"}
+                    except Exception as e:
+                        test_result = {"ok": False, "message": f"Telegram test failed: {e}"}
+        else:
+            test_result = {"ok": False, "message": "Unknown action."}
+
+    return render_template(
+        'admin/notification_settings.html',
+        smtp_enabled=smtp_enabled,
+        smtp_host=smtp_host,
+        smtp_port=smtp_port,
+        smtp_user=smtp_user,
+        smtp_from=smtp_from,
+        smtp_use_ssl=smtp_use_ssl,
+        smtp_use_tls=smtp_use_tls,
+        tg_enabled=tg_enabled,
+        tg_default_chat=tg_default_chat,
+        test_result=test_result
+    )
+
+
 @admin_bp.route('/admin/polls', methods=['GET', 'POST'])
 @login_required
 @admin_required

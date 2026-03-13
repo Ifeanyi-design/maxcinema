@@ -181,6 +181,12 @@
                         </svg>
                         Notify List
                     </a>
+                    <a href="{{ url_for('admin.notification_settings') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.notification_settings' %}text-yellow-400 font-semibold{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4m8 0a4 4 0 00-4-4m0 0V4m0 4v4m0 0v4m0-4h4m-4 0H8"/>
+                        </svg>
+                        Notification Settings
+                    </a>
                 </nav>
             
                 <!-- User Info / Logout -->

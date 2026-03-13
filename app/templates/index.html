@@ -44,17 +44,41 @@
 <section id="continueWatchingSection" class="hidden mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
     <div class="w-full bg-[#111111] flex items-center justify-between px-4 py-2 rounded-t-2xl">
         <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Continue Watching</h2>
-        <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Series Progress</span>
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Series Progress</span>
+            <button id="continueScrollLeft" type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white text-white text-xs transition-all flex items-center justify-center border border-white/20">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="continueScrollRight" type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white text-white text-xs transition-all flex items-center justify-center border border-white/20">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
-    <div id="continueWatchingGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white border-x border-b border-gray-100 rounded-b-2xl"></div>
+    <div id="continueWatchingBody" class="relative">
+        <div class="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-white to-transparent z-10"></div>
+        <div class="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-white to-transparent z-10"></div>
+        <div id="continueWatchingGrid" class="flex overflow-x-auto gap-2 p-2 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth"></div>
+    </div>
 </section>
 
 <section id="watchlistSection" class="hidden mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
     <div class="w-full bg-[#1f2937] flex items-center justify-between px-4 py-2 rounded-t-2xl">
         <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Your Watchlist</h2>
-        <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Saved Titles</span>
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Saved Titles</span>
+            <button id="watchlistScrollLeft" type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white text-white text-xs transition-all flex items-center justify-center border border-white/20">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button id="watchlistScrollRight" type="button" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white text-white text-xs transition-all flex items-center justify-center border border-white/20">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
-    <div id="watchlistGrid" class="flex overflow-x-auto gap-2 p-2 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth"></div>
+    <div id="watchlistBody" class="relative">
+        <div class="pointer-events-none absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-white to-transparent z-10"></div>
+        <div class="pointer-events-none absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-white to-transparent z-10"></div>
+        <div id="watchlistGrid" class="flex overflow-x-auto gap-2 p-2 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth"></div>
+    </div>
 </section>
 
 {% if upcoming_titles %}
@@ -355,25 +379,49 @@
     (() => {
         const continueSection = document.getElementById('continueWatchingSection');
         const continueGrid = document.getElementById('continueWatchingGrid');
+        const continueLeft = document.getElementById('continueScrollLeft');
+        const continueRight = document.getElementById('continueScrollRight');
         const watchlistSection = document.getElementById('watchlistSection');
         const watchlistGrid = document.getElementById('watchlistGrid');
+        const watchlistLeft = document.getElementById('watchlistScrollLeft');
+        const watchlistRight = document.getElementById('watchlistScrollRight');
+
+        const attachRailControls = (grid, leftBtn, rightBtn) => {
+            if (!grid || !leftBtn || !rightBtn) return;
+            const scrollAmount = () => Math.max(220, Math.floor(grid.clientWidth * 0.7));
+            const refreshButtons = () => {
+                const maxLeft = Math.max(0, grid.scrollWidth - grid.clientWidth);
+                const atStart = grid.scrollLeft <= 2;
+                const atEnd = grid.scrollLeft >= (maxLeft - 2);
+                leftBtn.disabled = atStart;
+                rightBtn.disabled = atEnd;
+                leftBtn.classList.toggle('opacity-40', atStart);
+                rightBtn.classList.toggle('opacity-40', atEnd);
+            };
+            leftBtn.addEventListener('click', () => grid.scrollBy({ left: -scrollAmount(), behavior: 'smooth' }));
+            rightBtn.addEventListener('click', () => grid.scrollBy({ left: scrollAmount(), behavior: 'smooth' }));
+            grid.addEventListener('scroll', refreshButtons, { passive: true });
+            window.addEventListener('resize', refreshButtons);
+            refreshButtons();
+        };
 
         try {
             const continueItems = JSON.parse(localStorage.getItem('maxcinema_continue_watching') || '[]');
             if (Array.isArray(continueItems) && continueItems.length && continueSection && continueGrid) {
                 continueGrid.innerHTML = continueItems.slice(0, 8).map((it) => `
-                    <a href="${it.url || '#'}" class="group rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
-                        <div class="relative h-[96px] bg-gray-100">
+                    <a href="${it.url || '#'}" class="group block flex-none w-[132px] md:w-[160px] rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden bg-white">
+                        <div class="relative h-[98px] md:h-[110px] bg-gray-100">
                             <img src="${it.image || ''}" alt="${(it.title || 'Untitled').replace(/"/g, '&quot;')}" class="w-full h-full object-cover">
                             <span class="absolute top-1 right-1 bg-black/75 text-white text-[8px] font-black px-1.5 py-[1px] rounded">S${it.season || '?'}E${it.episode || '?'}</span>
                         </div>
-                        <div class="p-2">
+                        <div class="p-1.5">
                             <p class="text-[11px] font-bold text-gray-900 line-clamp-1">${it.title || 'Untitled'}</p>
-                            <p class="text-[10px] text-gray-500 font-bold">Resume Episode ${it.episode || '?'}</p>
+                            <p class="text-[9px] text-gray-500 font-bold uppercase">Resume Ep ${it.episode || '?'}</p>
                         </div>
                     </a>
                 `).join('');
                 continueSection.classList.remove('hidden');
+                attachRailControls(continueGrid, continueLeft, continueRight);
             }
         } catch (e) {}
 
@@ -392,6 +440,7 @@
                     </a>
                 `).join('');
                 watchlistSection.classList.remove('hidden');
+                attachRailControls(watchlistGrid, watchlistLeft, watchlistRight);
             }
         } catch (e) {}
     })();
