@@ -1112,6 +1112,13 @@ def stats_dashboard():
     grand_total_downloads = movie_downloads + episode_downloads
     
     pending_requests = MovieRequest.query.filter_by(status='Pending').count()
+    req_filled = MovieRequest.query.filter_by(status='Filled').count()
+    req_rejected = MovieRequest.query.filter_by(status='Rejected').count()
+    req_total = pending_requests + req_filled + req_rejected
+    fill_rate = round((req_filled / req_total) * 100, 1) if req_total else 0
+    total_content = (AllVideo.query.filter_by(type='movie').count() +
+                     AllVideo.query.filter_by(type='series').count() +
+                     Trailer.query.count())
 
     # --- 2. CHART DATA: Top 5 Movies by Views ---
     top_movies_query = AllVideo.query.filter_by(type='movie').order_by(AllVideo.views.desc()).limit(5).all()
@@ -1142,9 +1149,7 @@ def stats_dashboard():
         top_series_downloads.append(s.views)
 
     # --- 4. PIE CHART: Requests ---
-    req_pending = MovieRequest.query.filter_by(status='Pending').count()
-    req_filled = MovieRequest.query.filter_by(status='Filled').count()
-    req_rejected = MovieRequest.query.filter_by(status='Rejected').count()
+    req_pending = pending_requests
 
     # --- 5. SEARCH TERMS ---
     top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
@@ -1167,6 +1172,11 @@ def stats_dashboard():
                            total_views=total_views,
                            total_downloads=grand_total_downloads,
                            pending_requests=pending_requests,
+                           req_total=req_total,
+                           req_filled=req_filled,
+                           req_rejected=req_rejected,
+                           fill_rate=fill_rate,
+                           total_content=total_content,
                            # Charts
                            top_movie_names=top_movie_names,
                            top_movie_views=top_movie_views,
