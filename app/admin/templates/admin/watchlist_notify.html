@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto pt-[70px] p-4 md:p-8">
+        <div class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight">Notify Me List</h1>
+            <p class="text-xs md:text-sm text-gray-400">Users waiting for upcoming titles.</p>
+        </div>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs md:text-sm">
+                    <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
+                        <tr>
+                            <th class="py-2 pr-3">Date</th>
+                            <th class="py-2 pr-3">Title</th>
+                            <th class="py-2 pr-3">Name</th>
+                            <th class="py-2 pr-3">Email</th>
+                            <th class="py-2 pr-3">Telegram</th>
+                            <th class="py-2">Notified</th>
+                            <th class="py-2">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-200 divide-y divide-gray-700/80">
+                        {% for row in rows %}
+                        <tr class="hover:bg-gray-700/30 transition-colors">
+                            <td class="py-2 pr-3 text-gray-400">{{ row.date_added.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td class="py-2 pr-3 font-bold">{{ row.video.name if row.video else 'Unknown' }}</td>
+                            <td class="py-2 pr-3">{{ row.name or '-' }}</td>
+                            <td class="py-2 pr-3">{{ row.email or '-' }}</td>
+                            <td class="py-2 pr-3">{{ row.telegram or '-' }}</td>
+                            <td class="py-2">
+                                {% if row.notified %}
+                                    <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">Yes</span>
+                                {% else %}
+                                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-black uppercase">No</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2">
+                                {% if not row.notified %}
+                                <a href="{{ url_for('admin.mark_watchlist_notified', row_id=row.id) }}" class="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-black uppercase">Mark</a>
+                                {% else %}
+                                <span class="text-gray-500 text-[10px] font-bold uppercase">Done</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" class="py-6 text-center text-gray-500">No notify entries yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

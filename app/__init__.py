@@ -1,5 +1,9 @@
 # app/__init__.py
-from .models import User, Genre, AllVideo, Movie, Series, Season, Episode, Comment, Rating, Trailer, StorageServer, RecentItem
+from .models import (
+    User, Genre, AllVideo, Movie, Series, Season, Episode, Comment, Rating,
+    Trailer, StorageServer, RecentItem, WatchlistNotify, WeeklyPoll,
+    WeeklyPollOption, WeeklyPollVote
+)
 import json
 import os
 from flask import Flask, request

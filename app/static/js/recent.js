@@ -25,19 +25,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const safeImage = item.image || "";
         const safeUrl = item.url || "#";
         const typeBadge = safeType
-            ? `<span class="recent-type-badge">${safeType}</span>`
+            ? `<span style="position:absolute;top:4px;right:4px;font-size:8px;font-weight:900;text-transform:uppercase;background:rgba(0,0,0,.75);color:#fff;padding:1px 6px;border-radius:4px;">${safeType}</span>`
             : "";
         return `
-            <a href="${safeUrl}" class="recent-card group block flex-none bg-white overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100">
-                <div class="recent-poster">
+            <a href="${safeUrl}" class="group block flex-none bg-white rounded-md overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100" style="width:86px;">
+                <div class="relative bg-gray-100" style="height:118px;">
                     <img src="${safeImage}" alt="${safeTitle}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
                     ${typeBadge}
                 </div>
-                <div class="recent-meta">
-                    <div class="recent-year-wrap">
-                        <span class="recent-year">${safeYear}</span>
+                <div style="padding:6px;">
+                    <div class="flex items-center justify-end" style="margin-bottom:2px;">
+                        <span style="font-size:9px;color:#6b7280;font-weight:700;">${safeYear}</span>
                     </div>
-                    <p class="recent-title">${safeTitle}</p>
+                    <p style="font-size:11px;font-weight:700;color:#111827;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeTitle}</p>
                 </div>
             </a>
         `;

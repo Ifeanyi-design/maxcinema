@@ -345,3 +345,53 @@ class AnalyticsEvent(db.Model):
     ip_address = db.Column(db.String(64), nullable=True)
     user_agent = db.Column(db.String(180), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+class WatchlistNotify(db.Model):
+    __tablename__ = "watchlist_notify"
+
+    id = db.Column(db.Integer, primary_key=True)
+    video_id = db.Column(db.Integer, db.ForeignKey('all_video.id', ondelete='CASCADE'), nullable=False, index=True)
+    name = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(120), nullable=True, index=True)
+    telegram = db.Column(db.String(120), nullable=True, index=True)
+    source = db.Column(db.String(20), default="web")
+    notified = db.Column(db.Boolean, default=False)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    video = db.relationship('AllVideo', lazy='joined')
+
+
+class WeeklyPoll(db.Model):
+    __tablename__ = "weekly_poll"
+
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(255), nullable=False)
+    is_active = db.Column(db.Boolean, default=True, index=True)
+    starts_at = db.Column(db.DateTime, default=datetime.utcnow)
+    ends_at = db.Column(db.DateTime, nullable=True, index=True)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    options = db.relationship('WeeklyPollOption', back_populates='poll', cascade='all, delete-orphan')
+
+
+class WeeklyPollOption(db.Model):
+    __tablename__ = "weekly_poll_option"
+
+    id = db.Column(db.Integer, primary_key=True)
+    poll_id = db.Column(db.Integer, db.ForeignKey('weekly_poll.id', ondelete='CASCADE'), nullable=False, index=True)
+    option_text = db.Column(db.String(180), nullable=False)
+    votes = db.Column(db.Integer, default=0)
+
+    poll = db.relationship('WeeklyPoll', back_populates='options')
+
+
+class WeeklyPollVote(db.Model):
+    __tablename__ = "weekly_poll_vote"
+
+    id = db.Column(db.Integer, primary_key=True)
+    poll_id = db.Column(db.Integer, db.ForeignKey('weekly_poll.id', ondelete='CASCADE'), nullable=False, index=True)
+    option_id = db.Column(db.Integer, db.ForeignKey('weekly_poll_option.id', ondelete='CASCADE'), nullable=False, index=True)
+    voter_token = db.Column(db.String(120), nullable=False, index=True)
+    ip_address = db.Column(db.String(64), nullable=True)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)

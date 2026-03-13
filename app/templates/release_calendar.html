@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}MaxCinema Release Calendar{% endblock %}
+{% block meta_description %}Track upcoming movie and series drops on MaxCinema release calendar.{% endblock %}
+
+{% block content %}
+<section class="mx-auto my-8 px-2 lg:px-4 max-w-[1600px]">
+    <div class="w-full bg-[#830506] text-white rounded-t-2xl px-6 py-5">
+        <h1 class="text-2xl md:text-3xl font-black uppercase tracking-tight">Release Calendar</h1>
+        <p class="text-xs md:text-sm font-bold text-white/80 mt-1">Upcoming drops you can plan for.</p>
+    </div>
+
+    <div class="bg-white border-x border-b border-gray-100 rounded-b-2xl p-4 md:p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section>
+                <h2 class="text-sm md:text-base font-black uppercase text-gray-900 mb-3">{{ month_label }}</h2>
+                <div class="space-y-2">
+                    {% for item in current_month_items %}
+                    <a href="{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
+                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
+                            <p class="text-[11px] text-gray-500 font-bold">{{ item.type|upper }} • {{ item.released_date.strftime('%b %d, %Y') }}</p>
+                        </div>
+                    </a>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No upcoming titles for this month.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-sm md:text-base font-black uppercase text-gray-900 mb-3">{{ next_month_label }}</h2>
+                <div class="space-y-2">
+                    {% for item in next_month_items %}
+                    <a href="{{ url_for('main.detail', det=item.type, name=item.name, id=item.id) }}" class="flex items-center gap-3 p-2 rounded-xl border border-gray-100 hover:border-[#830506]/30 hover:bg-gray-50 transition">
+                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-14 h-20 object-cover rounded-lg border border-gray-100">
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
+                            <p class="text-[11px] text-gray-500 font-bold">{{ item.type|upper }} • {{ item.released_date.strftime('%b %d, %Y') }}</p>
+                        </div>
+                    </a>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No upcoming titles for next month.</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+</section>
+{% endblock %}

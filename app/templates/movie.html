@@ -113,6 +113,22 @@
             </div>
         </div>
 
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-100 flex flex-wrap items-center gap-2">
+            <button id="watchlistToggleBtn"
+                    type="button"
+                    data-id="{{ video.id }}"
+                    data-title="{{ video.name }}"
+                    data-image="{{ video.image }}"
+                    data-type="{{ video.type }}"
+                    class="px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 text-[11px] font-black uppercase tracking-wide hover:border-[#830506] hover:text-[#830506] transition">
+                Add To Watchlist
+            </button>
+            <a href="{{ url_for('main.release_calendar') }}"
+               class="px-3 py-2 rounded-lg bg-black text-white text-[11px] font-black uppercase tracking-wide hover:bg-[#830506] transition">
+                Release Calendar
+            </a>
+        </div>
+
         <div class="p-3 md:p-8">
             <div class="flex flex-col md:flex-row gap-6 mb-6">
                 <div class="w-full md:w-2/5 lg:w-1/3 flex-shrink-0">
@@ -249,6 +265,16 @@
                         <p class="mt-6 text-[10px] text-gray-500 font-mono uppercase">
                             Bookmark this page. The buttons will appear automatically.
                         </p>
+
+                        <form id="notifyMeForm" class="mt-4 max-w-xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-2 relative z-10">
+                            <input type="text" name="name" placeholder="Name (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
+                            <input type="email" name="email" placeholder="Email (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
+                            <input type="text" name="telegram" placeholder="Telegram @username" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
+                            <button type="submit" class="md:col-span-3 h-10 rounded-lg bg-yellow-400 text-black font-black text-xs uppercase tracking-wider hover:bg-yellow-300 transition">
+                                Notify Me When Available
+                            </button>
+                            <p id="notifyMeMsg" class="md:col-span-3 text-[11px] text-yellow-200 font-bold"></p>
+                        </form>
                     </div>
 
                 {% elif is_missing_file %}
@@ -682,6 +708,99 @@
             list.unshift(item);
             list = list.slice(0, 20);
             localStorage.setItem(key, JSON.stringify(list));
+        })();
+    </script>
+    <script>
+        (function trackContinueWatchingAndWatchlist() {
+            const isSeries = {{ (video.type == 'series')|tojson }};
+            const detailUrl = window.location.href;
+            const poster = {{ video.image|tojson }};
+            const title = {{ video.name|tojson }};
+            const vtype = {{ video.type|tojson }};
+            const seasonNo = {{ (season if season is defined else 0)|tojson }};
+            const episodeNo = {{ (episode if episode is defined else 0)|tojson }};
+
+            if (isSeries && seasonNo && episodeNo) {
+                const key = "maxcinema_continue_watching";
+                let items = [];
+                try {
+                    items = JSON.parse(localStorage.getItem(key) || "[]");
+                } catch (e) {
+                    items = [];
+                }
+                const row = {
+                    title,
+                    image: poster,
+                    url: detailUrl,
+                    type: vtype,
+                    season: seasonNo,
+                    episode: episodeNo
+                };
+                items = Array.isArray(items) ? items.filter(x => !(x && x.title === row.title && x.url === row.url)) : [];
+                items.unshift(row);
+                items = items.slice(0, 20);
+                localStorage.setItem(key, JSON.stringify(items));
+            }
+
+            const watchBtn = document.getElementById('watchlistToggleBtn');
+            if (watchBtn) {
+                const watchKey = "maxcinema_watchlist";
+                const readList = () => {
+                    try { return JSON.parse(localStorage.getItem(watchKey) || "[]"); } catch (e) { return []; }
+                };
+                const writeList = (arr) => localStorage.setItem(watchKey, JSON.stringify(arr));
+                const normalize = (arr) => Array.isArray(arr) ? arr : [];
+                const item = {
+                    id: Number(watchBtn.dataset.id || 0),
+                    title: watchBtn.dataset.title || title,
+                    image: watchBtn.dataset.image || poster,
+                    type: watchBtn.dataset.type || vtype,
+                    url: detailUrl
+                };
+                const refresh = () => {
+                    const list = normalize(readList());
+                    const exists = list.some(x => Number(x.id) === Number(item.id));
+                    watchBtn.textContent = exists ? "Remove From Watchlist" : "Add To Watchlist";
+                    watchBtn.classList.toggle("border-[#830506]", exists);
+                    watchBtn.classList.toggle("text-[#830506]", exists);
+                };
+                watchBtn.addEventListener('click', () => {
+                    let list = normalize(readList());
+                    const exists = list.some(x => Number(x.id) === Number(item.id));
+                    if (exists) {
+                        list = list.filter(x => Number(x.id) !== Number(item.id));
+                    } else {
+                        list.unshift(item);
+                    }
+                    writeList(list.slice(0, 40));
+                    refresh();
+                });
+                refresh();
+            }
+        })();
+    </script>
+    <script>
+        (() => {
+            const form = document.getElementById('notifyMeForm');
+            if (!form) return;
+            const msg = document.getElementById('notifyMeMsg');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                msg.textContent = 'Submitting...';
+                try {
+                    const data = new FormData(form);
+                    const res = await fetch(`/watchlist/notify/{{ video.id }}`, { method: 'POST', body: data });
+                    const out = await res.json();
+                    if (!res.ok || !out.success) {
+                        msg.textContent = out.error || 'Failed to save.';
+                        return;
+                    }
+                    msg.textContent = out.message || 'Saved.';
+                    form.reset();
+                } catch (err) {
+                    msg.textContent = 'Failed to save.';
+                }
+            });
         })();
     </script>
     <script>

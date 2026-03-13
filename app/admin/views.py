@@ -4,7 +4,11 @@ from sqlalchemy import or_, func
 from sqlalchemy.orm import aliased
 from os import name
 from flask import render_template, abort, redirect, url_for, request, flash
-from ..models import AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie, Season, Episode, Rating, Comment, MovieRequest, SearchTerm, AnalyticsEvent
+from ..models import (
+    AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie,
+    Season, Episode, Rating, Comment, MovieRequest, SearchTerm, AnalyticsEvent,
+    WatchlistNotify, WeeklyPoll, WeeklyPollOption
+)
 from slugify import slugify
 from ..extensions import login_manager
 from . import admin_bp
@@ -1103,6 +1107,12 @@ def stats_dashboard():
     if not current_user.is_admin:
         abort(403)
 
+    range_key = (request.args.get('range') or '30d').strip().lower()
+    range_days_map = {'7d': 7, '30d': 30, '90d': 90}
+    selected_days = range_days_map.get(range_key, 30)
+    selected_range_label = f"{selected_days}d"
+    range_start = datetime.utcnow() - timedelta(days=selected_days)
+
     # --- 1. BIG NUMBER CARDS ---
     total_users = User.query.count()
     total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
@@ -1153,12 +1163,19 @@ def stats_dashboard():
     req_pending = pending_requests
 
     # --- 5. SEARCH TERMS ---
-    top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
-    recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(8).all()
+    scoped_search_query = SearchTerm.query.filter(SearchTerm.last_searched >= range_start)
+    top_searches = scoped_search_query.order_by(SearchTerm.count.desc()).limit(10).all()
+    recent_searches = scoped_search_query.order_by(SearchTerm.last_searched.desc()).limit(8).all()
+    if not top_searches:
+        top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+    if not recent_searches:
+        recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(8).all()
 
     # Heuristic: "no result" opportunities based on no active title match.
     likely_no_result_terms = []
-    search_candidates = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(40).all()
+    search_candidates = scoped_search_query.order_by(SearchTerm.count.desc()).limit(40).all()
+    if not search_candidates:
+        search_candidates = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(40).all()
     for st in search_candidates:
         has_match = AllVideo.query.filter(
             AllVideo.active.is_(True),
@@ -1169,10 +1186,9 @@ def stats_dashboard():
         if len(likely_no_result_terms) >= 8:
             break
 
-    # --- 5b. AD PERFORMANCE (LAST 30 DAYS) ---
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    # --- 5b. AD PERFORMANCE (SELECTED RANGE) ---
     ad_events = AnalyticsEvent.query.filter(
-        AnalyticsEvent.date_added >= thirty_days_ago,
+        AnalyticsEvent.date_added >= range_start,
         AnalyticsEvent.event.in_(["ad_slot_view", "ad_slot_click"])
     ).all()
 
@@ -1241,6 +1257,7 @@ def stats_dashboard():
 
     # --- 7. REQUEST FUNNEL + TREND ---
     now_utc = datetime.utcnow()
+    req_selected = MovieRequest.query.filter(MovieRequest.date_added >= range_start).count()
     req_7d = MovieRequest.query.filter(MovieRequest.date_added >= (now_utc - timedelta(days=7))).count()
     req_30d = MovieRequest.query.filter(MovieRequest.date_added >= (now_utc - timedelta(days=30))).count()
     stale_pending = MovieRequest.query.filter(
@@ -1248,11 +1265,12 @@ def stats_dashboard():
         MovieRequest.date_added < (now_utc - timedelta(days=7))
     ).count()
 
-    # Trend: new requests per day (last 14 days)
-    trend_days = [now_utc.date() - timedelta(days=i) for i in range(13, -1, -1)]
+    # Trend: new requests per day (selected range)
+    trend_span = selected_days
+    trend_days = [now_utc.date() - timedelta(days=i) for i in range(trend_span - 1, -1, -1)]
     trend_index = {d.isoformat(): 0 for d in trend_days}
     req_trend_rows = MovieRequest.query.filter(
-        MovieRequest.date_added >= (now_utc - timedelta(days=14))
+        MovieRequest.date_added >= range_start
     ).all()
 
     for row in req_trend_rows:
@@ -1308,6 +1326,10 @@ def stats_dashboard():
                            ad_views_series=ad_views_series,
                            ad_clicks_series=ad_clicks_series,
                            ad_placement_rows=ad_placement_rows,
+                           selected_range=range_key,
+                           selected_range_label=selected_range_label,
+                           selected_days=selected_days,
+                           req_selected=req_selected,
                            req_7d=req_7d,
                            req_30d=req_30d,
                            stale_pending=stale_pending,
@@ -1315,6 +1337,136 @@ def stats_dashboard():
                            req_trend_counts=req_trend_counts,
                            top_content_rows=top_content_rows
                            )
+
+
+@admin_bp.route('/admin/watchlist-notify')
+@login_required
+@admin_required
+def watchlist_notify_page():
+    try:
+        rows = WatchlistNotify.query.order_by(WatchlistNotify.date_added.desc()).limit(300).all()
+    except Exception:
+        db.session.rollback()
+        rows = []
+
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = Series.query.count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    return render_template(
+        'admin/watchlist_notify.html',
+        rows=rows,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests
+    )
+
+
+@admin_bp.route('/admin/watchlist-notify/mark/<int:row_id>')
+@login_required
+@admin_required
+def mark_watchlist_notified(row_id):
+    row = WatchlistNotify.query.get_or_404(row_id)
+    try:
+        row.notified = True
+        db.session.commit()
+        flash('Entry marked as notified.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to update entry: {e}', 'error')
+    return redirect(url_for('admin.watchlist_notify_page'))
+
+
+@admin_bp.route('/admin/polls', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_polls():
+    if request.method == 'POST':
+        question = (request.form.get('question') or '').strip()
+        options_raw = (request.form.get('options') or '').strip()
+        make_active = request.form.get('is_active') == 'on'
+
+        options = [x.strip() for x in options_raw.splitlines() if x.strip()]
+        if not question or len(options) < 2:
+            flash('Provide a question and at least 2 options.', 'error')
+            return redirect(url_for('admin.manage_polls'))
+
+        try:
+            if make_active:
+                WeeklyPoll.query.update({'is_active': False})
+
+            poll = WeeklyPoll(question=question, is_active=make_active)
+            db.session.add(poll)
+            db.session.flush()
+            for option_text in options[:8]:
+                db.session.add(WeeklyPollOption(poll_id=poll.id, option_text=option_text))
+            db.session.commit()
+            flash('Poll created successfully.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating poll: {e}', 'error')
+        return redirect(url_for('admin.manage_polls'))
+
+    try:
+        polls = WeeklyPoll.query.order_by(WeeklyPoll.date_added.desc()).limit(20).all()
+    except Exception:
+        db.session.rollback()
+        polls = []
+
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = Series.query.count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    return render_template(
+        'admin/polls.html',
+        polls=polls,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests
+    )
+
+
+@admin_bp.route('/admin/polls/activate/<int:poll_id>')
+@login_required
+@admin_required
+def activate_poll(poll_id):
+    poll = WeeklyPoll.query.get_or_404(poll_id)
+    try:
+        WeeklyPoll.query.update({'is_active': False})
+        poll.is_active = True
+        db.session.commit()
+        flash('Poll activated.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to activate poll: {e}', 'error')
+    return redirect(url_for('admin.manage_polls'))
+
+
+@admin_bp.route('/admin/polls/delete/<int:poll_id>')
+@login_required
+@admin_required
+def delete_poll(poll_id):
+    poll = WeeklyPoll.query.get_or_404(poll_id)
+    try:
+        db.session.delete(poll)
+        db.session.commit()
+        flash('Poll deleted.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Failed to delete poll: {e}', 'error')
+    return redirect(url_for('admin.manage_polls'))
 
 
 

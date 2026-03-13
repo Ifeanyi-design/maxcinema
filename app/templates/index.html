@@ -41,6 +41,72 @@
     </div>
 </section>
 
+<section id="continueWatchingSection" class="hidden mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
+    <div class="w-full bg-[#111111] flex items-center justify-between px-4 py-2 rounded-t-2xl">
+        <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Continue Watching</h2>
+        <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Series Progress</span>
+    </div>
+    <div id="continueWatchingGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white border-x border-b border-gray-100 rounded-b-2xl"></div>
+</section>
+
+<section id="watchlistSection" class="hidden mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
+    <div class="w-full bg-[#1f2937] flex items-center justify-between px-4 py-2 rounded-t-2xl">
+        <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Your Watchlist</h2>
+        <span class="text-[10px] text-gray-300 font-bold uppercase tracking-wider">Saved Titles</span>
+    </div>
+    <div id="watchlistGrid" class="flex overflow-x-auto gap-2 p-2 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth"></div>
+</section>
+
+{% if upcoming_titles %}
+<section id="ComingSoonCountdown" class="mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
+    <div class="w-full bg-gradient-to-r from-black via-[#830506] to-black flex items-center justify-between px-4 py-2 rounded-t-2xl">
+        <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Most Anticipated</h2>
+        <span class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Countdown</span>
+    </div>
+    <div class="flex overflow-x-auto gap-3 p-3 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth">
+        {% for u in upcoming_titles %}
+        <a href="{{ url_for('main.detail', det=u.type, name=u.name, id=u.id) }}"
+           class="download-ad-trigger group flex-none w-[140px] md:w-[170px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-0.5 overflow-hidden">
+            <div class="relative aspect-[2/3] bg-gray-100">
+                <img src="{{ u.image }}" alt="{{ u.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
+                <span class="absolute top-2 right-2 bg-black/75 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase">{{ u.type }}</span>
+            </div>
+            <div class="p-2">
+                <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-tight min-h-[30px]">{{ u.name }}</p>
+                <p class="text-[9px] text-gray-500 font-bold mt-1">Release: {{ u.released_date.strftime('%b %d, %Y') }}</p>
+                <p class="countdown-timer mt-1 text-[10px] font-black text-[#830506] uppercase tracking-wide"
+                   data-release-date="{{ u.released_date.isoformat() }}">
+                    Loading...
+                </p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if active_poll and active_poll.options %}
+<section id="weeklyPollSection" class="mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
+    <div class="w-full bg-gradient-to-r from-[#111827] via-[#0f172a] to-[#111827] px-4 py-3 rounded-2xl border border-gray-700">
+        <p class="text-[10px] font-black uppercase tracking-wider text-cyan-300">Weekly Poll</p>
+        <h3 class="text-white text-sm md:text-base font-black mt-1">{{ active_poll.question }}</h3>
+        <form id="weeklyPollForm" data-poll-id="{{ active_poll.id }}" class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+            {% for opt in active_poll.options %}
+            <label class="flex items-center justify-between gap-2 rounded-lg border border-gray-600 bg-gray-800/60 px-3 py-2 text-xs md:text-sm text-gray-100 cursor-pointer hover:border-cyan-400 transition">
+                <span class="truncate">{{ opt.option_text }}</span>
+                <input type="radio" name="option_id" value="{{ opt.id }}" class="accent-cyan-400">
+            </label>
+            {% endfor %}
+            <div class="md:col-span-2 flex items-center gap-2 mt-1">
+                <button type="submit" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-black text-[11px] font-black uppercase rounded-lg transition">Vote</button>
+                <span id="pollVoteMsg" class="text-[11px] text-gray-300 font-bold"></span>
+                <span class="ml-auto text-[11px] text-gray-400 font-bold">Total Votes: <span id="pollTotalVotes">{{ poll_total_votes }}</span></span>
+            </div>
+        </form>
+    </div>
+</section>
+{% endif %}
+
 <section id="Featured" class="mx-auto my-8 px-0 lg:px-4 max-w-[1600px] overflow-hidden">
     
     <div class="mx-2 lg:mx-0 bg-[#830506] flex justify-between items-center px-6 py-4 rounded-t-2xl shadow-lg relative overflow-hidden">
@@ -249,4 +315,120 @@
     </aside>
 </section>
 
+{% endblock %}
+
+{% block script %}
+<script>
+    (() => {
+        const timers = document.querySelectorAll('.countdown-timer[data-release-date]');
+        if (!timers.length) return;
+
+        const render = () => {
+            const now = new Date();
+            timers.forEach((el) => {
+                const raw = el.getAttribute('data-release-date');
+                const target = new Date(`${raw}T00:00:00`);
+                const diff = target.getTime() - now.getTime();
+
+                if (Number.isNaN(target.getTime())) {
+                    el.textContent = 'Release Date Unknown';
+                    return;
+                }
+                if (diff <= 0) {
+                    el.textContent = 'Now Out';
+                    return;
+                }
+
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const mins = Math.floor((totalSeconds % 3600) / 60);
+                el.textContent = `${days}d ${hours}h ${mins}m left`;
+            });
+        };
+
+        render();
+        setInterval(render, 30000);
+    })();
+</script>
+<script>
+    (() => {
+        const continueSection = document.getElementById('continueWatchingSection');
+        const continueGrid = document.getElementById('continueWatchingGrid');
+        const watchlistSection = document.getElementById('watchlistSection');
+        const watchlistGrid = document.getElementById('watchlistGrid');
+
+        try {
+            const continueItems = JSON.parse(localStorage.getItem('maxcinema_continue_watching') || '[]');
+            if (Array.isArray(continueItems) && continueItems.length && continueSection && continueGrid) {
+                continueGrid.innerHTML = continueItems.slice(0, 8).map((it) => `
+                    <a href="${it.url || '#'}" class="group rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
+                        <div class="relative h-[96px] bg-gray-100">
+                            <img src="${it.image || ''}" alt="${(it.title || 'Untitled').replace(/"/g, '&quot;')}" class="w-full h-full object-cover">
+                            <span class="absolute top-1 right-1 bg-black/75 text-white text-[8px] font-black px-1.5 py-[1px] rounded">S${it.season || '?'}E${it.episode || '?'}</span>
+                        </div>
+                        <div class="p-2">
+                            <p class="text-[11px] font-bold text-gray-900 line-clamp-1">${it.title || 'Untitled'}</p>
+                            <p class="text-[10px] text-gray-500 font-bold">Resume Episode ${it.episode || '?'}</p>
+                        </div>
+                    </a>
+                `).join('');
+                continueSection.classList.remove('hidden');
+            }
+        } catch (e) {}
+
+        try {
+            const watchlistItems = JSON.parse(localStorage.getItem('maxcinema_watchlist') || '[]');
+            if (Array.isArray(watchlistItems) && watchlistItems.length && watchlistSection && watchlistGrid) {
+                watchlistGrid.innerHTML = watchlistItems.slice(0, 12).map((it) => `
+                    <a href="${it.url || '#'}" class="group block flex-none w-[88px] md:w-[110px] bg-white rounded-md overflow-hidden border border-gray-100 shadow-sm hover:shadow-md">
+                        <div class="relative h-[118px] md:h-[148px] bg-gray-100">
+                            <img src="${it.image || ''}" alt="${(it.title || 'Untitled').replace(/"/g, '&quot;')}" class="w-full h-full object-cover">
+                            <span class="absolute top-1 right-1 bg-black/75 text-white text-[7px] font-black px-1.5 py-[1px] rounded uppercase">${(it.type || '').toUpperCase()}</span>
+                        </div>
+                        <div class="p-1.5">
+                            <p class="text-[10px] font-bold text-gray-900 line-clamp-1">${it.title || 'Untitled'}</p>
+                        </div>
+                    </a>
+                `).join('');
+                watchlistSection.classList.remove('hidden');
+            }
+        } catch (e) {}
+    })();
+</script>
+{% if active_poll and active_poll.options %}
+<script>
+    (() => {
+        const form = document.getElementById('weeklyPollForm');
+        if (!form) return;
+        const msg = document.getElementById('pollVoteMsg');
+        const totalEl = document.getElementById('pollTotalVotes');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pollId = form.dataset.pollId;
+            const data = new FormData(form);
+            msg.textContent = 'Submitting...';
+
+            try {
+                const res = await fetch(`/poll/vote/${pollId}`, { method: 'POST', body: data });
+                const out = await res.json();
+                if (!res.ok || !out.success) {
+                    msg.textContent = out.error || 'Vote failed.';
+                    return;
+                }
+                msg.textContent = 'Vote saved.';
+                if (totalEl) totalEl.textContent = out.total_votes || 0;
+                const votedInput = form.querySelector('input[name="option_id"]:checked');
+                if (votedInput) {
+                    const label = votedInput.closest('label');
+                    if (label) label.classList.add('border-cyan-400');
+                }
+            } catch (err) {
+                msg.textContent = 'Vote failed.';
+            }
+        });
+    })();
+</script>
+{% endif %}
 {% endblock %}

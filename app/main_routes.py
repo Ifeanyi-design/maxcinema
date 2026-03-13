@@ -18,7 +18,8 @@ from . import listeners
 from .extensions import db, login_manager
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
-    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent
+    Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
+    WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote
 )
 
 main_bp = Blueprint("main", __name__)
@@ -127,8 +128,69 @@ def get_up_next(trailer):
 
     # Final fallback: random
     return Trailer.query.filter(
-        Trailer.id != trailer.id
+    Trailer.id != trailer.id
     ).order_by(func.random()).limit(6).all()
+
+
+def _comment_badge_for_score(score: int):
+    if score >= 80:
+        return "Legend"
+    if score >= 35:
+        return "Top Fan"
+    if score >= 12:
+        return "Contributor"
+    if score >= 4:
+        return "Rising Voice"
+    return None
+
+
+def build_comment_badges():
+    """
+    Build badge map keyed by normalized identity (email first, fallback to name).
+    Uses both volume and recency to rank active commenters.
+    """
+    three_months_ago = datetime.utcnow() - timedelta(days=90)
+    rows = (
+        db.session.query(
+            Comment.email,
+            func.min(Comment.name),
+            func.count(Comment.id)
+        )
+        .group_by(Comment.email)
+        .all()
+    )
+
+    badge_map = {}
+    for email, any_name, total_count in rows:
+        identity = (email or any_name or "").strip().lower()
+        if not identity:
+            continue
+        recent_count = Comment.query.filter(
+            Comment.email == email,
+            Comment.date_added >= three_months_ago
+        ).count() if email else 0
+        score = int(total_count or 0) + (int(recent_count) * 2)
+        badge = _comment_badge_for_score(score)
+        if badge:
+            badge_map[identity] = badge
+    return badge_map
+
+
+def get_active_poll():
+    now_ts = datetime.utcnow()
+    try:
+        return (
+            WeeklyPoll.query
+            .filter(
+                WeeklyPoll.is_active.is_(True),
+                or_(WeeklyPoll.ends_at.is_(None), WeeklyPoll.ends_at >= now_ts)
+            )
+            .order_by(WeeklyPoll.date_added.desc())
+            .first()
+        )
+    except Exception:
+        db.session.rollback()
+        return None
 
 def populate_recent_items_bulk():
     """
@@ -209,6 +271,7 @@ safe_populate = safe_populate_bulk
 @main_bp.route('/<int:page>')
 def index(page=1):
     per_page = 24
+    today = datetime.utcnow().date()
     features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).limit(8).all()
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
@@ -219,6 +282,22 @@ def index(page=1):
 
     data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
     videos = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).all()
+    upcoming_titles = (
+        AllVideo.query
+        .filter(
+            AllVideo.active.is_(True),
+            AllVideo.coming_soon.is_(True),
+            AllVideo.released_date.isnot(None),
+            AllVideo.released_date >= today
+        )
+        .order_by(AllVideo.released_date.asc())
+        .limit(8)
+        .all()
+    )
+    active_poll = get_active_poll()
+    poll_total_votes = 0
+    if active_poll:
+        poll_total_votes = sum((opt.votes or 0) for opt in active_poll.options)
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
                                        .paginate(page=page, per_page=per_page, error_out=False)
@@ -270,7 +349,56 @@ def index(page=1):
                                 items=items, per_page=per_page,
                                   page=page, total_pages=recent_paginated.pages,
                                   top_rated_movies=top_rated_movies,
-                                  videos=recent_paginated, index=index, trending_trailers=trending_trailers)
+                                  videos=recent_paginated, index=index, trending_trailers=trending_trailers,
+                                  upcoming_titles=upcoming_titles,
+                                  active_poll=active_poll,
+                                  poll_total_votes=poll_total_votes)
+
+
+@main_bp.route("/release-calendar")
+def release_calendar():
+    today = datetime.utcnow().date()
+    start_month = today.replace(day=1)
+    next_month = (start_month + timedelta(days=32)).replace(day=1)
+    after_next_month = (next_month + timedelta(days=32)).replace(day=1)
+
+    current_month_items = (
+        AllVideo.query
+        .filter(
+            AllVideo.active.is_(True),
+            AllVideo.coming_soon.is_(True),
+            AllVideo.released_date >= start_month,
+            AllVideo.released_date < next_month
+        )
+        .order_by(AllVideo.released_date.asc())
+        .all()
+    )
+    next_month_items = (
+        AllVideo.query
+        .filter(
+            AllVideo.active.is_(True),
+            AllVideo.coming_soon.is_(True),
+            AllVideo.released_date >= next_month,
+            AllVideo.released_date < after_next_month
+        )
+        .order_by(AllVideo.released_date.asc())
+        .all()
+    )
+
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+
+    return render_template(
+        "release_calendar.html",
+        current_month_items=current_month_items,
+        next_month_items=next_month_items,
+        month_label=start_month.strftime("%B %Y"),
+        next_month_label=next_month.strftime("%B %Y"),
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers
+    )
 
 @main_bp.route("/featured/<int:page>")
 @main_bp.route("/featured")
@@ -530,6 +658,7 @@ def movie_details(det, name, id):
         .filter(Comment.name.like('[ADMIN] %'))
         .order_by(Comment.date_added.desc())
         .first())
+    comment_badges = build_comment_badges()
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
@@ -565,7 +694,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
@@ -622,6 +751,7 @@ def series_details(det, name, season, episode, id):
         .filter(Comment.name.like('[ADMIN] %'))
         .order_by(Comment.date_added.desc())
         .first())
+    comment_badges = build_comment_badges()
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
@@ -656,7 +786,7 @@ def series_details(det, name, season, episode, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges)
 
 
 @main_bp.route("/download/<type>/<int:id>")
@@ -914,6 +1044,7 @@ def watch_trailer(det="trailer_watch", name=None):
         .filter(Comment.name.like('[ADMIN] %'))
         .order_by(Comment.date_added.desc())
         .first())
+    comment_badges = build_comment_badges()
 
     return render_template(
         f"{det}.html",
@@ -923,7 +1054,8 @@ def watch_trailer(det="trailer_watch", name=None):
         dark=dark,
         up_next=up_next,
         num_comment=num_comment,
-        trending_trailers=trending_trailers
+        trending_trailers=trending_trailers,
+        comment_badges=comment_badges
     )
 
 
@@ -1256,10 +1388,10 @@ def add_comment(video_id, type="video"):
 
     if type == 'trailer':
         # dark_comments.html expects 'trailer', not 'video'
-        html = render_template('dark_comments.html', comment=comment, trailer=video_obj)
+        html = render_template('dark_comments.html', comment=comment, trailer=video_obj, comment_badges=build_comment_badges())
     else:
         # comments.html expects 'video'
-        html = render_template('comments.html', comment=comment, video=video_obj)
+        html = render_template('comments.html', comment=comment, video=video_obj, comment_badges=build_comment_badges())
     return jsonify({'success': True, 'html': html})
 
 
@@ -1319,11 +1451,85 @@ def reply_comment(video_id, type="video"):
 
     # 👇 THIS IS THE FIX 👇
     if type == 'trailer':
-        html = render_template('dark_comments.html', comment=reply, trailer=video_obj)
+        html = render_template('dark_comments.html', comment=reply, trailer=video_obj, comment_badges=build_comment_badges())
     else:
-        html = render_template('comments.html', comment=reply, video=video_obj)
+        html = render_template('comments.html', comment=reply, video=video_obj, comment_badges=build_comment_badges())
     
     return jsonify({'success': True, 'html': html})
+
+
+@main_bp.route('/watchlist/notify/<int:video_id>', methods=['POST'])
+def watchlist_notify(video_id):
+    video = AllVideo.query.filter_by(id=video_id, active=True).first_or_404()
+    name = (request.form.get('name') or '').strip()
+    email = (request.form.get('email') or '').strip().lower()
+    telegram = (request.form.get('telegram') or '').strip()
+
+    if not email and not telegram:
+        return jsonify({'success': False, 'error': 'Provide email or Telegram username.'}), 400
+
+    existing = WatchlistNotify.query.filter_by(
+        video_id=video.id,
+        email=email or None,
+        telegram=telegram or None
+    ).first()
+    if existing:
+        return jsonify({'success': True, 'message': 'You are already on this notify list.'})
+
+    try:
+        db.session.add(WatchlistNotify(
+            video_id=video.id,
+            name=name or None,
+            email=email or None,
+            telegram=telegram or None,
+            source="web"
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    return jsonify({'success': True, 'message': 'Added. We will notify you when it drops.'})
+
+
+@main_bp.route('/poll/vote/<int:poll_id>', methods=['POST'])
+def vote_poll(poll_id):
+    poll = WeeklyPoll.query.get_or_404(poll_id)
+    option_id = request.form.get('option_id', type=int)
+    if not option_id:
+        return jsonify({'success': False, 'error': 'Option is required'}), 400
+
+    option = WeeklyPollOption.query.filter_by(id=option_id, poll_id=poll.id).first()
+    if not option:
+        return jsonify({'success': False, 'error': 'Invalid option'}), 400
+
+    if not session.get('poll_voter_token'):
+        session['poll_voter_token'] = hashlib.sha256(
+            f"{request.remote_addr}-{time.time()}-{random.randint(1000, 9999)}".encode("utf-8")
+        ).hexdigest()[:40]
+        session.modified = True
+
+    voter_token = session.get('poll_voter_token')
+    already_voted = WeeklyPollVote.query.filter_by(poll_id=poll.id, voter_token=voter_token).first()
+    if already_voted:
+        return jsonify({'success': False, 'error': 'You already voted in this poll.'}), 409
+
+    try:
+        option.votes = (option.votes or 0) + 1
+        db.session.add(WeeklyPollVote(
+            poll_id=poll.id,
+            option_id=option.id,
+            voter_token=voter_token,
+            ip_address=request.remote_addr
+        ))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    totals = {opt.id: (opt.votes or 0) for opt in poll.options}
+    total_votes = sum(totals.values())
+    return jsonify({'success': True, 'totals': totals, 'total_votes': total_votes})
 
 @main_bp.route("/admin/uploads")
 def admin_uploads():

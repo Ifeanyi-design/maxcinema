@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto pt-[70px] p-4 md:p-8">
+        <div class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-black tracking-tight">Weekly Polls</h1>
+            <p class="text-xs md:text-sm text-gray-400">Create polls and activate one for homepage voting.</p>
+        </div>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-6">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Create New Poll</h2>
+            <form method="POST" class="grid grid-cols-1 gap-3">
+                <input type="text" name="question" placeholder="Question..." class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white" required>
+                <textarea name="options" rows="5" placeholder="One option per line..." class="p-3 rounded-lg bg-gray-900 border border-gray-700 text-white" required></textarea>
+                <label class="inline-flex items-center gap-2 text-sm text-gray-300 font-bold">
+                    <input type="checkbox" name="is_active" class="accent-yellow-400">
+                    Set as active poll
+                </label>
+                <button type="submit" class="h-11 px-4 rounded-lg bg-yellow-400 text-black text-xs font-black uppercase tracking-wider hover:bg-yellow-300 transition">
+                    Create Poll
+                </button>
+            </form>
+        </section>
+
+        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5">
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Recent Polls</h2>
+            <div class="space-y-3">
+                {% for poll in polls %}
+                <article class="rounded-xl border border-gray-700 bg-gray-900/40 p-3">
+                    <div class="flex flex-wrap items-center gap-2 justify-between">
+                        <p class="font-bold text-sm">{{ poll.question }}</p>
+                        <div class="flex items-center gap-2">
+                            {% if poll.is_active %}
+                                <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">Active</span>
+                            {% else %}
+                                <a href="{{ url_for('admin.activate_poll', poll_id=poll.id) }}" class="px-2 py-1 rounded bg-blue-600 text-white text-[10px] font-black uppercase">Activate</a>
+                            {% endif %}
+                            <a href="{{ url_for('admin.delete_poll', poll_id=poll.id) }}" class="px-2 py-1 rounded bg-red-600 text-white text-[10px] font-black uppercase">Delete</a>
+                        </div>
+                    </div>
+                    <ul class="mt-2 space-y-1 text-xs text-gray-300">
+                        {% for opt in poll.options %}
+                        <li class="flex items-center justify-between rounded-lg bg-gray-800/70 px-2 py-1">
+                            <span>{{ opt.option_text }}</span>
+                            <span class="font-black">{{ opt.votes }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </article>
+                {% else %}
+                <p class="text-sm text-gray-500">No polls created yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

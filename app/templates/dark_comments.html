@@ -7,6 +7,8 @@
 {% set parent_name = comment.parent.name if comment.parent else '' %}
 {% set parent_is_admin = parent_name.startswith('[ADMIN] ') if parent_name else false %}
 {% set parent_display_name = parent_name[8:] if parent_is_admin else parent_name %}
+{% set badge_identity = ((comment.email or display_name)|lower) %}
+{% set user_badge = comment_badges.get(badge_identity) if comment_badges else None %}
 
 <div class="comment-card {{ level_spacing }} mb-3">
     <article class="bg-gray-50 dark:bg-[#111111] border border-gray-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
@@ -17,6 +19,9 @@
                      class="w-10 h-10 rounded-full object-cover border border-white dark:border-gray-800 shadow-sm">
                 <div class="min-w-0">
                     <p class="font-bold text-gray-900 dark:text-gray-100 leading-tight truncate">{{ display_name }}</p>
+                    {% if user_badge and not is_admin_comment %}
+                    <p class="text-[9px] font-black uppercase text-[#830506] tracking-wider mt-0.5">{{ user_badge }}</p>
+                    {% endif %}
                     <p class="text-[10px] uppercase font-black text-gray-500 dark:text-gray-400 tracking-widest">
                         {{ comment.date_added.strftime('%b %d, %Y') }} - {{ comment.date_added.strftime('%H:%M') }}
                     </p>
