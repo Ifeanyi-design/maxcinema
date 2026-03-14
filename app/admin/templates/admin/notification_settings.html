@@ -16,7 +16,13 @@
 
         <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-6">
             <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Current Config Status</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs md:text-sm">
+            <div class="mb-3 rounded-lg border border-gray-700 bg-gray-900/40 p-3 text-xs md:text-sm">
+                <p class="text-gray-400 uppercase text-[10px] font-black">Active Email Provider</p>
+                <p class="font-bold {% if email_enabled %}text-emerald-300{% else %}text-red-300{% endif %}">
+                    {{ email_provider|upper }} {% if email_enabled %}(Ready){% else %}(Not configured){% endif %}
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs md:text-sm">
                 <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-3">
                     <p class="text-gray-400 uppercase text-[10px] font-black">SMTP</p>
                     <p class="font-bold {% if smtp_enabled %}text-emerald-300{% else %}text-red-300{% endif %}">
@@ -26,6 +32,14 @@
                     <p class="text-gray-400">User: {{ smtp_user or '-' }}</p>
                     <p class="text-gray-400">From: {{ smtp_from or '-' }}</p>
                     <p class="text-gray-400">SSL: {{ 'Yes' if smtp_use_ssl else 'No' }} | TLS: {{ 'Yes' if smtp_use_tls else 'No' }}</p>
+                </div>
+                <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-3">
+                    <p class="text-gray-400 uppercase text-[10px] font-black">Resend API</p>
+                    <p class="font-bold {% if resend_enabled %}text-emerald-300{% else %}text-red-300{% endif %}">
+                        {% if resend_enabled %}Configured{% else %}Missing{% endif %}
+                    </p>
+                    <p class="text-gray-400 mt-1">From: {{ resend_from or '-' }}</p>
+                    <p class="text-gray-400 break-all">URL: {{ resend_api_url or '-' }}</p>
                 </div>
                 <div class="rounded-lg border border-gray-700 bg-gray-900/40 p-3">
                     <p class="text-gray-400 uppercase text-[10px] font-black">Telegram</p>
@@ -39,7 +53,7 @@
         </section>
 
         <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-6">
-            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Test Email</h2>
+            <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Test Email ({{ email_provider|upper }})</h2>
             <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input type="hidden" name="action" value="test_email">
                 <input type="email" name="test_email" placeholder="you@example.com" class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white md:col-span-2" required>
@@ -47,6 +61,7 @@
                     Send Test Email
                 </button>
             </form>
+            <p class="mt-2 text-[11px] text-gray-500">Email test uses the active provider from <code>EMAIL_PROVIDER</code> in your .env.</p>
         </section>
 
         <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5">

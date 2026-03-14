@@ -30,11 +30,117 @@ def _has_download_payload(video):
     return bool((video.download_link or "").strip() or (video.dub_download_link or "").strip() or (video.backup_link or "").strip())
 
 
+def _get_email_provider_config():
+    provider = (os.getenv("EMAIL_PROVIDER", "smtp") or "smtp").strip().lower()
+
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587") or 587)
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASS", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", smtp_user or "noreply@maxcinema.local").strip()
+    smtp_use_ssl = os.getenv("SMTP_USE_SSL", "0").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_use_tls = os.getenv("SMTP_USE_TLS", "1").strip().lower() in {"1", "true", "yes", "on"}
+    smtp_enabled = bool(smtp_host and smtp_user and smtp_pass)
+
+    resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_from = os.getenv("RESEND_FROM", "").strip()
+    resend_api_url = os.getenv("RESEND_API_URL", "https://api.resend.com/emails").strip()
+    resend_enabled = bool(resend_api_key and resend_from)
+
+    return {
+        "provider": provider,
+        "smtp": {
+            "enabled": smtp_enabled,
+            "host": smtp_host,
+            "port": smtp_port,
+            "user": smtp_user,
+            "password": smtp_pass,
+            "from": smtp_from,
+            "use_ssl": smtp_use_ssl,
+            "use_tls": smtp_use_tls,
+        },
+        "resend": {
+            "enabled": resend_enabled,
+            "api_key": resend_api_key,
+            "from": resend_from,
+            "api_url": resend_api_url,
+        },
+    }
+
+
+def _email_transport_status(cfg):
+    provider = cfg["provider"]
+    if provider == "resend":
+        return cfg["resend"]["enabled"], "resend"
+    return cfg["smtp"]["enabled"], "smtp"
+
+
+def _send_email_notification(to_email, subject, plain_text, html_body=None):
+    cfg = _get_email_provider_config()
+    enabled, provider = _email_transport_status(cfg)
+    if not enabled:
+        return False, f"email provider '{provider}' is not configured"
+
+    if provider == "resend":
+        resend_cfg = cfg["resend"]
+        payload = {
+            "from": resend_cfg["from"],
+            "to": [to_email],
+            "subject": subject,
+            "html": html_body or f"<p>{plain_text.replace(chr(10), '<br>')}</p>"
+        }
+        try:
+            resp = requests.post(
+                resend_cfg["api_url"],
+                headers={
+                    "Authorization": f"Bearer {resend_cfg['api_key']}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+                timeout=20,
+            )
+            if resp.ok:
+                return True, ""
+            return False, f"resend:{resp.status_code}:{resp.text[:180]}"
+        except Exception as e:
+            return False, f"resend:{e}"
+
+    smtp_cfg = cfg["smtp"]
+    smtp_server = None
+    try:
+        if smtp_cfg["use_ssl"]:
+            smtp_server = smtplib.SMTP_SSL(smtp_cfg["host"], smtp_cfg["port"], timeout=20)
+        else:
+            smtp_server = smtplib.SMTP(smtp_cfg["host"], smtp_cfg["port"], timeout=20)
+            if smtp_cfg["use_tls"]:
+                smtp_server.starttls()
+
+        smtp_server.login(smtp_cfg["user"], smtp_cfg["password"])
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = smtp_cfg["from"]
+        msg["To"] = to_email
+        msg.set_content(plain_text)
+        if html_body:
+            msg.add_alternative(html_body, subtype="html")
+        smtp_server.send_message(msg)
+        return True, ""
+    except Exception as e:
+        return False, f"smtp:{e}"
+    finally:
+        if smtp_server:
+            try:
+                smtp_server.quit()
+            except Exception:
+                pass
+
+
 def _send_release_notifications(video):
     """
     Send notifications to watchers for a released title.
     Supports:
-    - SMTP email (if SMTP env vars set)
+    - Resend API email (EMAIL_PROVIDER=resend)
+    - SMTP email (EMAIL_PROVIDER=smtp)
     - Telegram Bot API (if TELEGRAM_BOT_TOKEN set)
     """
     rows = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).all()
@@ -49,13 +155,8 @@ def _send_release_notifications(video):
         "You requested this notification."
     )
 
-    # SMTP config (optional)
-    smtp_host = os.getenv("SMTP_HOST", "").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587") or 587)
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_pass = os.getenv("SMTP_PASS", "").strip()
-    smtp_from = os.getenv("SMTP_FROM", smtp_user or "noreply@maxcinema.local").strip()
-    smtp_enabled = bool(smtp_host and smtp_user and smtp_pass)
+    email_cfg = _get_email_provider_config()
+    email_enabled, _ = _email_transport_status(email_cfg)
 
     # Telegram config (optional)
     tg_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
@@ -67,24 +168,25 @@ def _send_release_notifications(video):
     marked = 0
     errors = []
 
-    smtp_server = None
     try:
-        if smtp_enabled:
-            smtp_server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-            smtp_server.starttls()
-            smtp_server.login(smtp_user, smtp_pass)
-
         for row in rows:
             sent_any = False
 
-            if smtp_enabled and row.email:
+            if email_enabled and row.email:
                 try:
-                    msg = EmailMessage()
-                    msg["Subject"] = f"Now Available: {video.name}"
-                    msg["From"] = smtp_from
-                    msg["To"] = row.email
-                    msg.set_content(plain_text)
-                    smtp_server.send_message(msg)
+                    html_text = (
+                        f"<p>Good news! '<strong>{video.name}</strong>' is now available on MaxCinema.</p>"
+                        f"<p><a href=\"{release_url}\">Open release page</a></p>"
+                        "<p>You requested this notification.</p>"
+                    )
+                    ok, err = _send_email_notification(
+                        to_email=row.email,
+                        subject=f"Now Available: {video.name}",
+                        plain_text=plain_text,
+                        html_body=html_text
+                    )
+                    if not ok:
+                        raise RuntimeError(err or "email send failed")
                     emailed += 1
                     sent_any = True
                 except Exception as e:
@@ -141,12 +243,6 @@ def _send_release_notifications(video):
     except Exception as e:
         db.session.rollback()
         errors.append(f"fatal:{e}")
-    finally:
-        if smtp_server:
-            try:
-                smtp_server.quit()
-            except Exception:
-                pass
 
     return {
         "queued": len(rows),
@@ -1529,14 +1625,10 @@ def mark_watchlist_notified(row_id):
 @login_required
 @admin_required
 def notification_settings():
-    smtp_host = os.getenv("SMTP_HOST", "").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587") or 587)
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_pass = os.getenv("SMTP_PASS", "").strip()
-    smtp_from = os.getenv("SMTP_FROM", smtp_user or "noreply@maxcinema.local").strip()
-    smtp_use_ssl = os.getenv("SMTP_USE_SSL", "0").strip().lower() in {"1", "true", "yes", "on"}
-    smtp_use_tls = os.getenv("SMTP_USE_TLS", "1").strip().lower() in {"1", "true", "yes", "on"}
-    smtp_enabled = bool(smtp_host and smtp_user and smtp_pass)
+    email_cfg = _get_email_provider_config()
+    email_enabled, email_provider = _email_transport_status(email_cfg)
+    smtp_cfg = email_cfg["smtp"]
+    resend_cfg = email_cfg["resend"]
 
     tg_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     tg_default_chat = os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "").strip()
@@ -1552,36 +1644,31 @@ def notification_settings():
             target_email = (request.form.get('test_email') or '').strip()
             if not target_email:
                 test_result = {"ok": False, "message": "Enter an email address for test send."}
-            elif not smtp_enabled:
-                test_result = {"ok": False, "message": "SMTP is not configured. Set SMTP_HOST/SMTP_USER/SMTP_PASS first."}
+            elif not email_enabled:
+                test_result = {"ok": False, "message": f"Email provider '{email_provider}' is not configured."}
             else:
-                smtp_server = None
                 try:
-                    if smtp_use_ssl:
-                        smtp_server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20)
-                    else:
-                        smtp_server = smtplib.SMTP(smtp_host, smtp_port, timeout=20)
-                        if smtp_use_tls:
-                            smtp_server.starttls()
-
-                    smtp_server.login(smtp_user, smtp_pass)
-                    msg = EmailMessage()
-                    msg["Subject"] = "MaxCinema Notification Test"
-                    msg["From"] = smtp_from
-                    msg["To"] = target_email
-                    msg.set_content(
-                        f"This is a test notification from MaxCinema admin settings.\n\nTime: {now_tag}\n\nIf you got this, SMTP works."
+                    plain_text = (
+                        "This is a test notification from MaxCinema admin settings.\n\n"
+                        f"Time: {now_tag}\n\n"
+                        f"If you got this, {email_provider.upper()} works."
                     )
-                    smtp_server.send_message(msg)
+                    html_text = (
+                        "<p>This is a test notification from MaxCinema admin settings.</p>"
+                        f"<p>Time: {now_tag}</p>"
+                        f"<p>If you got this, <strong>{email_provider.upper()}</strong> works.</p>"
+                    )
+                    ok, err = _send_email_notification(
+                        to_email=target_email,
+                        subject="MaxCinema Notification Test",
+                        plain_text=plain_text,
+                        html_body=html_text
+                    )
+                    if not ok:
+                        raise RuntimeError(err or "email send failed")
                     test_result = {"ok": True, "message": f"Test email sent to {target_email}."}
                 except Exception as e:
                     test_result = {"ok": False, "message": f"Email test failed: {e}"}
-                finally:
-                    if smtp_server:
-                        try:
-                            smtp_server.quit()
-                        except Exception:
-                            pass
 
         elif action == 'test_telegram':
             if not tg_enabled:
@@ -1613,13 +1700,18 @@ def notification_settings():
 
     return render_template(
         'admin/notification_settings.html',
-        smtp_enabled=smtp_enabled,
-        smtp_host=smtp_host,
-        smtp_port=smtp_port,
-        smtp_user=smtp_user,
-        smtp_from=smtp_from,
-        smtp_use_ssl=smtp_use_ssl,
-        smtp_use_tls=smtp_use_tls,
+        email_provider=email_provider,
+        email_enabled=email_enabled,
+        smtp_enabled=smtp_cfg["enabled"],
+        smtp_host=smtp_cfg["host"],
+        smtp_port=smtp_cfg["port"],
+        smtp_user=smtp_cfg["user"],
+        smtp_from=smtp_cfg["from"],
+        smtp_use_ssl=smtp_cfg["use_ssl"],
+        smtp_use_tls=smtp_cfg["use_tls"],
+        resend_enabled=resend_cfg["enabled"],
+        resend_from=resend_cfg["from"],
+        resend_api_url=resend_cfg["api_url"],
         tg_enabled=tg_enabled,
         tg_default_chat=tg_default_chat,
         test_result=test_result
