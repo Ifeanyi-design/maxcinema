@@ -393,6 +393,9 @@ def inject_admin_sidebar_counts():
 def dashboard():
     page = request.args.get('page', 1, type=int)
     per_page = 24
+    kind_filter = (request.args.get('kind') or 'all').strip().lower()
+    state_filter = (request.args.get('state') or 'all').strip().lower()
+    today = datetime.utcnow().date()
 
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
@@ -410,8 +413,24 @@ def dashboard():
             'available': server.available_storage()
         })
 
+    video_query = AllVideo.query
+    if kind_filter in {'movie', 'series'}:
+        video_query = video_query.filter(AllVideo.type == kind_filter)
+
+    missing_links_expr = (
+        (func.length(func.trim(func.coalesce(AllVideo.download_link, ''))) == 0) &
+        (func.length(func.trim(func.coalesce(AllVideo.dub_download_link, ''))) == 0) &
+        (func.length(func.trim(func.coalesce(AllVideo.backup_link, ''))) == 0)
+    )
+    if state_filter == 'coming_soon':
+        video_query = video_query.filter(AllVideo.coming_soon.is_(True))
+    elif state_filter == 'missing_links':
+        video_query = video_query.filter(missing_links_expr)
+    elif state_filter == 'inactive':
+        video_query = video_query.filter(AllVideo.active.is_(False))
+
     videos_page = (
-        AllVideo.query
+        video_query
         .order_by(AllVideo.created_at.desc())
         .paginate(page=page, per_page=per_page, error_out=False)
     )
@@ -442,6 +461,23 @@ def dashboard():
         analytics_available = False
         recent_analytics = []
 
+    needs_poster = (
+        AllVideo.query
+        .filter(func.length(func.trim(func.coalesce(AllVideo.image, ''))) == 0)
+        .count()
+    )
+    needs_missing_links = AllVideo.query.filter(missing_links_expr).count()
+    needs_past_due = (
+        AllVideo.query
+        .filter(
+            AllVideo.coming_soon.is_(True),
+            AllVideo.released_date.isnot(None),
+            AllVideo.released_date < today
+        )
+        .count()
+    )
+    needs_inactive = AllVideo.query.filter(AllVideo.active.is_(False)).count()
+
     return render_template(
         'admin/dashboard.html',
         total_movies=total_movies,
@@ -454,7 +490,13 @@ def dashboard():
         videos_page=videos_page,
         total_requests=total_requests,
         recent_analytics=recent_analytics,
-        analytics_available=analytics_available
+        analytics_available=analytics_available,
+        kind_filter=kind_filter,
+        state_filter=state_filter,
+        needs_poster=needs_poster,
+        needs_missing_links=needs_missing_links,
+        needs_past_due=needs_past_due,
+        needs_inactive=needs_inactive
     )
 
 import json

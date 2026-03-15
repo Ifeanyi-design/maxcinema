@@ -339,9 +339,59 @@
     </aside>
 </section>
 
+<button id="jumpLatestBtn"
+        type="button"
+        class="hidden fixed bottom-6 right-5 z-50 h-11 px-4 rounded-full bg-[#830506] text-white text-[11px] font-black uppercase tracking-wider shadow-xl hover:bg-black transition">
+    Jump To Latest
+</button>
+
 {% endblock %}
 
 {% block script %}
+<script>
+    (() => {
+        const jumpBtn = document.getElementById('jumpLatestBtn');
+        const target = document.getElementById('RecentlyAdded');
+        if (!jumpBtn || !target) return;
+
+        const refreshVisibility = () => {
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            jumpBtn.classList.toggle('hidden', y < 700);
+        };
+
+        jumpBtn.addEventListener('click', () => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        window.addEventListener('scroll', refreshVisibility, { passive: true });
+        refreshVisibility();
+    })();
+</script>
+<script>
+    (() => {
+        const imgs = document.querySelectorAll('#Featured img, #RecentlyAddedbox img, #TrendingCol img');
+        if (!imgs.length) return;
+        imgs.forEach((img) => {
+            const wrap = img.parentElement;
+            if (!wrap) return;
+            wrap.classList.add('bg-gray-200');
+            wrap.classList.add('animate-pulse');
+            img.classList.add('opacity-0', 'transition-opacity', 'duration-500');
+
+            const done = () => {
+                wrap.classList.remove('animate-pulse');
+                img.classList.remove('opacity-0');
+            };
+
+            if (img.complete && img.naturalWidth > 0) {
+                done();
+            } else {
+                img.addEventListener('load', done, { once: true });
+                img.addEventListener('error', done, { once: true });
+            }
+        });
+    })();
+</script>
 <script>
     (() => {
         const timers = document.querySelectorAll('.countdown-timer[data-release-date]');
