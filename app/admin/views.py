@@ -417,11 +417,22 @@ def dashboard():
     if kind_filter in {'movie', 'series'}:
         video_query = video_query.filter(AllVideo.type == kind_filter)
 
-    missing_links_expr = (
+    video_missing_links_expr = (
         (func.length(func.trim(func.coalesce(AllVideo.download_link, ''))) == 0) &
         (func.length(func.trim(func.coalesce(AllVideo.dub_download_link, ''))) == 0) &
         (func.length(func.trim(func.coalesce(AllVideo.backup_link, ''))) == 0)
     )
+    series_missing_episode_expr = (
+        db.session.query(Episode.id)
+        .join(Season, Episode.season_id == Season.id)
+        .join(Series, Season.series_id == Series.id)
+        .filter(
+            Series.all_video_id == AllVideo.id,
+            func.length(func.trim(func.coalesce(Episode.download_link, ''))) == 0
+        )
+        .exists()
+    )
+    missing_links_expr = video_missing_links_expr | series_missing_episode_expr
     if state_filter == 'coming_soon':
         video_query = video_query.filter(AllVideo.coming_soon.is_(True))
     elif state_filter == 'missing_links':
