@@ -87,7 +87,18 @@
         <h2 class="font-black text-white text-xs md:text-sm uppercase tracking-wide">Most Anticipated</h2>
         <span class="text-[10px] text-white/80 font-bold uppercase tracking-wider">Countdown</span>
     </div>
-    <div class="flex overflow-x-auto gap-3 p-3 bg-white border-x border-b border-gray-100 rounded-b-2xl scrollbar-hide scroll-smooth">
+    <div class="relative group/anticipated bg-white border-x border-b border-gray-100 rounded-b-2xl">
+        <button type="button"
+                onclick="document.getElementById('comingSoonRail').scrollBy({left: -280, behavior: 'smooth'})"
+                class="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white shadow-[0_5px_20px_rgba(0,0,0,0.15)] rounded-full w-10 h-10 hidden md:flex items-center justify-center hover:bg-[#830506] hover:text-white text-gray-700 transition-all opacity-0 group-hover/anticipated:opacity-100 border border-gray-100 cursor-pointer">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button type="button"
+                onclick="document.getElementById('comingSoonRail').scrollBy({left: 280, behavior: 'smooth'})"
+                class="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white shadow-[0_5px_20px_rgba(0,0,0,0.15)] rounded-full w-10 h-10 hidden md:flex items-center justify-center hover:bg-[#830506] hover:text-white text-gray-700 transition-all opacity-0 group-hover/anticipated:opacity-100 border border-gray-100 cursor-pointer">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    <div id="comingSoonRail" class="flex overflow-x-auto gap-3 p-3 rounded-b-2xl scrollbar-hide scroll-smooth">
         {% for u in upcoming_titles %}
         <a href="{% if u.type == 'series' and u.season and u.episode %}{{ url_for('main.detail', det=u.type, name=u.name, id=u.id, season=u.season, episode=u.episode) }}{% else %}{{ url_for('main.detail', det=u.type, name=u.name, id=u.id) }}{% endif %}"
            class="download-ad-trigger group flex-none w-[140px] md:w-[170px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all hover:-translate-y-0.5 overflow-hidden">
@@ -105,6 +116,7 @@
             </div>
         </a>
         {% endfor %}
+    </div>
     </div>
 </section>
 {% endif %}

@@ -5265,6 +5265,10 @@ iframe {
   opacity: 0.2;
 }
 
+.group\/anticipated:hover .group-hover\/anticipated\:opacity-100 {
+  opacity: 1;
+}
+
 @media (min-width: 640px) {
   .sm\:ml-3 {
     margin-left: 0.75rem;
