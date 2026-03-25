@@ -48,7 +48,7 @@ def create_app(config_class=Config):
 
     @app.context_processor
     def inject_ads():
-        iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "highperformanceformat.com")
+        iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "illuminationacceptedkeynote.com")
     
         def iframe_ad(key_env, width, height, fmt="iframe"):
             key = os.getenv(key_env)
@@ -70,7 +70,7 @@ def create_app(config_class=Config):
         sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
     
         # POPUNDER URL (built server-side from secrets)
-        pop_domain = os.getenv("AD_POP_DOMAIN", "effectivegatecpm.com")
+        pop_domain = os.getenv("AD_POP_DOMAIN", "illuminationacceptedkeynote.com")
         pop_path = os.getenv("AD_POP_PATH")
         pop_key = os.getenv("AD_POP_KEY")
     
