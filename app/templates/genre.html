@@ -42,6 +42,15 @@
             </div>
         </div>
 
+        {# ── Mid-content banner — between Telegram CTA and results grid ── #}
+        {% if videos.items %}
+        <div class="bg-white border-x border-gray-100 px-4 py-2 min-h-[58px] md:min-h-[98px]">
+          <p class="text-[7px] font-black uppercase tracking-[.25em] text-gray-400 text-center mb-1">Sponsored</p>
+          {% set banner_ad_slot = 'genre_mid_banner' %}
+          {% include 'ads/banner.html' %}
+        </div>
+        {% endif %}
+
         {% if videos.items %}
         <div id="ResultsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 py-8 bg-white px-4 border-x border-b border-gray-100 rounded-b-2xl shadow-sm">
             {% for movie in videos.items %}
@@ -102,6 +111,10 @@
 
     <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/4 gap-8">
         <div class="sticky top-24">
+            <div class="mb-4">
+                {% set sidebar_ad_slot = 'genre_sidebar' %}
+                {% include 'ads/sidebar.html' %}
+            </div>
             {% include 'sidebar_trending.html' %}
         </div>
     </aside>
