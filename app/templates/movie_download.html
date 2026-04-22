@@ -384,38 +384,61 @@
     {% endif %}
 
     {# ── DOWNLOAD PANEL ───────────────────────────────────────── #}
-    <div id="download-panel">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="h-px flex-1 bg-white/10"></div>
-        <p class="text-[10px] font-black uppercase tracking-[.25em] text-white/40">Choose Download Server</p>
-        <div class="h-px flex-1 bg-white/10"></div>
+<div id="download-panel">
+  <div class="flex items-center gap-3 mb-4">
+    <div class="h-px flex-1 bg-white/10"></div>
+    <p class="text-[10px] font-black uppercase tracking-[.25em] text-white/40">Choose Download Server</p>
+    <div class="h-px flex-1 bg-white/10"></div>
+  </div>
+
+  {% if is_coming_soon %}
+    {# ── CASE 1: COMING SOON ─────────────────────────────── #}
+    {% set target_date = video.released_date if det == "movie" else (current_episode.released_date if current_episode else none) %}
+    {% set today_date  = now.date() %}
+    {% set diff = (target_date - today_date).days if target_date else 0 %}
+
+    <div class="bg-gradient-to-br from-[#1a0000] to-[#0a0a0a] border-2 border-[#830506]/50
+                rounded-2xl p-8 text-center shadow-2xl mb-6">
+      <i class="fa-solid fa-clock text-yellow-400 text-4xl mb-4 block"></i>
+
+      <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-2">
+        {% if diff <= 0 %}
+          Dropping Today
+        {% elif diff == 1 %}
+          Dropping Tomorrow
+        {% else %}
+          Coming {{ target_date.strftime('%B %d, %Y') if target_date else 'Soon' }}
+        {% endif %}
+      </h2>
+
+      <p class="text-white/50 text-xs font-bold uppercase tracking-widest">
+        Stay tuned to MaxCinema
+      </p>
+    </div>
+
+  {% elif is_missing_file %}
+    {# ── CASE 2: FILE MISSING ────────────────────────────── #}
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-8 text-center mb-6">
+      <i class="fa-solid fa-triangle-exclamation text-orange-500 text-3xl mb-3 block"></i>
+      <p class="text-white font-bold">Links are being updated.</p>
+      <p class="text-white/40 text-xs mt-1">Please check back in a few minutes.</p>
+    </div>
+
+  {% else %}
+    {# ── CASE 3: SHOW SERVERS ────────────────────────────── #}
+    <div class="flex flex-col gap-4" id="server-list">
+
+      {# ── Notice ── #}
+      <div class="notice-box flex items-start gap-3">
+        <i class="fa-solid fa-circle-info text-[#830506] mt-0.5 flex-shrink-0"></i>
+        <span>
+          If redirected to an ad — press <strong>Back</strong> and click again.
+          Your download starts on the <strong class="text-white">2nd or 3rd click</strong>.
+          Ads keep this site free. ❤️
+        </span>
       </div>
 
-      {% if is_coming_soon %}
-        {# ── COMING SOON ─────────────────────────────────── #}
-        {% set target_date = video.released_date if det == "movie" else (current_episode.released_date if current_episode else none) %}
-        {% set today_date  = now.date() %}
-        {% set diff = (target_date - today_date).days if target_date else 0 %}
-        <div class="bg-gradient-to-br from-[#1a0000] to-[#0a0a0a] border-2 border-[#830506]/50
-                    rounded-2xl p-8 text-center shadow-2xl">
-          <i class="fa-solid fa-clock text-yellow-400 text-4xl mb-4 block"></i>
-          <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-2">
-  {% if diff <= 0 %}
-    Dropping Today
-  {% elif diff == 1 %}
-    Dropping Tomorrow
-  {% else %}
-    Coming {{ target_date.strftime('%B %d, %Y') }}
-  {% endif %}
-</h2>
-        {# ── SERVERS ─────────────────────────────────────── #}
-        <div class="flex flex-col gap-4" id="server-list">
-
-          {# ── Notice ── #}
-          <div class="notice-box flex items-start gap-3">
-            <i class="fa-solid fa-circle-info text-[#830506] mt-0.5 flex-shrink-0"></i>
-            <span>If redirected to an ad — press <strong>Back</strong> and click again. Your download starts on the <strong class="text-white">2nd or 3rd click</strong>. Ads keep this site free. ❤️</span>
-          </div>
+      {# ── KEEP ALL YOUR EXISTING SERVER BUTTONS BELOW THIS LINE ── #}
 
           {# ── Urgency text ──────────────────────────────── #}
           <p class="text-center text-[11px] font-black uppercase tracking-[.12em] text-yellow-400/90">
