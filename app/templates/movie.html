@@ -411,7 +411,7 @@
                 </div>
             </div>
 
-            <div class="w-full my-8 hidden">
+            <div class="w-full my-8">
                 {% set banner_ad_slot = 'movie_secondary_banner' %}
                 {% include 'ads/banner.html' %}
             </div>
@@ -466,10 +466,6 @@
             <div class="w-full flex flex-col gap-4">
                 {% set sidebar_ad_slot = 'movie_sidebar' %}
                 {% include 'ads/sidebar.html' %}
-                <div class="hidden md:flex lg:hidden w-full">
-                    {% set sidebar_ad_slot = 'movie_sidebar_secondary' %}
-                    {% include 'ads/sidebar.html' %}
-                </div>
             </div>
 
             {% set categories = [

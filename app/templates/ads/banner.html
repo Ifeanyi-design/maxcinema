@@ -29,7 +29,8 @@
       <script src="https://www.{{ ads.banner_mobile.domain }}/{{ ads.banner_mobile.key }}/invoke.js"></script>
     </div>
   {% elif ads.banner and ads.banner.key %}
-    <div class="md:hidden w-full flex justify-center items-center my-3 overflow-x-auto" data-ad-slot="{{ slot_name }}">
+    <div class="md:hidden w-full flex justify-center items-center my-3 overflow-hidden max-w-full" data-ad-slot="{{ slot_name }}">
+      <div style="max-width:100%;overflow:hidden;">
       <script>
         atOptions = {
           'key': '{{ ads.banner.key }}',
@@ -40,6 +41,7 @@
         };
       </script>
       <script src="https://www.{{ ads.banner.domain }}/{{ ads.banner.key }}/invoke.js"></script>
+      </div>
     </div>
   {% endif %}
 {% endif %}

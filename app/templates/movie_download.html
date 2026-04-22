@@ -208,6 +208,65 @@
     text-transform: uppercase;
     letter-spacing: .1em;
   }
+
+  /* ── CTR / Conversion additions ──────────────────────────── */
+
+  /* Muted style for backup / smartlink servers */
+  .server-card--muted {
+    background: linear-gradient(135deg, #1c1c1c 0%, #222 60%, #1a1a1a 100%);
+    box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    opacity: .82;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .server-card--muted:hover { opacity: 1; transform: translateY(-2px); }
+
+  /* Enhanced primary — bigger, bolder, more hover lift */
+  .server-card--primary.dl-primary-btn {
+    box-shadow: 0 10px 36px rgba(131,5,6,.5);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .server-card--primary.dl-primary-btn:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(131,5,6,.65);
+  }
+  .server-card--primary.dl-primary-btn:active { transform: scale(.97); }
+
+  /* Trust badge pills inside primary card */
+  .dl-trust-badge {
+    font-size: .63rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.6);
+    letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  .dl-trust-divider {
+    display: inline-block;
+    width: 1px;
+    height: 11px;
+    background: rgba(255,255,255,.2);
+    flex-shrink: 0;
+  }
+
+  /* Friction text on backup servers */
+  .dl-friction-text {
+    font-size: .58rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-top: .2rem;
+  }
+
+  /* Pre-click spinner */
+  @keyframes dl-spin { to { transform: rotate(360deg); } }
+  .dl-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: dl-spin .7s linear infinite;
+    flex-shrink: 0;
+  }
 </style>
 {% endblock %}
 
@@ -341,56 +400,53 @@
                     rounded-2xl p-8 text-center shadow-2xl">
           <i class="fa-solid fa-clock text-yellow-400 text-4xl mb-4 block"></i>
           <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-2">
-            {% if diff <= 0 %}Dropping Today{% elif diff == 1 %}Dropping Tomorrow{% else %}Coming {{ target_date.strftime('%A') }}{% endif %}
-          </h2>
-          <p class="text-white/60 text-sm mb-6">
-            {% if diff <= 0 %}File uploads any moment now.{% elif diff == 1 %}Less than 24 hours away.{% else %}Scheduled for <span class="text-yellow-400">{{ target_date.strftime('%B %d') }}</span> ({{ diff }} days).{% endif %}
-          </p>
-          <div class="inline-block bg-[#830506] px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-widest text-white animate-pulse">
-            Status: Waiting for Upload
-          </div>
-        </div>
+            {% if diff <= 0 %}Dropping Today{% elif diff == 1 %}Dropping Tomorrow{% else %}Coming {{ target_date.strftime        {# ── SERVERS ─────────────────────────────────────── #}
+        <div class="flex flex-col gap-4" id="server-list">
 
-      {% elif is_missing_file %}
-        {# ── PENDING UPLOAD ──────────────────────────────── #}
-        <div class="bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10
-                    rounded-2xl p-8 text-center">
-          <i class="fa-solid fa-cloud-arrow-up text-yellow-400 text-4xl mb-4 block"></i>
-          <h2 class="text-xl font-black text-white uppercase tracking-tight mb-2">Upload Pending</h2>
-          <p class="text-white/55 text-sm">Download file hasn't been uploaded yet. Please check back soon.</p>
-        </div>
-
-      {% else %}
-        {# ── SERVERS ─────────────────────────────────────── #}
-        <div class="space-y-3" id="server-list">
-
-          {# --- NOTICE -------------------------------------------- #}
+          {# ── Notice ── #}
           <div class="notice-box flex items-start gap-3">
             <i class="fa-solid fa-circle-info text-[#830506] mt-0.5 flex-shrink-0"></i>
-            <span>
-              If redirected to an ad page, press <strong>Back</strong> — your download starts on the
-              <strong class="text-white">2nd or 3rd click</strong>.
-              Ads keep this site free. ❤️
-            </span>
+            <span>If redirected to an ad — press <strong>Back</strong> and click again. Your download starts on the <strong class="text-white">2nd or 3rd click</strong>. Ads keep this site free. ❤️</span>
           </div>
 
-          {# ─── SERVER 1: Primary real link ─────────────────────── #}
+          {# ── Urgency text ──────────────────────────────── #}
+          <p class="text-center text-[11px] font-black uppercase tracking-[.12em] text-yellow-400/90">
+            🔥 Recommended for fastest download
+          </p>
+
+          {# ─── SERVER 1: Primary (dominant, above fold) ────────── #}
           {% if storage_obj and storage_obj.server_type == 'telegram' %}
             {# Telegram flow #}
             <a id="server1-btn"
                href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode, method='server') }}"
-               class="server-card server-card--primary dl-server-btn block"
+               class="server-card server-card--primary dl-server-btn dl-primary-btn block"
                data-server="1">
-              <div class="server-card__body">
-                <div class="server-card__icon"><i class="fa-solid fa-bolt"></i></div>
+              <div class="server-card__body py-5 px-5 gap-4">
+                <div class="server-card__icon w-14 h-14 text-2xl flex-shrink-0"><i class="fa-solid fa-bolt"></i></div>
                 <div class="flex-1 min-w-0">
-                  <p class="server-card__label">Recommended · Fastest</p>
-                  <p class="server-card__title">Server 1 — Fast Download</p>
+                  <p class="server-card__label">⚡ Recommended · Fastest · Free</p>
+                  <p class="server-card__title text-xl md:text-2xl">Fast Download (Recommended)</p>
+                  <p class="text-white/55 text-[11px] font-semibold mt-1">Server 1 — Primary</p>
                 </div>
-                <span class="server-card__badge">⚡ Primary</span>
+                <i class="fa-solid fa-chevron-right text-white/40 text-sm flex-shrink-0 ml-1"></i>
+              </div>
+              <div class="flex items-center justify-center gap-3 px-5 pb-4 flex-wrap">
+                <span class="dl-trust-badge">⚡ Fast Server</span>
+                <span class="dl-trust-divider"></span>
+                <span class="dl-trust-badge">🔒 Secure</span>
+                <span class="dl-trust-divider"></span>
+                <span class="dl-trust-badge">📥 No Waiting</span>
               </div>
               <div class="dl-progress"><div class="dl-progress__bar"></div></div>
             </a>
+
+            {# Pre-click loading indicator (hidden, shown during 850ms delay) #}
+            <div id="dl-loading-state" class="hidden text-center -mt-2">
+              <div class="inline-flex items-center gap-2 bg-white/8 border border-white/12 rounded-full px-5 py-2">
+                <span class="dl-spinner"></span>
+                <span class="text-white/70 text-xs font-bold">Preparing your download...</span>
+              </div>
+            </div>
 
             {% if dub_code %}
             <a id="server1-dub-btn"
@@ -434,18 +490,34 @@
             {% if check_dl_link %}
             <a id="server1-btn"
                href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode) }}"
-               class="server-card server-card--primary dl-server-btn block"
+               class="server-card server-card--primary dl-server-btn dl-primary-btn block"
                data-server="1">
-              <div class="server-card__body">
-                <div class="server-card__icon"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+              <div class="server-card__body py-5 px-5 gap-4">
+                <div class="server-card__icon w-14 h-14 text-2xl flex-shrink-0"><i class="fa-solid fa-cloud-arrow-down"></i></div>
                 <div class="flex-1 min-w-0">
-                  <p class="server-card__label">Direct Link · Fast</p>
-                  <p class="server-card__title">Server 1 — Download Now</p>
+                  <p class="server-card__label">⚡ Direct Link · Fast · Free</p>
+                  <p class="server-card__title text-xl md:text-2xl">Fast Download (Recommended)</p>
+                  <p class="text-white/55 text-[11px] font-semibold mt-1">Server 1 — Primary</p>
                 </div>
-                <span class="server-card__badge">⚡ Primary</span>
+                <i class="fa-solid fa-chevron-right text-white/40 text-sm flex-shrink-0 ml-1"></i>
+              </div>
+              <div class="flex items-center justify-center gap-3 px-5 pb-4 flex-wrap">
+                <span class="dl-trust-badge">⚡ Fast Server</span>
+                <span class="dl-trust-divider"></span>
+                <span class="dl-trust-badge">🔒 Secure</span>
+                <span class="dl-trust-divider"></span>
+                <span class="dl-trust-badge">📥 No Waiting</span>
               </div>
               <div class="dl-progress"><div class="dl-progress__bar"></div></div>
             </a>
+
+            {# Pre-click loading indicator #}
+            <div id="dl-loading-state" class="hidden text-center -mt-2">
+              <div class="inline-flex items-center gap-2 bg-white/8 border border-white/12 rounded-full px-5 py-2">
+                <span class="dl-spinner"></span>
+                <span class="text-white/70 text-xs font-bold">Preparing your download...</span>
+              </div>
+            </div>
             {% endif %}
 
             {% if dub_code %}
@@ -490,15 +562,31 @@
             </a>
           {% endif %}
 
-          {# ─── SERVER 2 & 3: Smartlink mirrors ─────────────────── #}
+          {# ── "Other options" divider ── #}
+          <div role="separator" class="flex items-center gap-3 pt-1">
+            <div class="h-px flex-1 bg-white/10"></div>
+            <p class="text-[9px] font-black uppercase tracking-[.18em] text-white/30 whitespace-nowrap">Other download options</p>
+            <div class="h-px flex-1 bg-white/10"></div>
+          </div>
+
+          {# ── Inline ad between server groups ─────────────────────── #}
+          {# Renders regardless of smartlink — sits at natural section break #}
+          <div class="text-center py-1">
+            <p class="text-[7px] font-black uppercase tracking-[.2em] text-white/15 mb-2">Sponsored</p>
+            {% set banner_ad_slot = 'dl_inter_server' %}
+            {% include 'ads/banner.html' %}
+          </div>
+
+          {# ─── SERVER 2 & 3: Smartlink mirrors (muted / backup) ─── #}
           {% if ads and ads.smartlink_url %}
           <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow"
-             class="server-card server-card--secondary smartlink-trigger block">
+             class="server-card server-card--muted smartlink-trigger block">
             <div class="server-card__body">
               <div class="server-card__icon"><i class="fa-solid fa-server"></i></div>
               <div class="flex-1 min-w-0">
-                <p class="server-card__label">Mirror Server</p>
+                <p class="server-card__label">Backup Server 1 · Use if main server fails</p>
                 <p class="server-card__title">Server 2 — Mirror Link</p>
+                <p class="dl-friction-text">May be slower · Backup only</p>
               </div>
               <span class="server-card__badge">MIRROR</span>
             </div>
@@ -506,12 +594,13 @@
           </a>
 
           <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow"
-             class="server-card server-card--tertiary smartlink-trigger block">
+             class="server-card server-card--muted smartlink-trigger block">
             <div class="server-card__body">
               <div class="server-card__icon"><i class="fa-solid fa-database"></i></div>
               <div class="flex-1 min-w-0">
-                <p class="server-card__label">Backup Server</p>
+                <p class="server-card__label">Backup Server 2 · Alternative option</p>
                 <p class="server-card__title">Server 3 — Backup Mirror</p>
+                <p class="dl-friction-text">Use if other servers fail</p>
               </div>
               <span class="server-card__badge">BACKUP</span>
             </div>

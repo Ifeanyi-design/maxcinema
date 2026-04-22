@@ -212,6 +212,13 @@
 </section>
 
 
+{# ── Mid-content ad — between Featured Hits and Recently Added ── #}
+<div class="mx-auto px-2 lg:px-4 max-w-[1600px] my-2 min-h-[60px] md:min-h-[98px]">
+    <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em] mb-1">Sponsored</p>
+    {% set banner_ad_slot = 'homepage_mid_banner' %}
+    {% include 'ads/banner.html' %}
+</div>
+
 <section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-2 lg:px-4 max-w-[1600px] my-4 md:my-8">
     
     <section id="RecentlyAdded" class="flex flex-col lg:w-3/4 mx-auto w-full">
