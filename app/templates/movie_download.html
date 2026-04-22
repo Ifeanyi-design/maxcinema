@@ -400,7 +400,15 @@
                     rounded-2xl p-8 text-center shadow-2xl">
           <i class="fa-solid fa-clock text-yellow-400 text-4xl mb-4 block"></i>
           <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-2">
-            {% if diff <= 0 %}Dropping Today{% elif diff == 1 %}Dropping Tomorrow{% else %}Coming {{ target_date.strftime        {# ── SERVERS ─────────────────────────────────────── #}
+  {% if diff <= 0 %}
+    Dropping Today
+  {% elif diff == 1 %}
+    Dropping Tomorrow
+  {% else %}
+    Coming {{ target_date.strftime('%B %d, %Y') }}
+  {% endif %}
+</h2>
+        {# ── SERVERS ─────────────────────────────────────── #}
         <div class="flex flex-col gap-4" id="server-list">
 
           {# ── Notice ── #}
