@@ -1,78 +1,71 @@
+{#
+  ads/popunder.html
+  =================
+  PURPOSE: Smartlink handler for download mirror buttons ONLY.
+
+  WHAT THIS IS NOT:
+  - This is NOT a popunder trigger.
+  - It does NOT fire on body clicks or background interactions.
+  - It does NOT use {{ ads.pop_url }} (that belongs to the Adsterra SDK).
+
+  WHAT THIS DOES:
+  - Listens for clicks on elements with class "smartlink-trigger"
+  - Opens {{ ads.smartlink_url }} in a new tab on those clicks
+  - Smartlink = separate monetization channel (different URL/account)
+
+  DEPENDENCIES:
+  - {{ ads.smartlink_url }} must be set via AD_SMARTLINK_URL env var
+  - ad-controller.js must be loaded before this partial
+#}
+
+{% if ads and ads.smartlink_url %}
 <script>
-  window.__CC__ = {{ (country or "XX")|tojson }};
-</script>
+(function () {
+  'use strict';
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const adUrl = {{ (ads.pop_url if ads and ads.pop_url else None)|tojson }};
-  if (!adUrl) return;
+  var smartlinkUrl = {{ ads.smartlink_url | tojson }};
+  if (!smartlinkUrl) return;
 
-  const cc = (window.__CC__ || "XX").toUpperCase();
-
-  const TIER1 = new Set([
-    "US","GB","CA","AU","DE","FR","NL","NO","SE","FI","BE","CH","AT","IE","NZ","DK"
-  ]);
-
-  const isTier1 = TIER1.has(cc);
-
-  const ua = navigator.userAgent;
-  const isSafari =
-    /Safari/i.test(ua) &&
+  var ua = navigator.userAgent;
+  var isSafari = /Safari/i.test(ua) &&
     !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
 
-  // Tier logic
-  const backgroundCooldown = isTier1 ? (15 * 60 * 1000) : (60 * 1000);
-  const downloadMod = isTier1 ? 3 : 2;
-
-  function safeSetItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
-  function safeGetItem(k, d) { try { return localStorage.getItem(k) || d; } catch (e) { return d; } }
-
-  function openAd() {
-    safeSetItem("lastAdTime", String(Date.now()));
-
+  /**
+   * openSmartlink()
+   * Opens the smartlink URL in a new tab.
+   * This is intentionally a NEW TAB (not a popunder).
+   * Smartlink is a secondary revenue channel for mirror download buttons.
+   */
+  function openSmartlink() {
     if (isSafari) {
-      const a = document.createElement("a");
-      a.href = adUrl;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
+      // Safari blocks window.open outside direct user gesture — use anchor click
+      var a = document.createElement('a');
+      a.href = smartlinkUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
-      a.remove();
+      document.body.removeChild(a);
     } else {
-      const win = window.open(adUrl, "_blank");
-      if (win) { try { win.blur(); window.focus(); } catch (e) {} }
+      var w = window.open(smartlinkUrl, '_blank', 'noopener,noreferrer');
+      if (w) {
+        try { w.opener = null; } catch (e) {}
+      }
     }
   }
 
-  document.body.addEventListener("click", function (e) {
-    const trigger = e.target.closest(".download-ad-trigger");
+  // Delegated listener — only fires for .smartlink-trigger elements
+  document.addEventListener('click', function (e) {
+    var trigger = e.target.closest('.smartlink-trigger');
+    if (!trigger) return;
 
-    // Download button logic
-    if (trigger && trigger.tagName === "A") {
-      let clickCount = parseInt(safeGetItem("adClickCount", "0"), 10);
-      clickCount++;
-      safeSetItem("adClickCount", String(clickCount));
+    // Let the element's default href navigate normally (download mirror link)
+    // but also open the smartlink in a new tab as a revenue action
+    openSmartlink();
+    // NOTE: We do NOT call e.preventDefault() — the mirror link still works
+  }, false);
 
-      if (clickCount % downloadMod !== 0) {
-        e.preventDefault();
-        openAd();
-      }
-      return;
-    }
-
-    // Background pops
-    if (isSafari) return;
-
-    const isInteractive =
-      e.target.closest("a") || e.target.closest("button") || e.target.closest("input");
-
-    if (!isInteractive) {
-      const now = Date.now();
-      const lastAdTime = parseInt(safeGetItem("lastAdTime", "0"), 10);
-      if (now - lastAdTime > backgroundCooldown) {
-        openAd();
-      }
-    }
-  });
-});
+})();
 </script>
+{% endif %}

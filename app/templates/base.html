@@ -52,7 +52,10 @@
     {% endblock %}
 </head>
 
-<body id="BodyTop" class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
+<body id="BodyTop"
+      data-pop-url="{{ ads.pop_url or '' }}"
+      data-country="{{ country or 'XX' }}"
+      class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
     
     {% if not dark %}
         {%include "header.html"%}
@@ -238,8 +241,12 @@
 
     {% block script %}
     {% endblock %}
+    {# Central ad controller — must load before smartlink handler #}
+    <script src="{{ url_for('static', filename='js/ad-controller.js') }}"></script>
+    {# Smartlink handler (mirror download buttons only — NOT a popunder) #}
     {% include 'ads/popunder.html' %}
-    <script src="https://pl28314200.effectivegatecpm.com/81/d2/13/81d2132d6afc8317fc42e3a20b663e83.js"></script>
+    {# Adsterra SDK — PRIMARY popunder, fires on first user interaction #}
+    <script src="https://pl28314200.illuminationacceptedkeynote.com/81/d2/13/81d2132d6afc8317fc42e3a20b663e83.js"></script>
     {% include 'ads/stickyads.html' %}
     <script>
         // Global image fallback to avoid broken poster boxes.

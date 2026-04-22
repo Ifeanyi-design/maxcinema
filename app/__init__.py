@@ -77,6 +77,15 @@ def create_app(config_class=Config):
         pop_url = None
         if pop_path and pop_key:
             pop_url = f"https://www.{pop_domain}/{pop_path}?key={pop_key}"
+
+        # SMARTLINK — completely separate monetization channel
+        # Set AD_SMARTLINK_URL directly in .env, or build from parts
+        smartlink_url = os.getenv("AD_SMARTLINK_URL")
+        if not smartlink_url:
+            sl_domain = os.getenv("AD_SMARTLINK_DOMAIN", "")
+            sl_path   = os.getenv("AD_SMARTLINK_PATH", "")
+            if sl_domain and sl_path:
+                smartlink_url = f"https://{sl_domain}/{sl_path}"
     
         return dict(
             ads={
@@ -86,6 +95,7 @@ def create_app(config_class=Config):
                 "sticky_desktop": sticky_desktop,
                 "sticky_mobile": sticky_mobile,
                 "pop_url": pop_url,
+                "smartlink_url": smartlink_url,
                 "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
                 "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
                 "monetag_push_zone": os.getenv("MONETAG_PUSH_ZONE"),

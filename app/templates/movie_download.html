@@ -1,0 +1,632 @@
+{% extends "base.html" %}
+
+{% set show_top_banner = false %}
+
+{% block title %}
+  {% if video.type == 'series' %}
+    Download {{ video.name }} S{{ season }}E{{ episode }} | MaxCinema
+  {% else %}
+    Download {{ video.name }} ({{ video.year_produced }}) | MaxCinema
+  {% endif %}
+{% endblock %}
+
+{% block meta_description %}
+  {% if video.type == 'series' %}
+    Download {{ video.name }} Season {{ season }} Episode {{ episode }} in HD. Fast, free download on MaxCinema.
+  {% else %}
+    Download {{ video.name }} ({{ video.year_produced }}) full movie in HD. Fast, free, no sign-up. MaxCinema.
+  {% endif %}
+{% endblock %}
+
+{% block social_tags %}
+  {% if video.type == 'series' %}
+    {% set share_title = "Download " ~ video.name ~ " S" ~ season ~ "E" ~ episode %}
+    {% set share_image = current_season.image if current_season and current_season.image else video.image %}
+  {% else %}
+    {% set share_title = "Download " ~ video.name ~ " (" ~ video.year_produced ~ ")" %}
+    {% set share_image = video.image %}
+  {% endif %}
+  <meta property="og:title"       content="{{ share_title }}">
+  <meta property="og:description" content="Fast, free HD movie download on MaxCinema.">
+  <meta property="og:image"       content="{{ share_image }}">
+  <meta property="og:url"         content="{{ request.url }}">
+  <meta property="og:type"        content="video.movie">
+  <meta property="og:site_name"   content="MaxCinema">
+  <meta name="twitter:card"       content="summary_large_image">
+  <meta name="twitter:title"      content="{{ share_title }}">
+  <meta name="twitter:image"      content="{{ share_image }}">
+{% endblock %}
+
+{% block style %}
+<style>
+  /* ── Download Page Exclusive Styles ───────────────────────────── */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+  .dl-page * { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* Hero backdrop */
+  .hero-backdrop {
+    position: relative;
+    overflow: hidden;
+    min-height: 340px;
+    display: flex;
+    align-items: flex-end;
+  }
+  .hero-backdrop__bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center top;
+    filter: blur(18px) brightness(0.35) saturate(1.4);
+    transform: scale(1.08);
+    z-index: 0;
+  }
+  .hero-backdrop__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, #0a0a0a 30%, transparent 100%);
+    z-index: 1;
+  }
+  .hero-backdrop__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 2rem 1.5rem 2.5rem;
+  }
+
+  /* Server cards */
+  .server-card {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+  }
+  .server-card:hover { transform: translateY(-3px); }
+  .server-card--primary {
+    background: linear-gradient(135deg, #830506 0%, #b00709 50%, #6a0304 100%);
+    box-shadow: 0 8px 32px rgba(131,5,6,.45);
+  }
+  .server-card--secondary {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    box-shadow: 0 8px 32px rgba(15,52,96,.35);
+  }
+  .server-card--tertiary {
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 60%, #1b4332 100%);
+    box-shadow: 0 8px 32px rgba(27,67,50,.35);
+  }
+  .server-card__body {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .server-card__icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #fff;
+  }
+  .server-card__label {
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.65);
+    margin-bottom: .25rem;
+  }
+  .server-card__title {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: -.01em;
+  }
+  .server-card__badge {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: .55rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    padding: .3rem .7rem;
+    border-radius: 9999px;
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  /* Progress bar animation on click */
+  .dl-progress {
+    height: 3px;
+    background: rgba(255,255,255,.12);
+    overflow: hidden;
+    border-radius: 0 0 1rem 1rem;
+  }
+  .dl-progress__bar {
+    height: 100%;
+    width: 0%;
+    background: rgba(255,255,255,.8);
+    transition: width .9s ease;
+  }
+
+  /* Pulse glow */
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 0 0 rgba(131,5,6,.5); }
+    50%      { box-shadow: 0 0 0 10px rgba(131,5,6,0); }
+  }
+  .server-card--primary { animation: pulse-glow 2.5s ease-in-out infinite; }
+
+  /* Info grid */
+  .info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem .85rem;
+    border-radius: 9999px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: rgba(255,255,255,.75);
+  }
+
+  /* Related grid */
+  .related-card {
+    background: #111;
+    border-radius: .75rem;
+    overflow: hidden;
+    transition: transform .2s ease;
+  }
+  .related-card:hover { transform: translateY(-4px); }
+
+  /* Notice box */
+  .notice-box {
+    background: rgba(131,5,6,.12);
+    border: 1px solid rgba(131,5,6,.3);
+    border-radius: .75rem;
+    padding: .9rem 1.25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.75);
+    line-height: 1.6;
+  }
+
+  /* Quality badge */
+  .q-badge {
+    padding: .2rem .55rem;
+    border-radius: .3rem;
+    font-size: .6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{# ─────────────────────────────────────────────────────────────── #}
+{#  Setup variables                                                #}
+{# ─────────────────────────────────────────────────────────────── #}
+{% set dl_id      = video.id if det == "movie" else (current_episode.id if current_episode else video.id) %}
+{% set dl_season  = none if det == "movie" else season %}
+{% set dl_episode = none if det == "movie" else episode %}
+{% set storage_obj    = video.storage_server if det == "movie" else (current_episode.storage_server if current_episode else none) %}
+{% set check_dl_link  = video.download_link  if det == "movie" else (current_episode.download_link  if current_episode else none) %}
+{% set dub_code       = video.dub_download_link if det == "movie" else (current_episode.dub_download_link if current_episode else none) %}
+{% set is_missing_file = (not check_dl_link or (check_dl_link|string|trim) == '') and (not dub_code or (dub_code|string|trim) == '') %}
+{% set is_coming_soon  = video.coming_soon if det == "movie" else (current_episode.coming_soon if current_episode else false) %}
+{% set hero_image = (current_season.image if current_season and current_season.image else video.image) or '' %}
+{% set genre_text = (video.genres | map(attribute='name') | join(' ') | lower) %}
+{% set country_text = ((video.country or '') | string | lower) %}
+{% set language_text = ((video.language or '') | string | lower) %}
+{% set is_anime = ('anime' in genre_text) or ('japan' in country_text) or ('japanese' in language_text) %}
+
+{# ─────────────────────────────────────────────────────────────── #}
+{#  Page wrapper                                                   #}
+{# ─────────────────────────────────────────────────────────────── #}
+<div class="dl-page min-h-screen bg-[#0a0a0a] -mx-4 sm:-mx-4 xl:-mx-8 mt-16 md:mt-20">
+
+  {# ── HERO ─────────────────────────────────────────────────────── #}
+  <div class="hero-backdrop">
+    <div class="hero-backdrop__bg"
+         style="background-image: url('{{ hero_image }}');"></div>
+    <div class="hero-backdrop__overlay"></div>
+    <div class="hero-backdrop__content">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row gap-5 items-end sm:items-center">
+
+        {# Poster #}
+        <div class="flex-shrink-0 w-28 sm:w-36 rounded-xl overflow-hidden shadow-2xl border-2 border-white/10">
+          <img src="{{ hero_image }}" alt="{{ video.name }}"
+               class="w-full aspect-[2/3] object-cover"
+               onerror="this.src='https://res.cloudinary.com/da4thsw5a/image/upload/v1768031437/android-chrome-192x192_juadt7.png'">
+        </div>
+
+        {# Meta #}
+        <div class="flex-1 min-w-0">
+          {# Type badge #}
+          <span class="inline-block mb-2 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest
+                       {% if video.type == 'series' %}bg-blue-600/80{% else %}bg-[#830506]/80{% endif %} text-white">
+            {{ "SERIES" if video.type == "series" else "MOVIE" }}
+          </span>
+
+          <h1 class="text-white font-black text-2xl sm:text-4xl leading-tight tracking-tight mb-1 drop-shadow-lg">
+            {{ video.name }}
+            {% if video.type == 'series' %}
+              <span class="text-[#830506]">S{{ "%02d"|format(season) }}E{{ "%02d"|format(episode) }}</span>
+            {% endif %}
+          </h1>
+
+          {% if current_episode and video.type == 'series' %}
+            <p class="text-white/60 font-semibold text-sm mb-3">{{ current_episode.name }}</p>
+          {% endif %}
+
+          {# Info pills #}
+          <div class="flex flex-wrap gap-2 mt-2">
+            {% if video.year_produced %}
+              <span class="info-pill"><i class="fa-regular fa-calendar"></i> {{ video.year_produced }}</span>
+            {% endif %}
+            {% if video.length or (current_episode and current_episode.length) %}
+              <span class="info-pill"><i class="fa-regular fa-clock"></i>
+                {{ current_episode.length if current_episode and current_episode.length else video.length }}
+              </span>
+            {% endif %}
+            {% if video.language %}
+              <span class="info-pill"><i class="fa-solid fa-language"></i> {{ video.language }}</span>
+            {% endif %}
+            <span class="info-pill q-badge bg-yellow-500/20 border-yellow-500/30 text-yellow-300">
+              <i class="fa-solid fa-film"></i> HD
+            </span>
+            {% for g in video.genres[:3] %}
+              <span class="info-pill">{{ g.name }}</span>
+            {% endfor %}
+          </div>
+
+          {# Star rating #}
+          {% if video.rating %}
+          <div class="flex items-center gap-2 mt-3">
+            <div class="flex gap-0.5 text-yellow-400 text-xs">
+              {% for i in range(1,6) %}
+                <i class="fas fa-star {{ 'text-gray-600' if i > video.rating else '' }}"></i>
+              {% endfor %}
+            </div>
+            <span class="text-yellow-400 font-black text-sm">{{ video.rating | round(1) }}</span>
+            <span class="text-white/30 text-xs font-semibold">/ 5</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── MAIN CONTENT ─────────────────────────────────────────────── #}
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+    {# ── AD: top banner ───────────────────────────────────────── #}
+    <div class="flex justify-center">
+      {% set banner_ad_slot = 'dl_top_banner' %}
+      {% include 'ads/banner.html' %}
+    </div>
+
+    {# ── DESCRIPTION ──────────────────────────────────────────── #}
+    {% set synopsis = (current_season.description if current_season and current_season.description else video.description) %}
+    {% if synopsis %}
+    <div class="bg-white/5 border border-white/8 rounded-2xl p-5">
+      <p class="text-[10px] font-black text-white/30 uppercase tracking-[.2em] mb-2">Synopsis</p>
+      <p class="text-white/75 text-sm leading-relaxed">{{ synopsis }}</p>
+    </div>
+    {% endif %}
+
+    {# ── DOWNLOAD PANEL ───────────────────────────────────────── #}
+    <div id="download-panel">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="h-px flex-1 bg-white/10"></div>
+        <p class="text-[10px] font-black uppercase tracking-[.25em] text-white/40">Choose Download Server</p>
+        <div class="h-px flex-1 bg-white/10"></div>
+      </div>
+
+      {% if is_coming_soon %}
+        {# ── COMING SOON ─────────────────────────────────── #}
+        {% set target_date = video.released_date if det == "movie" else (current_episode.released_date if current_episode else none) %}
+        {% set today_date  = now.date() %}
+        {% set diff = (target_date - today_date).days if target_date else 0 %}
+        <div class="bg-gradient-to-br from-[#1a0000] to-[#0a0a0a] border-2 border-[#830506]/50
+                    rounded-2xl p-8 text-center shadow-2xl">
+          <i class="fa-solid fa-clock text-yellow-400 text-4xl mb-4 block"></i>
+          <h2 class="text-2xl font-black text-white uppercase tracking-tight mb-2">
+            {% if diff <= 0 %}Dropping Today{% elif diff == 1 %}Dropping Tomorrow{% else %}Coming {{ target_date.strftime('%A') }}{% endif %}
+          </h2>
+          <p class="text-white/60 text-sm mb-6">
+            {% if diff <= 0 %}File uploads any moment now.{% elif diff == 1 %}Less than 24 hours away.{% else %}Scheduled for <span class="text-yellow-400">{{ target_date.strftime('%B %d') }}</span> ({{ diff }} days).{% endif %}
+          </p>
+          <div class="inline-block bg-[#830506] px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-widest text-white animate-pulse">
+            Status: Waiting for Upload
+          </div>
+        </div>
+
+      {% elif is_missing_file %}
+        {# ── PENDING UPLOAD ──────────────────────────────── #}
+        <div class="bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10
+                    rounded-2xl p-8 text-center">
+          <i class="fa-solid fa-cloud-arrow-up text-yellow-400 text-4xl mb-4 block"></i>
+          <h2 class="text-xl font-black text-white uppercase tracking-tight mb-2">Upload Pending</h2>
+          <p class="text-white/55 text-sm">Download file hasn't been uploaded yet. Please check back soon.</p>
+        </div>
+
+      {% else %}
+        {# ── SERVERS ─────────────────────────────────────── #}
+        <div class="space-y-3" id="server-list">
+
+          {# --- NOTICE -------------------------------------------- #}
+          <div class="notice-box flex items-start gap-3">
+            <i class="fa-solid fa-circle-info text-[#830506] mt-0.5 flex-shrink-0"></i>
+            <span>
+              If redirected to an ad page, press <strong>Back</strong> — your download starts on the
+              <strong class="text-white">2nd or 3rd click</strong>.
+              Ads keep this site free. ❤️
+            </span>
+          </div>
+
+          {# ─── SERVER 1: Primary real link ─────────────────────── #}
+          {% if storage_obj and storage_obj.server_type == 'telegram' %}
+            {# Telegram flow #}
+            <a id="server1-btn"
+               href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode, method='server') }}"
+               class="server-card server-card--primary dl-server-btn block"
+               data-server="1">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fa-solid fa-bolt"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">Recommended · Fastest</p>
+                  <p class="server-card__title">Server 1 — Fast Download</p>
+                </div>
+                <span class="server-card__badge">⚡ Primary</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+
+            {% if dub_code %}
+            <a id="server1-dub-btn"
+               href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode, method='server', audio='dub') }}"
+               class="server-card server-card--primary dl-server-btn block"
+               data-server="1dub">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fa-solid fa-microphone-alt"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">{{ 'English Dub' if is_anime else 'Alternate Audio' }}</p>
+                  <p class="server-card__title">Server 1 — {{ 'ENG Dub Version' if is_anime else 'Alt Audio' }}</p>
+                </div>
+                <span class="server-card__badge">DUB</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+            {% endif %}
+
+            {# Telegram Bot backup #}
+            {% set file_code_raw = video.download_link if det == "movie" else (current_episode.download_link if current_episode else '') %}
+            {% set file_code = file_code_raw.strip() if file_code_raw else '' %}
+            {% set my_bots = ['MaxStreamV2_Bot', 'max_cinema_stream_bot', 'Maxload2_bot', 'Maxload_bot'] %}
+            {% set selected_bot = my_bots | random %}
+            {% if file_code %}
+            <a href="https://t.me/{{ selected_bot }}?start={{ file_code }}" target="_blank" rel="noopener"
+               class="server-card server-card--secondary block">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fa-brands fa-telegram"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">Via Telegram Bot</p>
+                  <p class="server-card__title">Telegram — Get Download Link</p>
+                </div>
+                <span class="server-card__badge">BOT</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+            {% endif %}
+
+          {% else %}
+            {# Other servers — direct link flow #}
+            {% if check_dl_link %}
+            <a id="server1-btn"
+               href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode) }}"
+               class="server-card server-card--primary dl-server-btn block"
+               data-server="1">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">Direct Link · Fast</p>
+                  <p class="server-card__title">Server 1 — Download Now</p>
+                </div>
+                <span class="server-card__badge">⚡ Primary</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+            {% endif %}
+
+            {% if dub_code %}
+            <a id="server1-dub-btn"
+               href="{{ url_for('main.download_dispatcher', type=video.type, id=dl_id, season=dl_season, episode=dl_episode, audio='dub') }}"
+               class="server-card server-card--primary dl-server-btn block"
+               data-server="1dub">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fa-solid fa-microphone-alt"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">{{ 'English Dub' if is_anime else 'Alternate Audio' }}</p>
+                  <p class="server-card__title">Server 1 — {{ 'ENG Dub' if is_anime else 'Alt Audio' }}</p>
+                </div>
+                <span class="server-card__badge">DUB</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+            {% endif %}
+          {% endif %}
+
+          {# ─── Backup / Stream link ─────────────────────────────── #}
+          {% set stream_url = video.backup_link if det == "movie" else (current_episode.backup_link if current_episode else none) %}
+          {% if stream_url %}
+            {% if 'dood' in stream_url or 'myvidplay' in stream_url %}
+              {% set btn_name = 'Doodstream' %}{% set btn_icon = 'fa-play-circle' %}
+            {% elif 'tape' in stream_url %}
+              {% set btn_name = 'StreamTape' %}{% set btn_icon = 'fa-tape' %}
+            {% else %}
+              {% set btn_name = 'Watch Online' %}{% set btn_icon = 'fa-external-link-alt' %}
+            {% endif %}
+            <a href="{{ stream_url }}" target="_blank" rel="noopener nofollow"
+               class="server-card server-card--secondary block">
+              <div class="server-card__body">
+                <div class="server-card__icon"><i class="fas {{ btn_icon }}"></i></div>
+                <div class="flex-1 min-w-0">
+                  <p class="server-card__label">Stream Online</p>
+                  <p class="server-card__title">{{ btn_name }} — Watch Now</p>
+                </div>
+                <span class="server-card__badge">STREAM</span>
+              </div>
+              <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+            </a>
+          {% endif %}
+
+          {# ─── SERVER 2 & 3: Smartlink mirrors ─────────────────── #}
+          {% if ads and ads.smartlink_url %}
+          <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow"
+             class="server-card server-card--secondary smartlink-trigger block">
+            <div class="server-card__body">
+              <div class="server-card__icon"><i class="fa-solid fa-server"></i></div>
+              <div class="flex-1 min-w-0">
+                <p class="server-card__label">Mirror Server</p>
+                <p class="server-card__title">Server 2 — Mirror Link</p>
+              </div>
+              <span class="server-card__badge">MIRROR</span>
+            </div>
+            <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+          </a>
+
+          <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow"
+             class="server-card server-card--tertiary smartlink-trigger block">
+            <div class="server-card__body">
+              <div class="server-card__icon"><i class="fa-solid fa-database"></i></div>
+              <div class="flex-1 min-w-0">
+                <p class="server-card__label">Backup Server</p>
+                <p class="server-card__title">Server 3 — Backup Mirror</p>
+              </div>
+              <span class="server-card__badge">BACKUP</span>
+            </div>
+            <div class="dl-progress"><div class="dl-progress__bar"></div></div>
+          </a>
+          {% endif %}
+
+        </div>{# /server-list #}
+      {% endif %}
+    </div>{# /download-panel #}
+
+    {# ── TELEGRAM CTA ─────────────────────────────────────────── #}
+    <div class="rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 sm:gap-6"
+         style="background: linear-gradient(135deg, #0088cc 0%, #00aaff 100%);">
+      <div class="flex items-center gap-3 flex-1">
+        <div class="bg-white/20 p-3 rounded-full flex-shrink-0">
+          <i class="fa-brands fa-telegram-plane text-white text-2xl"></i>
+        </div>
+        <div>
+          <p class="text-white font-black text-sm">Join MaxCinema on Telegram</p>
+          <p class="text-white/75 text-xs font-semibold uppercase italic">Get every new release instantly</p>
+        </div>
+      </div>
+      <a href="https://t.me/MaxCinemaOfficial" target="_blank" rel="noopener"
+         class="flex-shrink-0 w-full sm:w-auto bg-white text-[#0088cc] font-black px-8 py-3
+                rounded-full hover:bg-blue-50 transition text-center text-xs uppercase shadow-lg">
+        Join Now
+      </a>
+    </div>
+
+    {# ── AD: inline native / banner ───────────────────────────── #}
+    <div class="text-center">
+      <p class="text-[8px] font-black uppercase tracking-[.25em] text-white/20 mb-2">Sponsored</p>
+      {% set banner_ad_slot = 'dl_mid_banner' %}
+      {% include 'ads/banner.html' %}
+    </div>
+
+    {# ── RELATED CONTENT ──────────────────────────────────────── #}
+    {% if suggested %}
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="h-px flex-1 bg-white/10"></div>
+        <p class="text-[10px] font-black uppercase tracking-[.25em] text-white/40">You Might Also Like</p>
+        <div class="h-px flex-1 bg-white/10"></div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {% for s in suggested %}
+        <a href="{{ url_for('main.movie_download_page', slug=s.slug or s.name) }}"
+           class="related-card group block">
+          <div class="relative aspect-[2/3] overflow-hidden">
+            <img src="{{ s.image }}" alt="{{ s.name }}"
+                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                 loading="lazy"
+                 onerror="this.src='https://res.cloudinary.com/da4thsw5a/image/upload/v1768031437/android-chrome-192x192_juadt7.png'">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent
+                        opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+              <i class="fas fa-download text-white text-lg"></i>
+            </div>
+          </div>
+          <div class="p-2.5">
+            <p class="text-white text-[11px] font-bold line-clamp-2 leading-tight
+                      group-hover:text-[#830506] transition-colors">{{ s.name }}</p>
+            <p class="text-white/35 text-[9px] font-semibold uppercase mt-0.5">{{ s.type }}</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── SIDEBAR AD (mobile only) ─────────────────────────────── #}
+    <div class="block md:hidden text-center">
+      {% set sidebar_ad_slot = 'dl_bottom_sidebar' %}
+      {% include 'ads/sidebar.html' %}
+    </div>
+
+    {# Spacer for sticky footer ad #}
+    <div class="h-4"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+(function () {
+  'use strict';
+
+  // ── Progress bar animation on server click ──────────────────────
+  document.querySelectorAll('.dl-server-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      var bar = btn.querySelector('.dl-progress__bar');
+      if (bar) {
+        bar.style.transition = 'width 1.2s ease';
+        bar.style.width = '90%';
+        setTimeout(function () { bar.style.width = '100%'; }, 1200);
+      }
+
+      // Signal the ad controller that the SDK should fire on this click
+      // (Adsterra SDK fires automatically — we just record it for cooldown)
+      if (window.MaxCinemaAds && window.MaxCinemaAds.isPopDue()) {
+        window.MaxCinemaAds.recordPopFired();
+      }
+      // Let the anchor navigate normally — do NOT prevent default
+    });
+  });
+
+  // ── Series episode picker ───────────────────────────────────────
+  var epBtns = document.querySelectorAll('.ep-picker-btn');
+  epBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      epBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    });
+  });
+
+})();
+</script>
+{% endblock %}

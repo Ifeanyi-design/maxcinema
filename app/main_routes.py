@@ -896,6 +896,84 @@ def series_details(det, name, season, episode, id):
     return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges)
 
 
+@main_bp.route("/download/<string:slug>")
+def movie_download_page(slug):
+    """
+    Public download hub page.
+    Route: /download/<slug>
+    Supports both movies and series (season/episode via query args).
+    """
+    # Try slug first, then name as fallback
+    video = AllVideo.query.filter_by(slug=slug, active=True).first()
+    if not video:
+        video = AllVideo.query.filter_by(name=slug, active=True).first_or_404()
+
+    # Series support — season/episode from query args
+    season  = request.args.get('season',  1, type=int)
+    episode = request.args.get('episode', 1, type=int)
+    det     = video.type  # 'movie' or 'series'
+
+    current_season  = None
+    current_episode = None
+
+    if video.type == 'series' and video.series:
+        current_season = Season.query.filter_by(
+            series_id=video.series.id,
+            season_number=season
+        ).first()
+        if current_season:
+            current_episode = Episode.query.filter_by(
+                season_id=current_season.id,
+                episode_number=episode
+            ).first()
+            if not current_episode:
+                current_episode = (
+                    Episode.query
+                    .filter_by(season_id=current_season.id)
+                    .order_by(Episode.episode_number.asc())
+                    .first()
+                )
+            if current_episode:
+                episode = current_episode.episode_number
+
+    # Sidebar data
+    series_trend     = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend      = AllVideo.query.filter_by(trending=True, type="movie",  active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+
+    # Related content
+    genre_ids = [g.id for g in video.genres]
+    suggested = (
+        AllVideo.query
+        .options(defer(AllVideo.video_qualities))
+        .join(AllVideo.genres)
+        .filter(Genre.id.in_(genre_ids), AllVideo.id != video.id, AllVideo.active == True)
+        .distinct().limit(8).all()
+    )
+    if len(suggested) < 8:
+        extra = AllVideo.query.filter(
+            AllVideo.id != video.id,
+            ~AllVideo.id.in_([s.id for s in suggested]),
+            AllVideo.active == True
+        ).order_by(func.random()).limit(8 - len(suggested)).all()
+        suggested.extend(extra)
+
+    return render_template(
+        "movie_download.html",
+        video=video,
+        det=det,
+        season=season,
+        episode=episode,
+        current_season=current_season,
+        current_episode=current_episode,
+        suggested=suggested,
+        trending_series=series_trend,
+        trending_movie=movie_trend,
+        trending_trailers=trending_trailers,
+        dark=True,
+    )
+
+
 @main_bp.route("/download/<type>/<int:id>")
 @main_bp.route("/download/<type>/<int:id>/<int:season>/<int:episode>")
 def download_dispatcher(type, id, season=None, episode=None):
