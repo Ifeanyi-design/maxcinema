@@ -16,6 +16,7 @@ from slugify import slugify
 import hashlib
 from . import listeners
 from .extensions import db, login_manager
+from .indexnow import get_indexnow_key_record, get_site_base_url
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
     Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
@@ -99,13 +100,36 @@ def inject_now():
 
     
 def ping_search_engines():
-    sitemap_url = "https://maxcinema.name.ng/sitemap.xml"
+    sitemap_url = f"{get_site_base_url()}/sitemap.xml"
     try:
         requests.get(f"http://www.google.com/ping?sitemap={sitemap_url}")
         requests.get(f"http://www.bing.com/ping?sitemap={sitemap_url}")
         print("Search engines notified!")
     except Exception as e:
         print("Ping failed:", e)
+
+
+@main_bp.route("/robots.txt")
+def robots_txt():
+    body = "\n".join([
+        "User-agent: *",
+        "Allow: /",
+        f"Sitemap: {get_site_base_url()}/sitemap.xml",
+    ])
+    response = make_response(body)
+    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return response
+
+
+@main_bp.route("/<string:key>.txt")
+def indexnow_key_file(key):
+    record = get_indexnow_key_record()
+    if not record or record["key"] != key:
+        abort(404)
+
+    response = make_response(record["content"])
+    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return response
 
 def get_up_next(trailer):
     # Same release year
@@ -1734,7 +1758,7 @@ def sitemap():
     Dynamic Sitemap: Generates XML on the fly.
     Always up to date with DB. No file saving required.
     """
-    host = "https://www.maxcinema.name.ng"
+    host = get_site_base_url()
 
     # 1. Define Static Pages (Manually add the host)
     static_urls = [

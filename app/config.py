@@ -10,6 +10,13 @@ root_dir = os.path.dirname(basedir)
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SITE_BASE_URL = (os.environ.get("SITE_BASE_URL") or "https://maxcinema.name.ng").rstrip("/")
+    INDEXNOW_ENABLED = (os.environ.get("INDEXNOW_ENABLED") or "1").strip().lower() not in {
+        "0", "false", "no", "off"
+    }
+    INDEXNOW_KEY = (os.environ.get("INDEXNOW_KEY") or "").strip()
+    INDEXNOW_KEY_FILENAME = (os.environ.get("INDEXNOW_KEY_FILENAME") or "").strip()
+    INDEXNOW_ENDPOINT = (os.environ.get("INDEXNOW_ENDPOINT") or "https://api.indexnow.org/indexnow").strip()
 
     # =========================================================
     # 🚀 DATABASE CONFIG (SAFE FOR NEON + SQLITE)

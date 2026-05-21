@@ -21,6 +21,15 @@ import smtplib
 import requests
 from email.message import EmailMessage
 
+from ..indexnow import (
+    build_episode_url,
+    build_trailer_url,
+    submit_for_episode,
+    submit_for_trailer,
+    submit_for_video,
+    submit_indexnow_urls,
+    urls_for_video,
+)
 from ..utils import ContentImporter # Import the class we just made
 
 from itertools import cycle  # <--- ADD THIS AT THE TOP
@@ -305,6 +314,51 @@ def admin_required(func):
         return func(*args, **kwargs)
     return decorated_view
 
+
+def _collect_manual_indexnow_urls(limit_per_type=25):
+    urls = [
+        url_for('main.index', _external=True),
+        url_for('main.sitemap', _external=True),
+        url_for('main.robots_txt', _external=True),
+        url_for('main.trailer', _external=True),
+        url_for('main.trending', type='movie', _external=True),
+        url_for('main.trending', type='series', _external=True),
+        url_for('main.release_calendar', _external=True),
+        url_for('main.navbar', nav='all_movie', _external=True),
+        url_for('main.navbar', nav='all_series', _external=True),
+    ]
+
+    latest_movies = (
+        AllVideo.query
+        .filter_by(type='movie', active=True)
+        .order_by(AllVideo.date_added.desc())
+        .limit(limit_per_type)
+        .all()
+    )
+    latest_series = (
+        AllVideo.query
+        .filter_by(type='series', active=True)
+        .order_by(AllVideo.date_added.desc())
+        .limit(limit_per_type)
+        .all()
+    )
+    latest_trailers = (
+        Trailer.query
+        .order_by(Trailer.date_added.desc())
+        .limit(limit_per_type)
+        .all()
+    )
+
+    for video in latest_movies + latest_series:
+        urls.extend(urls_for_video(video))
+
+    for trailer in latest_trailers:
+        trailer_url = build_trailer_url(trailer)
+        if trailer_url:
+            urls.append(trailer_url)
+
+    return urls
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -510,6 +564,29 @@ def dashboard():
         needs_inactive=needs_inactive
     )
 
+
+@admin_bp.route('/admin/indexnow/resubmit', methods=['POST'])
+@login_required
+@admin_required
+def resubmit_indexnow():
+    try:
+        urls = _collect_manual_indexnow_urls()
+        result = submit_indexnow_urls(urls)
+    except Exception as e:
+        db.session.rollback()
+        flash(f'IndexNow resubmit failed: {e}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    if result.get('ok'):
+        flash(f"IndexNow resubmitted {len(result.get('submitted', []))} URL(s).", 'success')
+    else:
+        reason = result.get('reason') or result.get('response_text') or 'unknown error'
+        status = result.get('status_code')
+        details = f" ({status})" if status else ""
+        flash(f"IndexNow resubmit did not complete{details}: {reason}", 'warning')
+
+    return redirect(url_for('admin.dashboard'))
+
 import json
 
 
@@ -574,6 +651,7 @@ def edit_video(video_id, prev):
                     f"Release notifications sent: email {summary['emailed']}, telegram {summary['telegram']}, marked {summary['marked']}/{summary['queued']}.",
                     "info"
                 )
+        submit_for_video(video)
         flash("Video updated successfully!", "success")
         return redirect(url_for("admin.dashboard"))
 
@@ -587,6 +665,7 @@ def edit_video(video_id, prev):
 @admin_required
 def delete_video(video_id, prev):
     video = AllVideo.query.get_or_404(video_id)
+    deleted_urls = urls_for_video(video)
 
     try:
         # ---------------- Delete RecentItems ----------------
@@ -618,6 +697,7 @@ def delete_video(video_id, prev):
         # ---------------- Finally delete the AllVideo ----------------
         db.session.delete(video)
         db.session.commit()
+        submit_indexnow_urls(deleted_urls)
         flash("Video and all related content deleted successfully!", "success")
     except Exception as e:
         db.session.rollback()
@@ -694,6 +774,7 @@ def add_movie(prev):
             db.session.add(series)
 
         db.session.commit()
+        submit_for_video(video)
         flash(f"{video.type.capitalize()} '{video.name}' added successfully!", "success")
         return redirect(url_for("admin.add_movie", prev=prev))
 
@@ -762,6 +843,7 @@ def add_series(prev):
             db.session.add(series)
 
         db.session.commit()
+        submit_for_video(video)
         flash(f"{video.type.capitalize()} '{video.name}' added successfully!", "success")
         video = AllVideo.query.filter_by(slug=slug).first()
         return redirect(url_for("admin.view_series_specific", prev="series", name=video.slug, id=video.id))
@@ -850,6 +932,7 @@ def view_series():
 def delete_series(series_id):
     series = Series.query.get_or_404(series_id)
     video = AllVideo.query.get(series.all_video_id)
+    deleted_urls = urls_for_video(video)
 
     # Optional: remove RecentItem rows referencing this series or its videos/episodes
     # try:
@@ -868,6 +951,7 @@ def delete_series(series_id):
     if video:
         db.session.delete(video)
     db.session.commit()
+    submit_indexnow_urls(deleted_urls)
     flash('Series and associated videos deleted.', 'success')
     return redirect(url_for('admin.view_series'))
 
@@ -897,6 +981,7 @@ def add_season(series_id, prev):
         ep = Season.query.filter_by(series_id=serie.id).count()
         serie.num_seasons = int(ep)
         db.session.commit()
+        submit_for_video(series)
         flash(f"Season {season.season_number} added to {series.name}.", "success")
         return redirect(url_for('admin.view_series_specific',prev=prev, name=series.slug, id=series.id))
 
@@ -908,6 +993,8 @@ def add_season(series_id, prev):
 @admin_required
 def delete_season(prev, name, id, season_id):
     season = Season.query.get_or_404(season_id)
+    serie = AllVideo.query.get_or_404(id)
+    deleted_urls = urls_for_video(serie) + [build_episode_url(episode) for episode in season.episodes]
     # optional: remove RecentItem referencing episodes in this season
     # try:
     #     episode_ids = [e.id for e in season.episodes]
@@ -917,10 +1004,10 @@ def delete_season(prev, name, id, season_id):
 
     db.session.delete(season)
     db.session.commit()
-    serie = AllVideo.query.get_or_404(id)
     season_count = len(serie.series.seasons)
     serie.series.num_seasons = season_count
     db.session.commit()
+    submit_indexnow_urls(deleted_urls + urls_for_video(serie))
     flash('Season deleted.', 'success')
     return redirect(url_for('admin.view_series_specific', prev=prev, name=name, id=id))
 
@@ -937,6 +1024,7 @@ def edit_season(prev, name, series_id, season_id):
         form.populate_obj(season)
         season.updated_at = datetime.utcnow()
         db.session.commit()
+        submit_for_video(series)
         flash(f"Season {season.season_number} updated.", "success")
         return redirect(url_for('admin.view_series_specific',prev=prev, name=series.slug, id=series.id))
 
@@ -993,6 +1081,7 @@ def add_episode(season_id, prev):
             video.num_episodes = total_eps
             
             db.session.commit()
+            submit_for_episode(new_episode)
             
             flash(f"Episode {new_episode.episode_number} created successfully!", "success")
             return redirect(url_for('admin.view_series_specific', prev=prev, name=video.all_video.slug, id=video.all_video.id))
@@ -1040,6 +1129,7 @@ def edit_episode(name, prev, series_id, season_id, episode_id):
 
         episode.updated_at = datetime.utcnow()
         db.session.commit()
+        submit_for_episode(episode)
         
         flash(f"Episode updated successfully.", "success")
         return redirect(url_for('admin.view_episodes', prev=prev, name=series.slug, ns=season.season_number, season_id=season.id))
@@ -1052,6 +1142,7 @@ def edit_episode(name, prev, series_id, season_id, episode_id):
 def delete_episode(name, id, prev, season_id, episode_id):
 
     episode = Episode.query.get_or_404(episode_id)
+    deleted_urls = [build_episode_url(episode)]
     # optional: remove RecentItem referencing episodes in this season
     # try:
     #     episode_ids = [e.id for e in season.episodes]
@@ -1072,7 +1163,8 @@ def delete_episode(name, id, prev, season_id, episode_id):
     serie.series.num_episodes = total_eps
 
     db.session.commit()
-    flash('Season deleted.', 'success')
+    submit_indexnow_urls(deleted_urls + urls_for_video(serie))
+    flash('Episode deleted.', 'success')
     return redirect(url_for('admin.view_episodes', prev=prev, name=name, season_id=season_id, ns=season.season_number))
 
 
@@ -1093,8 +1185,15 @@ def view_trailers():
 @admin_required
 def delete_trailer(trailer_id):
     trailer = Trailer.query.get_or_404(trailer_id)
+    deleted_urls = [
+        build_trailer_url(trailer),
+        url_for("main.trailer", _external=True),
+        url_for("main.index", _external=True),
+        url_for("main.sitemap", _external=True),
+    ]
     db.session.delete(trailer)
     db.session.commit()
+    submit_indexnow_urls(deleted_urls)
     return redirect(url_for("admin.view_trailers"))
 
 @admin_bp.route("/edit-trailer/<prev>/<slug>/<int:trailer_id>", methods=["GET", "POST"])
@@ -1106,6 +1205,7 @@ def edit_trailer(prev, slug, trailer_id):
     if form.validate_on_submit():
         form.populate_obj(trailer)
         db.session.commit()
+        submit_for_trailer(trailer)
         flash(f"Season {trailer.name} updated.", "success")
         return redirect(url_for("admin.view_trailers"))
     return render_template("admin/trailer_form.html", form=form)
@@ -1120,6 +1220,7 @@ def add_trailer(prev):
         form.populate_obj(new_trailer)
         db.session.add(new_trailer)
         db.session.commit()
+        submit_for_trailer(new_trailer)
         return redirect(url_for("admin.view_trailers"))
     return render_template("admin/trailer_form.html", form=form)
 
