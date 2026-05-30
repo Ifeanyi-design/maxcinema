@@ -232,10 +232,26 @@
                   </div>
                   <p class="mt-6 text-[10px] text-gray-500 font-mono uppercase">Bookmark this page. The buttons will appear automatically.</p>
                   <form id="notifyMeForm" class="mt-4 max-w-xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-2 relative z-10">
-                    <p class="md:col-span-3 text-[11px] text-yellow-100 font-bold">Enter your Email or Telegram to get notified when it drops (email works for direct alerts).</p>
+                    <p class="md:col-span-3 text-[11px] text-yellow-100 font-bold">Email gets a direct alert. Telegram @username will be tagged in our notification group.</p>
                     <input type="text" name="name" placeholder="Name (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
                     <input type="email" name="email" placeholder="Email (optional)" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
                     <input type="text" name="telegram" placeholder="Telegram @username" class="w-full h-10 px-3 rounded-lg bg-white/95 text-black text-sm">
+                    <div id="telegramJoinPrompt" class="hidden md:col-span-3 overflow-hidden rounded-xl border border-[#0088cc]/50 bg-[#0088cc]/15 p-3 text-left shadow-lg opacity-0 -translate-y-2 transition-all duration-300">
+                      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div class="flex items-start gap-3">
+                          <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0088cc] text-white shadow-md">
+                            <i class="fa-brands fa-telegram-plane text-lg"></i>
+                          </span>
+                          <div>
+                            <p class="text-sm font-black text-white">Join our Telegram group first</p>
+                            <p class="text-xs font-semibold text-blue-100">We can tag your @username there, but Telegram may not alert you if you are not inside the group.</p>
+                          </div>
+                        </div>
+                        <a href="https://t.me/MaxCinemaOfficial" target="_blank" rel="noopener" class="inline-flex h-10 items-center justify-center rounded-lg bg-white px-4 text-xs font-black uppercase tracking-wider text-[#0088cc] shadow-md transition hover:bg-blue-50">
+                          Join Group
+                        </a>
+                      </div>
+                    </div>
                     <button type="submit" class="md:col-span-3 h-10 rounded-lg bg-yellow-400 text-black font-black text-xs uppercase tracking-wider hover:bg-yellow-300 transition">Notify Me When Available</button>
                     <p id="notifyMeMsg" class="md:col-span-3 text-[11px] text-yellow-200 font-bold"></p>
                   </form>
@@ -618,10 +634,26 @@
             const form = document.getElementById('notifyMeForm');
             if (!form) return;
             const msg = document.getElementById('notifyMeMsg');
+            const telegramInput = form.querySelector('input[name=\"telegram\"]');
+            const emailInput = form.querySelector('input[name=\"email\"]');
+            const telegramPrompt = document.getElementById('telegramJoinPrompt');
+            const toggleTelegramPrompt = () => {
+                if (!telegramPrompt || !telegramInput) return;
+                const hasTelegram = telegramInput.value.trim().length > 0;
+                telegramPrompt.classList.toggle('hidden', !hasTelegram);
+                requestAnimationFrame(() => {
+                    telegramPrompt.classList.toggle('opacity-0', !hasTelegram);
+                    telegramPrompt.classList.toggle('-translate-y-2', !hasTelegram);
+                    telegramPrompt.classList.toggle('opacity-100', hasTelegram);
+                    telegramPrompt.classList.toggle('translate-y-0', hasTelegram);
+                });
+            };
+            telegramInput?.addEventListener('input', toggleTelegramPrompt);
+            toggleTelegramPrompt();
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const email = (form.querySelector('input[name=\"email\"]')?.value || '').trim();
-                const telegram = (form.querySelector('input[name=\"telegram\"]')?.value || '').trim();
+                const email = (emailInput?.value || '').trim();
+                const telegram = (telegramInput?.value || '').trim();
                 if (!email && !telegram) {
                     msg.textContent = 'Enter email or Telegram (one is enough).';
                     return;
@@ -635,8 +667,11 @@
                         msg.textContent = out.error || 'Failed to save.';
                         return;
                     }
-                    msg.textContent = out.message || 'Saved.';
+                    msg.textContent = telegram && !email
+                        ? 'Saved. Join our Telegram group so your @username mention can reach you.'
+                        : (out.message || 'Saved.');
                     form.reset();
+                    toggleTelegramPrompt();
                 } catch (err) {
                     msg.textContent = 'Failed to save.';
                 }
