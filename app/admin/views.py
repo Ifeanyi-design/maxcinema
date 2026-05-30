@@ -144,6 +144,43 @@ def _send_email_notification(to_email, subject, plain_text, html_body=None):
                 pass
 
 
+def _send_telegram_notification(target, text, bot_token=None, default_chat_id=None):
+    bot_token = (bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "")).strip()
+    default_chat_id = (default_chat_id or os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "")).strip()
+    target = (target or "").strip()
+
+    if not bot_token:
+        return False, "Telegram bot is not configured. Set TELEGRAM_BOT_TOKEN."
+
+    chat_id = None
+    message_text = text
+
+    if target and target.lstrip("-").isdigit():
+        chat_id = target
+    elif target and default_chat_id:
+        chat_id = default_chat_id
+        mention = f"@{target.lstrip('@')}"
+        message_text = f"{mention} {text}".strip()
+    elif default_chat_id:
+        chat_id = default_chat_id
+    elif target:
+        return False, "Telegram usernames cannot receive direct bot DMs. Set TELEGRAM_NOTIFY_CHAT_ID to a group/channel for username mentions, or collect numeric chat IDs."
+    else:
+        return False, "Set TELEGRAM_NOTIFY_CHAT_ID or provide a numeric Telegram chat ID."
+
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": chat_id, "text": message_text, "disable_web_page_preview": False},
+            timeout=15
+        )
+        if resp.ok:
+            return True, ""
+        return False, resp.text[:180]
+    except Exception as e:
+        return False, str(e)
+
+
 def _send_release_notifications(video):
     """
     Send notifications to watchers for a released title.
@@ -204,43 +241,18 @@ def _send_release_notifications(video):
             if tg_enabled:
                 try:
                     tg_target = (row.telegram or "").strip()
-                    # If user provided direct chat id, use it. Else fallback to configured channel/chat.
-                    if tg_target and tg_target.lstrip("-").isdigit():
-                        chat_id = tg_target
-                    elif tg_default_chat:
-                        mention = f"@{tg_target.lstrip('@')}" if tg_target and not tg_target.lstrip("-").isdigit() else ""
-                        chat_id = tg_default_chat
-                        plain_with_mention = f"{mention} {plain_text}".strip()
-                        payload = {"chat_id": chat_id, "text": plain_with_mention, "disable_web_page_preview": False}
-                        resp = requests.post(
-                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
-                            json=payload,
-                            timeout=15
+                    if tg_target:
+                        ok, err = _send_telegram_notification(
+                            tg_target,
+                            plain_text,
+                            bot_token=tg_bot_token,
+                            default_chat_id=tg_default_chat
                         )
-                        if resp.ok:
+                        if ok:
                             telegram += 1
                             sent_any = True
                         else:
-                            errors.append(f"telegram:{tg_target or 'default'}:{resp.text[:120]}")
-                        if sent_any:
-                            row.notified = True
-                            marked += 1
-                        continue
-                    else:
-                        chat_id = None
-
-                    if chat_id:
-                        payload = {"chat_id": chat_id, "text": plain_text, "disable_web_page_preview": False}
-                        resp = requests.post(
-                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
-                            json=payload,
-                            timeout=15
-                        )
-                        if resp.ok:
-                            telegram += 1
-                            sent_any = True
-                        else:
-                            errors.append(f"telegram:{chat_id}:{resp.text[:120]}")
+                            errors.append(f"telegram:{tg_target}:{err}")
                 except Exception as e:
                     errors.append(f"telegram:{row.telegram}:{e}")
 
@@ -1830,25 +1842,18 @@ def notification_settings():
             else:
                 target_chat = (request.form.get('test_telegram_chat') or '').strip() or tg_default_chat
                 if not target_chat:
-                    test_result = {"ok": False, "message": "Enter a Telegram chat id/username or set TELEGRAM_NOTIFY_CHAT_ID."}
+                    test_result = {"ok": False, "message": "Enter a numeric chat ID, or set TELEGRAM_NOTIFY_CHAT_ID for username mentions."}
                 else:
-                    try:
-                        payload = {
-                            "chat_id": target_chat,
-                            "text": f"MaxCinema Telegram test notification ({now_tag}).",
-                            "disable_web_page_preview": True
-                        }
-                        resp = requests.post(
-                            f"https://api.telegram.org/bot{tg_bot_token}/sendMessage",
-                            json=payload,
-                            timeout=15
-                        )
-                        if resp.ok:
-                            test_result = {"ok": True, "message": f"Telegram test sent to {target_chat}."}
-                        else:
-                            test_result = {"ok": False, "message": f"Telegram test failed: {resp.text[:180]}"}
-                    except Exception as e:
-                        test_result = {"ok": False, "message": f"Telegram test failed: {e}"}
+                    ok, err = _send_telegram_notification(
+                        target_chat,
+                        f"MaxCinema Telegram test notification ({now_tag}).",
+                        bot_token=tg_bot_token,
+                        default_chat_id=tg_default_chat
+                    )
+                    if ok:
+                        test_result = {"ok": True, "message": f"Telegram test sent using {target_chat}."}
+                    else:
+                        test_result = {"ok": False, "message": f"Telegram test failed: {err}"}
         else:
             test_result = {"ok": False, "message": "Unknown action."}
 

@@ -47,7 +47,7 @@
                         {% if tg_enabled %}Configured{% else %}Missing{% endif %}
                     </p>
                     <p class="text-gray-400 mt-1">Default Chat: {{ tg_default_chat or '-' }}</p>
-                    <p class="text-gray-500 mt-2 text-[11px]">Use numeric chat id (recommended). Username-based DM is not supported by Telegram bot API.</p>
+                    <p class="text-gray-500 mt-2 text-[11px]">Personal @username DMs are not supported by Telegram bots. Usernames only work as mentions inside TELEGRAM_NOTIFY_CHAT_ID.</p>
                 </div>
             </div>
         </section>
@@ -68,12 +68,12 @@
             <h2 class="text-sm font-black uppercase tracking-wider text-gray-200 mb-3">Test Telegram</h2>
             <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <input type="hidden" name="action" value="test_telegram">
-                <input type="text" name="test_telegram_chat" placeholder="Chat ID (e.g. -1001234567890)" class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white md:col-span-2">
+                <input type="text" name="test_telegram_chat" placeholder="Chat ID, or @username if default chat is set" class="h-11 px-3 rounded-lg bg-gray-900 border border-gray-700 text-white md:col-span-2">
                 <button type="submit" class="h-11 px-4 rounded-lg bg-cyan-500 text-black text-xs font-black uppercase tracking-wider hover:bg-cyan-400 transition">
                     Send Telegram Test
                 </button>
             </form>
-            <p class="mt-2 text-[11px] text-gray-500">If left blank, system will use TELEGRAM_NOTIFY_CHAT_ID from .env.</p>
+            <p class="mt-2 text-[11px] text-gray-500">If left blank, system sends to TELEGRAM_NOTIFY_CHAT_ID. For @username tests, TELEGRAM_NOTIFY_CHAT_ID must be a group/channel where the mention should be posted.</p>
         </section>
     </div>
 </div>
