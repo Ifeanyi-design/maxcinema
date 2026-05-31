@@ -19,6 +19,7 @@ from flask_login import login_required, current_user, login_user, logout_user
 import os
 import smtplib
 import requests
+import time
 from email.message import EmailMessage
 
 from ..indexnow import (
@@ -147,9 +148,11 @@ def _send_email_notification(to_email, subject, plain_text, html_body=None):
 def _send_telegram_notification(target, text, bot_token=None, default_chat_id=None):
     bot_token = (bot_token or os.getenv("TELEGRAM_BOT_TOKEN", "")).strip()
     default_chat_id = (default_chat_id or os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "")).strip()
+    relay_url = os.getenv("TELEGRAM_RELAY_URL", "").strip()
+    relay_secret = os.getenv("TELEGRAM_RELAY_SECRET", "").strip()
     target = (target or "").strip()
 
-    if not bot_token:
+    if not bot_token and not relay_url:
         return False, "Telegram bot is not configured. Set TELEGRAM_BOT_TOKEN."
 
     chat_id = None
@@ -168,17 +171,49 @@ def _send_telegram_notification(target, text, bot_token=None, default_chat_id=No
     else:
         return False, "Set TELEGRAM_NOTIFY_CHAT_ID or provide a numeric Telegram chat ID."
 
-    try:
-        resp = requests.post(
-            f"https://api.telegram.org/bot{bot_token}/sendMessage",
-            json={"chat_id": chat_id, "text": message_text, "disable_web_page_preview": False},
-            timeout=30
-        )
-        if resp.ok:
-            return True, ""
-        return False, resp.text[:180]
-    except Exception as e:
-        return False, str(e)
+    if relay_url:
+        headers = {"Content-Type": "application/json"}
+        if relay_secret:
+            headers["Authorization"] = f"Bearer {relay_secret}"
+
+        try:
+            resp = requests.post(
+                relay_url,
+                headers=headers,
+                json={
+                    "chat_id": chat_id,
+                    "text": message_text,
+                    "disable_web_page_preview": False,
+                },
+                timeout=(10, 45)
+            )
+            if resp.ok:
+                return True, ""
+            return False, f"relay:{resp.status_code}:{resp.text[:180]}"
+        except requests.exceptions.RequestException as e:
+            return False, f"relay:{e}"
+
+    last_error = ""
+    for attempt in range(1, 4):
+        try:
+            resp = requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={"chat_id": chat_id, "text": message_text, "disable_web_page_preview": False},
+                timeout=(10, 45)
+            )
+            if resp.ok:
+                return True, ""
+            return False, resp.text[:180]
+        except requests.exceptions.Timeout:
+            last_error = f"Telegram API timed out on attempt {attempt}/3"
+        except requests.exceptions.RequestException as e:
+            last_error = str(e)
+            break
+
+        if attempt < 3:
+            time.sleep(2)
+
+    return False, last_error or "Telegram request failed"
 
 
 def _send_release_notifications(video):
