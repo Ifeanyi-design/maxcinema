@@ -118,6 +118,15 @@ def create_app(config_class=Config):
     @app.context_processor
     def inject_country():
         return {"country": get_country_code()}
+
+    @app.context_processor
+    def inject_telegram_links():
+        main_group_url = os.getenv("TELEGRAM_MAIN_GROUP_URL", "https://t.me/MaxCinemaOfficial").strip()
+        notify_group_url = os.getenv("TELEGRAM_NOTIFY_GROUP_URL", main_group_url).strip()
+        return {
+            "telegram_main_group_url": main_group_url,
+            "telegram_notify_group_url": notify_group_url,
+        }
     
 
     # Register blueprints

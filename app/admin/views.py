@@ -172,7 +172,7 @@ def _send_telegram_notification(target, text, bot_token=None, default_chat_id=No
         resp = requests.post(
             f"https://api.telegram.org/bot{bot_token}/sendMessage",
             json={"chat_id": chat_id, "text": message_text, "disable_web_page_preview": False},
-            timeout=15
+            timeout=30
         )
         if resp.ok:
             return True, ""
