@@ -1977,7 +1977,11 @@ def release_notify(video_id):
             "success"
         )
         if summary["errors"]:
-            flash(f"Some notifications failed ({len(summary['errors'])}). Check SMTP/Telegram config.", "warning")
+            first_error = summary["errors"][0]
+            flash(
+                f"Some notifications failed ({len(summary['errors'])}). First error: {first_error}",
+                "warning"
+            )
     return redirect(request.referrer or url_for('admin.view_movies'))
 
 
