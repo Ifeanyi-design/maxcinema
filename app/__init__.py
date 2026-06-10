@@ -136,4 +136,7 @@ def create_app(config_class=Config):
     from .admin import admin_bp
     app.register_blueprint(admin_bp)
 
+    from .sports import sports_bp
+    app.register_blueprint(sports_bp)
+
     return app

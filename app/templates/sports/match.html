@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ match_state.home_team }} vs {{ match_state.away_team }} - Match Center | MaxCinema{% endblock %}
+
+{% block content %}
+<section class="py-6 md:py-10 text-white">
+    <div class="rounded-2xl bg-[#080808] border border-white/10 overflow-hidden">
+        <div class="p-4 md:p-8 bg-gradient-to-br from-[#101010] to-[#830506]">
+            <a href="{{ url_for('sports.index') }}" class="text-xs text-yellow-300 font-black uppercase tracking-wider"><i class="fa-solid fa-arrow-left mr-2"></i>Sports Hub</a>
+            <div id="matchCenter" data-match-id="{{ match.id }}" data-match-endpoint="{{ url_for('sports.api_match', match_id=match.id) }}" class="mt-5">
+                <p class="text-[10px] uppercase tracking-[0.3em] text-gray-300 font-black">{{ match_state.competition or 'Football' }}</p>
+                <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                    <h1 class="text-xl md:text-4xl font-black text-right">{{ match_state.home_team }}</h1>
+                    <div id="matchScore" class="rounded-2xl bg-black/50 border border-white/20 px-4 md:px-8 py-3 text-3xl md:text-5xl font-black text-yellow-300 tabular-nums">{{ match_state.home_score }} - {{ match_state.away_score }}</div>
+                    <h1 class="text-xl md:text-4xl font-black">{{ match_state.away_team }}</h1>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-bold">
+                    <span id="matchStatus" class="rounded-full bg-white/15 px-3 py-1 uppercase">{{ match_state.status }}</span>
+                    <span id="matchClock" class="rounded-full bg-white/15 px-3 py-1">{{ match_state.provider_clock or match_state.provider_status or 'Awaiting provider' }}</span>
+                    {% if match_state.stale %}<span class="rounded-full bg-amber-500/30 px-3 py-1 text-amber-100">Stale Data</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 p-4 md:p-6">
+            <div class="lg:col-span-2">
+                <h2 class="text-sm font-black uppercase tracking-widest text-gray-300 mb-3">Timeline</h2>
+                <div id="matchEvents" class="space-y-3">
+                    {% for event in match_state.events %}
+                    <div class="rounded-xl bg-white/5 border border-white/10 p-3" data-event-id="{{ event.id }}">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="text-xs font-black text-yellow-300 uppercase">{{ event.event_type }}</span>
+                            <span class="text-xs text-gray-400">{{ event.minute or event.clock or '-' }}</span>
+                        </div>
+                        <p class="text-sm text-gray-200 mt-1">{{ event.summary or event.player_name or 'Match event' }}</p>
+                    </div>
+                    {% else %}
+                    <div class="rounded-xl border border-dashed border-white/20 p-6 text-sm text-gray-400">Timeline events will appear when provider data is available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <aside class="rounded-xl bg-white text-gray-900 p-4">
+                <h2 class="text-sm font-black uppercase tracking-widest text-[#830506]">Watch Live</h2>
+                {% if stream.available %}
+                    {% if stream.embed_url %}
+                    <a href="{{ url_for('sports.watch_match', match_id=match.id) }}" class="mt-4 h-11 rounded-lg bg-[#830506] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center">Open Player</a>
+                    {% elif stream.external_url %}
+                    <a href="{{ stream.external_url }}" target="_blank" rel="noopener" class="mt-4 h-11 rounded-lg bg-[#830506] text-white text-xs font-black uppercase tracking-wider flex items-center justify-center">Open Stream</a>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-2">{{ stream.title }}</p>
+                {% else %}
+                    <p class="text-sm text-gray-500 mt-4">No stream source is available yet. Scores and timeline remain live when provider data is connected.</p>
+                {% endif %}
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script>
+(function() {
+    const center = document.getElementById('matchCenter');
+    if (!center) return;
+    const scoreEl = document.getElementById('matchScore');
+    const statusEl = document.getElementById('matchStatus');
+    const clockEl = document.getElementById('matchClock');
+    let previousScore = scoreEl ? scoreEl.textContent.trim() : '';
+
+    async function refreshMatch() {
+        try {
+            const res = await fetch(center.dataset.matchEndpoint, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (!data.success || !data.match) return;
+            const match = data.match;
+            const nextScore = `${match.home_score} - ${match.away_score}`;
+            if (scoreEl && previousScore && previousScore !== nextScore) {
+                scoreEl.textContent = nextScore;
+                scoreEl.classList.add('ring-4', 'ring-yellow-300', 'scale-105');
+                setTimeout(() => scoreEl.classList.remove('ring-4', 'ring-yellow-300', 'scale-105'), 1300);
+            }
+            previousScore = nextScore;
+            if (statusEl) statusEl.textContent = match.status;
+            if (clockEl) clockEl.textContent = match.provider_clock || match.provider_status || 'Awaiting provider';
+        } catch (err) {
+            // Keep stale match state visible.
+        }
+    }
+
+    setInterval(refreshMatch, 15000);
+})();
+</script>
+{% endblock %}

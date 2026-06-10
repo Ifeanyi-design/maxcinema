@@ -395,3 +395,239 @@ class WeeklyPollVote(db.Model):
     voter_token = db.Column(db.String(120), nullable=False, index=True)
     ip_address = db.Column(db.String(64), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+class SportsSport(db.Model):
+    __tablename__ = "sports_sport"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False, unique=True)
+    slug = db.Column(db.String(80), nullable=False, unique=True, index=True)
+    enabled = db.Column(db.Boolean, default=True, index=True)
+    display_order = db.Column(db.Integer, default=0, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    competitions = db.relationship("SportsCompetition", back_populates="sport", cascade="all, delete-orphan")
+    teams = db.relationship("SportsTeam", back_populates="sport", cascade="all, delete-orphan")
+
+
+class SportsCompetition(db.Model):
+    __tablename__ = "sports_competition"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sport_id = db.Column(db.Integer, db.ForeignKey("sports_sport.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = db.Column(db.String(160), nullable=False)
+    slug = db.Column(db.String(180), nullable=False, index=True)
+    country = db.Column(db.String(80), nullable=True, index=True)
+    logo_url = db.Column(db.String(500), nullable=True)
+    current_season = db.Column(db.String(40), nullable=True, index=True)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_competition_id = db.Column(db.String(120), nullable=True, index=True)
+    enabled = db.Column(db.Boolean, default=False, index=True)
+    featured = db.Column(db.Boolean, default=False, index=True)
+    hidden = db.Column(db.Boolean, default=False, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sport = db.relationship("SportsSport", back_populates="competitions")
+    seasons = db.relationship("SportsSeason", back_populates="competition", cascade="all, delete-orphan")
+    matches = db.relationship("SportsMatch", back_populates="competition", cascade="all, delete-orphan")
+    standings = db.relationship("SportsStanding", back_populates="competition", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        db.UniqueConstraint("sport_id", "slug", name="uq_sports_competition_sport_slug"),
+    )
+
+
+class SportsTeam(db.Model):
+    __tablename__ = "sports_team"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sport_id = db.Column(db.Integer, db.ForeignKey("sports_sport.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = db.Column(db.String(160), nullable=False)
+    slug = db.Column(db.String(180), nullable=False, index=True)
+    short_name = db.Column(db.String(80), nullable=True)
+    country = db.Column(db.String(80), nullable=True, index=True)
+    logo_url = db.Column(db.String(500), nullable=True)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_team_id = db.Column(db.String(120), nullable=True, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sport = db.relationship("SportsSport", back_populates="teams")
+
+    __table_args__ = (
+        db.UniqueConstraint("sport_id", "slug", name="uq_sports_team_sport_slug"),
+    )
+
+
+class SportsSeason(db.Model):
+    __tablename__ = "sports_season"
+
+    id = db.Column(db.Integer, primary_key=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey("sports_competition.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = db.Column(db.String(80), nullable=False)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_season_id = db.Column(db.String(120), nullable=True, index=True)
+    starts_at = db.Column(db.DateTime, nullable=True, index=True)
+    ends_at = db.Column(db.DateTime, nullable=True, index=True)
+    current = db.Column(db.Boolean, default=False, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    competition = db.relationship("SportsCompetition", back_populates="seasons")
+
+
+class SportsMatch(db.Model):
+    __tablename__ = "sports_match"
+
+    id = db.Column(db.Integer, primary_key=True)
+    sport_id = db.Column(db.Integer, db.ForeignKey("sports_sport.id", ondelete="CASCADE"), nullable=False, index=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey("sports_competition.id", ondelete="SET NULL"), nullable=True, index=True)
+    season_id = db.Column(db.Integer, db.ForeignKey("sports_season.id", ondelete="SET NULL"), nullable=True, index=True)
+    home_team_id = db.Column(db.Integer, db.ForeignKey("sports_team.id", ondelete="SET NULL"), nullable=True, index=True)
+    away_team_id = db.Column(db.Integer, db.ForeignKey("sports_team.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = db.Column(db.String(240), nullable=False)
+    slug = db.Column(db.String(260), nullable=False, index=True)
+    kickoff_at = db.Column(db.DateTime, nullable=True, index=True)
+    status = db.Column(db.String(40), default="scheduled", index=True)
+    provider_status = db.Column(db.String(80), nullable=True, index=True)
+    provider_clock = db.Column(db.String(40), nullable=True)
+    minute = db.Column(db.Integer, nullable=True, index=True)
+    home_score = db.Column(db.Integer, default=0)
+    away_score = db.Column(db.Integer, default=0)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_match_id = db.Column(db.String(120), nullable=True, index=True)
+    external_match_id = db.Column(db.String(120), nullable=True, index=True)
+    featured = db.Column(db.Boolean, default=False, index=True)
+    pinned = db.Column(db.Boolean, default=False, index=True)
+    archived = db.Column(db.Boolean, default=False, index=True)
+    last_synced_at = db.Column(db.DateTime, nullable=True, index=True)
+    stale_after = db.Column(db.DateTime, nullable=True, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sport = db.relationship("SportsSport")
+    competition = db.relationship("SportsCompetition", back_populates="matches")
+    season = db.relationship("SportsSeason")
+    home_team = db.relationship("SportsTeam", foreign_keys=[home_team_id])
+    away_team = db.relationship("SportsTeam", foreign_keys=[away_team_id])
+    events = db.relationship("SportsMatchEvent", back_populates="match", cascade="all, delete-orphan", order_by="SportsMatchEvent.sort_order")
+    streams = db.relationship("SportsStreamSource", back_populates="match", cascade="all, delete-orphan", order_by="SportsStreamSource.priority")
+
+
+class SportsMatchEvent(db.Model):
+    __tablename__ = "sports_match_event"
+
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey("sports_match.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = db.Column(db.String(50), nullable=False, index=True)
+    minute = db.Column(db.Integer, nullable=True, index=True)
+    clock = db.Column(db.String(40), nullable=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("sports_team.id", ondelete="SET NULL"), nullable=True, index=True)
+    player_name = db.Column(db.String(160), nullable=True)
+    related_player_name = db.Column(db.String(160), nullable=True)
+    summary = db.Column(db.String(300), nullable=True)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_event_id = db.Column(db.String(120), nullable=True, index=True)
+    sort_order = db.Column(db.Integer, default=0, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    occurred_at = db.Column(db.DateTime, nullable=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    match = db.relationship("SportsMatch", back_populates="events")
+    team = db.relationship("SportsTeam")
+
+
+class SportsStanding(db.Model):
+    __tablename__ = "sports_standing"
+
+    id = db.Column(db.Integer, primary_key=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey("sports_competition.id", ondelete="CASCADE"), nullable=False, index=True)
+    season_id = db.Column(db.Integer, db.ForeignKey("sports_season.id", ondelete="SET NULL"), nullable=True, index=True)
+    team_id = db.Column(db.Integer, db.ForeignKey("sports_team.id", ondelete="SET NULL"), nullable=True, index=True)
+    position = db.Column(db.Integer, nullable=True, index=True)
+    played = db.Column(db.Integer, default=0)
+    won = db.Column(db.Integer, default=0)
+    drawn = db.Column(db.Integer, default=0)
+    lost = db.Column(db.Integer, default=0)
+    goals_for = db.Column(db.Integer, default=0)
+    goals_against = db.Column(db.Integer, default=0)
+    goal_difference = db.Column(db.Integer, default=0)
+    points = db.Column(db.Integer, default=0, index=True)
+    group_name = db.Column(db.String(80), nullable=True, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    last_synced_at = db.Column(db.DateTime, nullable=True, index=True)
+
+    competition = db.relationship("SportsCompetition", back_populates="standings")
+    season = db.relationship("SportsSeason")
+    team = db.relationship("SportsTeam")
+
+
+class SportsStreamSource(db.Model):
+    __tablename__ = "sports_stream_source"
+
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey("sports_match.id", ondelete="CASCADE"), nullable=True, index=True)
+    sport_id = db.Column(db.Integer, db.ForeignKey("sports_sport.id", ondelete="CASCADE"), nullable=True, index=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey("sports_competition.id", ondelete="CASCADE"), nullable=True, index=True)
+    source_type = db.Column(db.String(40), default="manual", index=True)
+    provider_name = db.Column(db.String(80), nullable=True, index=True)
+    title = db.Column(db.String(160), nullable=False)
+    embed_url = db.Column(db.String(700), nullable=True)
+    external_url = db.Column(db.String(700), nullable=True)
+    url_pattern = db.Column(db.String(700), nullable=True)
+    enabled = db.Column(db.Boolean, default=True, index=True)
+    priority = db.Column(db.Integer, default=100, index=True)
+    notes = db.Column(db.Text, nullable=True)
+    last_checked_at = db.Column(db.DateTime, nullable=True, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    match = db.relationship("SportsMatch", back_populates="streams")
+    sport = db.relationship("SportsSport")
+    competition = db.relationship("SportsCompetition")
+
+
+class SportsProviderCache(db.Model):
+    __tablename__ = "sports_provider_cache"
+
+    id = db.Column(db.Integer, primary_key=True)
+    provider_name = db.Column(db.String(80), nullable=False, index=True)
+    cache_key = db.Column(db.String(240), nullable=False, index=True)
+    payload = db.Column(db.JSON, nullable=True)
+    status = db.Column(db.String(40), default="fresh", index=True)
+    expires_at = db.Column(db.DateTime, nullable=False, index=True)
+    stale_until = db.Column(db.DateTime, nullable=True, index=True)
+    last_error = db.Column(db.Text, nullable=True)
+    last_fetched_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("provider_name", "cache_key", name="uq_sports_provider_cache_key"),
+    )
+
+
+class SportsProviderMapping(db.Model):
+    __tablename__ = "sports_provider_mapping"
+
+    id = db.Column(db.Integer, primary_key=True)
+    provider_name = db.Column(db.String(80), nullable=False, index=True)
+    entity_type = db.Column(db.String(40), nullable=False, index=True)
+    local_id = db.Column(db.Integer, nullable=True, index=True)
+    provider_entity_id = db.Column(db.String(120), nullable=False, index=True)
+    provider_payload = db.Column(db.JSON, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint("provider_name", "entity_type", "provider_entity_id", name="uq_sports_provider_mapping_external"),
+    )

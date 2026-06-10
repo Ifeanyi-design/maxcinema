@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Sports Hub - Live Football Scores | MaxCinema{% endblock %}
+{% block meta_description %}Follow live football fixtures, scores, standings, match timelines, and Watch Live links on MaxCinema Sports Hub.{% endblock %}
+
+{% block content %}
+<section class="py-6 md:py-10 text-white">
+    <div class="rounded-2xl bg-[#080808] border border-white/10 overflow-hidden shadow-2xl">
+        <div class="px-4 md:px-8 py-6 md:py-8 bg-gradient-to-br from-[#111111] via-[#151515] to-[#830506]">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <p class="text-[10px] md:text-xs uppercase tracking-[0.3em] text-yellow-300 font-black">MaxCinema Sports</p>
+                    <h1 class="text-3xl md:text-5xl font-black tracking-tight mt-2">Live Football Center</h1>
+                    <p class="text-sm md:text-base text-gray-200 mt-3 max-w-2xl">Fixtures, scores, timelines, standings, and Watch Live links built for World Cup traffic.</p>
+                </div>
+                <a href="{{ url_for('main.index') }}" class="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white text-[#830506] text-xs font-black uppercase tracking-wider shadow-lg hover:bg-yellow-100 transition">
+                    <i class="fa-solid fa-film mr-2"></i> Back To Movies
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 p-4 md:p-6">
+            <div class="lg:col-span-2">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-lg md:text-xl font-black uppercase tracking-wide">Live & Featured</h2>
+                    <span id="sportsLiveBadge" class="hidden text-[10px] font-black uppercase tracking-widest text-white bg-red-600 rounded-full px-3 py-1 animate-pulse">Live</span>
+                </div>
+                <div id="sportsLiveMatches" class="grid grid-cols-1 md:grid-cols-2 gap-3" data-live-endpoint="{{ url_for('sports.api_live_matches') }}">
+                    {% for match in live_matches %}
+                        <article class="sports-match-card rounded-xl bg-white/5 border border-white/10 p-4" data-match-id="{{ match.id or 'demo' }}" data-score="{{ match.home_score }}-{{ match.away_score }}">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-[10px] uppercase tracking-widest text-gray-400 font-black">{{ match.competition or 'Football' }}</p>
+                                <span class="text-[10px] px-2 py-1 rounded-full {% if match.is_live %}bg-red-600 text-white animate-pulse{% else %}bg-gray-700 text-gray-200{% endif %} font-black uppercase">{{ match.status }}</span>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-bold">{{ match.home_team }}</p>
+                                    <p class="truncate text-sm font-bold mt-2">{{ match.away_team }}</p>
+                                </div>
+                                <div class="text-3xl font-black text-yellow-300 tabular-nums">{{ match.home_score }} - {{ match.away_score }}</div>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between text-[11px] text-gray-400">
+                                <span>{{ match.provider_clock or match.provider_status or 'Awaiting provider' }}</span>
+                                {% if match.id %}
+                                    <a href="{{ url_for('sports.match_detail', match_id=match.id) }}" class="text-yellow-300 font-black uppercase">Match Center</a>
+                                {% else %}
+                                    <span class="text-gray-500 font-bold uppercase">Coming Soon</span>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <aside class="rounded-xl bg-white text-gray-900 p-4 border border-white/10">
+                <h2 class="text-sm font-black uppercase tracking-wider text-[#830506]">Competitions</h2>
+                <div class="mt-4 space-y-2">
+                    {% for competition in competitions %}
+                        <a href="{{ url_for('sports.competition_detail', sport_slug=active_sport, competition_slug=competition.slug) }}" class="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 hover:border-[#830506] transition">
+                            <span class="text-sm font-bold">{{ competition.name }}</span>
+                            {% if competition.featured %}<span class="text-[10px] font-black uppercase text-yellow-600">Featured</span>{% endif %}
+                        </a>
+                    {% else %}
+                        <div class="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                            Competitions will appear after the first provider sync. Football support is ready.
+                        </div>
+                    {% endfor %}
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script>
+(function() {
+    const root = document.getElementById('sportsLiveMatches');
+    const badge = document.getElementById('sportsLiveBadge');
+    if (!root) return;
+
+    const endpoint = root.dataset.liveEndpoint;
+    const previousScores = new Map();
+
+    function applyMatches(matches) {
+        let hasLive = false;
+        matches.forEach((match) => {
+            if (match.is_live) hasLive = true;
+            if (!match.id) return;
+            const card = root.querySelector(`[data-match-id="${match.id}"]`);
+            const score = `${match.home_score}-${match.away_score}`;
+            if (card && previousScores.has(match.id) && previousScores.get(match.id) !== score) {
+                card.classList.add('ring-2', 'ring-yellow-300', 'scale-[1.01]');
+                setTimeout(() => card.classList.remove('ring-2', 'ring-yellow-300', 'scale-[1.01]'), 1200);
+            }
+            previousScores.set(match.id, score);
+        });
+        if (badge) badge.classList.toggle('hidden', !hasLive);
+    }
+
+    async function refreshLive() {
+        try {
+            const res = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (data.success && Array.isArray(data.matches)) applyMatches(data.matches);
+        } catch (err) {
+            // Keep stale UI visible.
+        }
+    }
+
+    refreshLive();
+    setInterval(refreshLive, 15000);
+})();
+</script>
+{% endblock %}

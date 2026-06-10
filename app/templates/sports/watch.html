@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Watch {{ match_state.home_team }} vs {{ match_state.away_team }} | MaxCinema Sports{% endblock %}
+
+{% block content %}
+<section class="py-6 md:py-10 text-white">
+    <div class="rounded-2xl bg-[#080808] border border-white/10 p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+            <div>
+                <a href="{{ url_for('sports.match_detail', match_id=match.id) }}" class="text-xs text-yellow-300 font-black uppercase tracking-wider"><i class="fa-solid fa-arrow-left mr-2"></i>Match Center</a>
+                <h1 class="text-2xl md:text-4xl font-black mt-2">{{ match_state.home_team }} vs {{ match_state.away_team }}</h1>
+            </div>
+            <span class="text-xs font-black uppercase rounded-full bg-white/10 px-3 py-1">{{ match_state.status }}</span>
+        </div>
+
+        {% if stream.available and stream.embed_url %}
+        <div class="aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+            <iframe src="{{ stream.embed_url }}" class="w-full h-full" allowfullscreen loading="lazy" referrerpolicy="no-referrer"></iframe>
+        </div>
+        {% elif stream.available and stream.external_url %}
+        <div class="rounded-xl bg-white text-gray-900 p-6 text-center">
+            <p class="font-bold">This stream opens on an external provider.</p>
+            <a href="{{ stream.external_url }}" target="_blank" rel="noopener" class="mt-4 inline-flex h-11 items-center justify-center rounded-lg bg-[#830506] text-white text-xs font-black uppercase tracking-wider px-5">Open Stream</a>
+        </div>
+        {% else %}
+        <div class="rounded-xl border border-dashed border-white/20 p-8 text-center text-gray-400">
+            No stream source is available for this match yet.
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
