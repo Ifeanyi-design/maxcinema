@@ -56,33 +56,69 @@
       data-pop-url="{{ ads.pop_url or '' }}"
       data-country="{{ country or 'XX' }}"
       class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
-    <!-- LEARN TECH CAMPAIGN BANNER -->
-    <div id="campaign-banner" class="bg-blue-600 text-white text-center py-2 text-sm font-bold w-full z-[60] relative">
-        <span class="mr-2 px-2 py-1 bg-white text-blue-600 rounded text-xs uppercase tracking-bold">HiiT</span>
-        Current Intake Begins In: <span id="countdown-timer" class="font-mono text-yellow-300 ml-1"></span>
-        <a href="{{ url_for('main.learn_tech') }}" class="ml-4 underline hover:text-gray-200">Claim 50% Discount &rarr;</a>
+    <!-- LEARN TECH CAMPAIGN BANNER — Premium v2 -->
+    <div id="campaign-banner"
+         style="display:none;"
+         class="relative overflow-hidden z-[60] w-full text-white text-center text-xs sm:text-sm font-bold"
+         role="banner">
+        <!-- Gradient background -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-800 via-indigo-700 to-blue-800"></div>
+        <!-- Shimmer sweep -->
+        <div class="absolute inset-0 pointer-events-none"
+             style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+                    animation:bannerShimmer 3s infinite;
+                    transform:translateX(-100%);">
+        </div>
+        <style>
+        @keyframes bannerShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+        </style>
+        <!-- Content -->
+        <div class="relative z-10 flex items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 pr-10">
+            <span class="hidden sm:flex items-center gap-1">
+                <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            </span>
+            <span class="font-black text-yellow-300 uppercase tracking-widest text-[10px] sm:text-xs border border-yellow-400/40 px-2 py-0.5 rounded-full">HiiT</span>
+            <span class="text-white/90">Cohort 1 Begins In:</span>
+            <span id="countdown-timer" class="font-mono text-yellow-300 font-black text-sm tabular-nums min-w-[120px] text-left"></span>
+            <a href="{{ url_for('main.learn_tech') }}"
+               class="hidden sm:inline-flex items-center gap-1 bg-white text-blue-700 font-black text-[11px] uppercase tracking-wide px-3 py-1 rounded-full hover:bg-yellow-300 hover:text-blue-900 transition-all duration-200 shadow-lg">
+                Claim 50% Off →
+            </a>
+        </div>
+        <!-- Close button -->
+        <button id="banner-close"
+                onclick="document.getElementById('campaign-banner').style.display='none'; localStorage.setItem('lt_banner_dismissed','1');"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition p-1 z-20"
+                aria-label="Dismiss banner">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
     <script>
-        function updateTopCountdown() {
-            const targetDate = new Date("2026-06-29T00:00:00").getTime();
-            const now = new Date().getTime();
-            const distance = targetDate - now;
-            const timerEl = document.getElementById("countdown-timer");
-            if (!timerEl) return;
-            if (distance < 0) {
-                timerEl.innerHTML = "Intake Closed";
-                return;
+        // Only show if not dismissed
+        (function() {
+            if (!localStorage.getItem('lt_banner_dismissed')) {
+                document.getElementById('campaign-banner').style.display = 'block';
             }
-            const d = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((distance % (1000 * 60)) / 1000);
-            timerEl.innerHTML = d + "d " + h + "h " + m + "m " + s + "s ";
+        })();
+        function updateTopCountdown() {
+            const targetDate = new Date("2026-06-29T08:00:00").getTime();
+            const distance   = targetDate - Date.now();
+            const timerEl    = document.getElementById("countdown-timer");
+            if (!timerEl) return;
+            if (distance < 0) { timerEl.textContent = "Intake Closed"; return; }
+            const d = Math.floor(distance / 864e5);
+            const h = Math.floor(distance % 864e5 / 36e5);
+            const m = Math.floor(distance % 36e5 / 6e4);
+            const s = Math.floor(distance % 6e4 / 1e3);
+            timerEl.textContent = d + "d " + String(h).padStart(2,'0') + "h " + String(m).padStart(2,'0') + "m " + String(s).padStart(2,'0') + "s";
         }
         setInterval(updateTopCountdown, 1000);
         updateTopCountdown();
     </script>
     
+
     {% if not dark %}
         {%include "header.html"%}
     {% else %}
