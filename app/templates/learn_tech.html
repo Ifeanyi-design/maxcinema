@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Learn Tech Masterclass - MaxCinema{% endblock %}
+
+{% block content %}
+<style>
+/* Cinematic CSS specific to learn tech page */
+.cinematic-hero {
+    background: linear-gradient(to top, #0f172a, transparent), url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80');
+    background-size: cover;
+    background-position: center;
+}
+.glass-panel {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
+    border-color: #3b82f6;
+}
+.whatsapp-btn {
+    background-color: #25D366;
+    color: white;
+}
+.whatsapp-btn:hover {
+    background-color: #128C7E;
+}
+</style>
+
+<div class="min-h-screen bg-slate-900 text-white pb-20">
+    <!-- Hero Section -->
+    <section class="cinematic-hero relative h-[70vh] flex items-center justify-center pt-20">
+        <div class="absolute inset-0 bg-black/60"></div>
+        <div class="relative z-10 text-center max-w-4xl px-4">
+            <span class="text-blue-500 font-bold tracking-widest uppercase text-sm mb-4 block">HiiT Masterclass</span>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 text-white leading-tight">
+                Build Skills. Create Opportunities. Shape Your Future.
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                Learn the skills behind today's most in-demand careers and claim your 50% discount for the June 29 Cohort.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#courses" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full transition duration-300 shadow-lg shadow-blue-500/30 text-lg">
+                    Explore Masterclasses
+                </a>
+            </div>
+            
+            <!-- Trust Signals -->
+            <div class="mt-12 flex flex-wrap justify-center gap-6 text-gray-300 text-sm md:text-base font-medium">
+                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Live Instructor-Led</div>
+                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Beginner Friendly</div>
+                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Certificate Included</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="max-w-7xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-4">How It Works</h2>
+            <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">1</div>
+                <h3 class="font-bold mb-2">Choose Course</h3>
+                <p class="text-sm text-gray-400">Select your preferred masterclass below.</p>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">2</div>
+                <h3 class="font-bold mb-2">Request Consultation</h3>
+                <p class="text-sm text-gray-400">Leave your details or message us on WhatsApp.</p>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">3</div>
+                <h3 class="font-bold mb-2">Get 50% Discount</h3>
+                <p class="text-sm text-gray-400">Receive your exclusive MaxCinema discount code.</p>
+            </div>
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">4</div>
+                <h3 class="font-bold mb-2">Join June 29 Cohort</h3>
+                <p class="text-sm text-gray-400">Start learning with live expert instructors.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Courses Section -->
+    <section id="courses" class="max-w-7xl mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold mb-4">Featured Masterclasses</h2>
+            <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- CEH -->
+            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
+                <div class="h-40 bg-gradient-to-br from-red-900 to-black p-6 flex items-center justify-center relative">
+                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
+                    <h3 class="text-xl font-black text-center text-white">Certified Ethical Hacker</h3>
+                </div>
+                <div class="p-6 flex-grow flex flex-col">
+                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Protect Systems and Networks</p>
+                    <div class="mb-6 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white">₦25,000</span>
+                        <span class="text-sm text-gray-500 line-through">₦50,000</span>
+                    </div>
+                    <div class="mt-auto flex flex-col gap-3">
+                        <button onclick="openLeadModal('Certified Ethical Hacker')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                            Claim Discount
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UI/UX -->
+            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
+                <div class="h-40 bg-gradient-to-br from-purple-900 to-black p-6 flex items-center justify-center relative">
+                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
+                    <h3 class="text-xl font-black text-center text-white">UI/UX Design</h3>
+                </div>
+                <div class="p-6 flex-grow flex flex-col">
+                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Design Beautiful Apps Like Netflix</p>
+                    <div class="mb-6 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white">₦20,000</span>
+                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                    </div>
+                    <div class="mt-auto flex flex-col gap-3">
+                        <button onclick="openLeadModal('UI/UX Design')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                            Claim Discount
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Python -->
+            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
+                <div class="h-40 bg-gradient-to-br from-blue-900 to-black p-6 flex items-center justify-center relative">
+                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
+                    <h3 class="text-xl font-black text-center text-white">Python Programming</h3>
+                </div>
+                <div class="p-6 flex-grow flex flex-col">
+                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Become a Python Developer</p>
+                    <div class="mb-6 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white">₦20,000</span>
+                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                    </div>
+                    <div class="mt-auto flex flex-col gap-3">
+                        <button onclick="openLeadModal('Python Programming')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                            Claim Discount
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Analysis -->
+            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
+                <div class="h-40 bg-gradient-to-br from-emerald-900 to-black p-6 flex items-center justify-center relative">
+                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
+                    <h3 class="text-xl font-black text-center text-white">Data Analysis</h3>
+                </div>
+                <div class="p-6 flex-grow flex flex-col">
+                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Analyze the World's Data with Python</p>
+                    <div class="mb-6 flex items-baseline gap-2">
+                        <span class="text-2xl font-bold text-white">₦20,000</span>
+                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                    </div>
+                    <div class="mt-auto flex flex-col gap-3">
+                        <button onclick="openLeadModal('Data Analysis')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                            Claim Discount
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Other courses CTA -->
+        <div class="mt-16 text-center max-w-2xl mx-auto glass-panel p-8 rounded-2xl">
+            <h3 class="text-2xl font-bold mb-4">Need another course?</h3>
+            <p class="text-gray-300 mb-6">We have over 20+ masterclasses available at a discount, including Web Development, Digital Marketing, and Cloud Computing.</p>
+            <a href="https://wa.me/2340000000000?text=Hello%2C%20I%20am%20interested%20in%20the%20other%20available%20courses%20for%20the%20MaxCinema%2050%25%20discount." target="_blank" class="whatsapp-btn font-bold py-3 px-8 rounded-xl transition inline-flex items-center gap-2">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
+                Contact via WhatsApp
+            </a>
+        </div>
+    </section>
+
+    <!-- Modal for Lead Form -->
+    <div id="leadModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative animate-fade-in-up">
+            <!-- Close Button -->
+            <button onclick="closeLeadModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="p-8">
+                <h3 class="text-2xl font-bold mb-2">Claim Your 50% Discount</h3>
+                <p class="text-gray-300 text-sm mb-6">Enter your details to generate your discount code for <span id="modalCourseName" class="font-bold text-white"></span>.</p>
+                
+                <form id="leadForm" onsubmit="submitLead(event)">
+                    <input type="hidden" id="course_interest" name="course_interest">
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-1">Full Name</label>
+                        <input type="text" id="name" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm text-gray-400 mb-1">Email Address</label>
+                        <input type="email" id="email" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm text-gray-400 mb-1">Phone Number (Optional)</label>
+                        <input type="tel" id="phone" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2">
+                        Generate Discount Code
+                    </button>
+
+                    <div class="mt-4 text-center">
+                        <span class="text-gray-500 text-xs">or</span>
+                    </div>
+
+                    <button type="button" onclick="redirectToWhatsApp()" class="mt-4 w-full whatsapp-btn font-bold py-3 rounded-xl transition flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
+                        Skip & Message WhatsApp
+                    </button>
+                </form>
+
+                <!-- Success State -->
+                <div id="successState" class="hidden text-center py-6">
+                    <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Success!</h3>
+                    <p class="text-gray-300 mb-6">Click below to claim your discount on WhatsApp.</p>
+                    <button onclick="redirectToWhatsApp()" class="w-full whatsapp-btn font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 animate-pulse">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
+                        Get Code on WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const PHONE_NUMBER = "2340000000000"; // Replace with actual phone number later
+    
+    function openLeadModal(courseName) {
+        document.getElementById('modalCourseName').textContent = courseName;
+        document.getElementById('course_interest').value = courseName;
+        document.getElementById('leadModal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLeadModal() {
+        document.getElementById('leadModal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        // Reset state
+        document.getElementById('leadForm').reset();
+        document.getElementById('leadForm').classList.remove('hidden');
+        document.getElementById('successState').classList.add('hidden');
+    }
+
+    function redirectToWhatsApp() {
+        const course = document.getElementById('course_interest').value;
+        let text = encodeURIComponent(`Hello, I am interested in the ${course} course and would like to claim my 50% discount.`);
+        window.open(`https://wa.me/${PHONE_NUMBER}?text=${text}`, '_blank');
+        closeLeadModal();
+    }
+
+    async function submitLead(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = 'Saving...';
+        submitBtn.disabled = true;
+
+        const payload = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            course_interest: document.getElementById('course_interest').value
+        };
+
+        try {
+            const res = await fetch('/api/leads/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Hide form, show success
+                document.getElementById('leadForm').classList.add('hidden');
+                document.getElementById('successState').classList.remove('hidden');
+            } else {
+                alert('Error saving details: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('A network error occurred. Please try WhatsApp directly.');
+        } finally {
+            submitBtn.innerHTML = 'Generate Discount Code';
+            submitBtn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

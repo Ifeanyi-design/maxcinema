@@ -56,6 +56,32 @@
       data-pop-url="{{ ads.pop_url or '' }}"
       data-country="{{ country or 'XX' }}"
       class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
+    <!-- LEARN TECH CAMPAIGN BANNER -->
+    <div id="campaign-banner" class="bg-blue-600 text-white text-center py-2 text-sm font-bold w-full z-[60] relative">
+        <span class="mr-2 px-2 py-1 bg-white text-blue-600 rounded text-xs uppercase tracking-bold">HiiT</span>
+        Current Intake Begins In: <span id="countdown-timer" class="font-mono text-yellow-300 ml-1"></span>
+        <a href="{{ url_for('main.learn_tech') }}" class="ml-4 underline hover:text-gray-200">Claim 50% Discount &rarr;</a>
+    </div>
+    <script>
+        function updateTopCountdown() {
+            const targetDate = new Date("2026-06-29T00:00:00").getTime();
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+            const timerEl = document.getElementById("countdown-timer");
+            if (!timerEl) return;
+            if (distance < 0) {
+                timerEl.innerHTML = "Intake Closed";
+                return;
+            }
+            const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((distance % (1000 * 60)) / 1000);
+            timerEl.innerHTML = d + "d " + h + "h " + m + "m " + s + "s ";
+        }
+        setInterval(updateTopCountdown, 1000);
+        updateTopCountdown();
+    </script>
     
     {% if not dark %}
         {%include "header.html"%}

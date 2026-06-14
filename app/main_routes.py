@@ -20,7 +20,7 @@ from .indexnow import get_indexnow_key_record, get_site_base_url
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
     Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
-    WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote
+    WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote, CourseLead
 )
 
 main_bp = Blueprint("main", __name__)
@@ -1871,6 +1871,39 @@ def live_search():
 
 
 from sqlalchemy import text  # Ensure this is imported at the top
+
+@main_bp.route('/learn-tech')
+def learn_tech():
+    series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
+    trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
+    return render_template("learn_tech.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+
+@main_bp.route('/api/leads/submit', methods=['POST'])
+def submit_course_lead():
+    data = request.get_json(silent=True) or {}
+    name = data.get('name', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    course_interest = data.get('course_interest', '').strip()
+
+    if not name or not email or not course_interest:
+        return jsonify({'success': False, 'error': 'Name, email, and course interest are required'}), 400
+
+    try:
+        new_lead = CourseLead(
+            name=name,
+            email=email,
+            phone=phone,
+            course_interest=course_interest
+        )
+        db.session.add(new_lead)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Lead saved successfully'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error saving lead: {e}")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 @main_bp.route('/ping')
 def ping():

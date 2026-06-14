@@ -631,3 +631,12 @@ class SportsProviderMapping(db.Model):
     __table_args__ = (
         db.UniqueConstraint("provider_name", "entity_type", "provider_entity_id", name="uq_sports_provider_mapping_external"),
     )
+
+class CourseLead(db.Model):
+    __tablename__ = "course_lead"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(50), nullable=True)
+    course_interest = db.Column(db.String(150), nullable=False)
+    date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)

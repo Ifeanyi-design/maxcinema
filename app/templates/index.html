@@ -233,16 +233,45 @@
             {% for nav_item in ['MOVIE', 'SERIES', 'TRAILERS', 'TRENDING'] %}
                 <a href="{{ url_for('main.navbar', nav='all_' ~ nav_item|lower if nav_item != 'TRENDING' else 'trending') }}" 
                    class="flex-1 text-center text-[10px] font-black bg-white border border-gray-200 text-gray-500 py-2 rounded-lg hover:bg-[#830506] hover:text-white hover:border-[#830506] transition-all shadow-sm uppercase tracking-wide">
+    
+    <section id="RecentlyAdded" class="flex flex-col lg:w-3/4 mx-auto w-full">
+        
+        <div class="w-full bg-[#830506] flex items-center justify-center px-4 py-4 rounded-t-2xl shadow-md">
+            <h2 class="font-black text-white text-lg md:text-xl flex items-center gap-2 italic uppercase tracking-tight">
+                <i class="fa-solid fa-bolt text-yellow-400"></i> Recently Added
+            </h2>
+        </div>
+
+        <div class="md:hidden w-full border-x border-b border-gray-100 bg-gray-50 p-2 flex items-center justify-center gap-2 shadow-inner">
+            {% for nav_item in ['MOVIE', 'SERIES', 'TRAILERS', 'TRENDING'] %}
+                <a href="{{ url_for('main.navbar', nav='all_' ~ nav_item|lower if nav_item != 'TRENDING' else 'trending') }}" 
+                   class="flex-1 text-center text-[10px] font-black bg-white border border-gray-200 text-gray-500 py-2 rounded-lg hover:bg-[#830506] hover:text-white hover:border-[#830506] transition-all shadow-sm uppercase tracking-wide">
                    {{ nav_item }}
                 </a>
             {% endfor %}
         </div>
 
         <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-3 md:px-6 border-x border-b border-gray-100 rounded-b-2xl shadow-sm">
+            
+            <a class="group relative flex flex-col bg-gradient-to-br from-blue-900 to-black rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-blue-500 cursor-pointer"
+                 href="{{ url_for('main.learn_tech') }}">
+                
+                <div class="absolute top-2 left-2 z-40 bg-blue-600 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm border border-blue-400">
+                    <span class="text-[10px] font-black text-white tracking-widest uppercase">Sponsored</span>
+                </div>
+
+                <div class="relative w-full aspect-[2/3] overflow-hidden bg-slate-900 flex flex-col items-center justify-center p-4 text-center">
+                    <h3 class="text-xl md:text-2xl font-black text-white mb-2 uppercase tracking-wide">Learn Tech<br>Masterclass</h3>
+                    <p class="text-xs text-blue-200 font-bold mb-4">50% Off Top Courses</p>
+                    <div class="w-16 h-1 bg-blue-500 mb-4"></div>
+                    <p class="text-xs text-gray-300 mb-6">Build the skills for today's most in-demand careers.</p>
+                    <span class="bg-blue-600 text-white font-bold py-2 px-4 rounded-full text-xs uppercase hover:bg-blue-700 transition">Explore &rarr;</span>
+                </div>
+            </a>
+
             {% for item in items %}
                 {% set is_movie = item.__class__.__name__ == 'Movie' %}
                 {% set video = item.all_video if is_movie else item.season.series.all_video %}
-                
                 <a class="group download-ad-trigger relative flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer"
                      href="{{ url_for('main.detail', det=video.type, name=video.name, id=video.id, season=item.season.season_number if not is_movie else none, episode=item.episode_number if not is_movie else none) }}">
                     
