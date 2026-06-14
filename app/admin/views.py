@@ -3,11 +3,12 @@ from collections import defaultdict
 from sqlalchemy import or_, func
 from sqlalchemy.orm import aliased
 from os import name
-from flask import render_template, abort, redirect, url_for, request, flash
+from flask import render_template, abort, redirect, url_for, request, flash, Response
+import csv, io
 from ..models import (
     AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie,
     Season, Episode, Rating, Comment, MovieRequest, SearchTerm, AnalyticsEvent,
-    WatchlistNotify, WeeklyPoll, WeeklyPollOption
+    WatchlistNotify, WeeklyPoll, WeeklyPollOption, CourseLead
 )
 from slugify import slugify
 from ..extensions import login_manager
@@ -2273,3 +2274,91 @@ def search_terms_page():
         'admin/search_terms.html',
         search_terms=search_terms
     )
+
+
+# ─── COURSE LEADS DASHBOARD ─────────────────────────────────────────────────
+
+@admin_bp.route('/leads')
+@login_required
+@admin_required
+def leads_dashboard():
+    page          = request.args.get('page', 1, type=int)
+    per_page      = 25
+    course_filter = request.args.get('course', '').strip()
+    search_query  = request.args.get('q', '').strip()
+
+    q = CourseLead.query
+
+    if course_filter:
+        q = q.filter(CourseLead.course_interest == course_filter)
+
+    if search_query:
+        like = f"%{search_query}%"
+        q = q.filter(
+            db.or_(
+                CourseLead.name.ilike(like),
+                CourseLead.email.ilike(like),
+                CourseLead.phone.ilike(like),
+            )
+        )
+
+    q = q.order_by(CourseLead.date_added.desc())
+    leads_page = q.paginate(page=page, per_page=per_page, error_out=False)
+
+    # Distinct courses for the filter dropdown
+    courses = [
+        r[0] for r in
+        db.session.query(CourseLead.course_interest).distinct().order_by(CourseLead.course_interest).all()
+        if r[0]
+    ]
+
+    total_leads = CourseLead.query.count()
+
+    return render_template(
+        'admin/leads.html',
+        leads_page=leads_page,
+        courses=courses,
+        course_filter=course_filter,
+        search_query=search_query,
+        total_leads=total_leads,
+    )
+
+
+@admin_bp.route('/leads/export')
+@login_required
+@admin_required
+def export_leads():
+    """Export all course leads as a CSV file."""
+    leads = CourseLead.query.order_by(CourseLead.date_added.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Name', 'Email', 'Phone', 'Course Interest', 'Date Submitted'])
+
+    for lead in leads:
+        writer.writerow([
+            lead.id,
+            lead.name,
+            lead.email,
+            lead.phone or '',
+            lead.course_interest,
+            lead.date_added.strftime('%Y-%m-%d %H:%M:%S') if lead.date_added else '',
+        ])
+
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=course_leads.csv'}
+    )
+
+
+@admin_bp.route('/leads/delete/<int:lead_id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_lead(lead_id):
+    lead = CourseLead.query.get_or_404(lead_id)
+    db.session.delete(lead)
+    db.session.commit()
+    flash('Lead deleted.', 'success')
+    return redirect(url_for('admin.leads_dashboard'))

@@ -1,0 +1,167 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Course Leads — MaxCinema Admin{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 lg:p-8">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">🎯 Course Leads</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {{ total_leads }} total lead{{ 's' if total_leads != 1 else '' }} captured
+            </p>
+        </div>
+        <a href="{{ url_for('admin.export_leads') }}"
+           class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Export CSV
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="flex flex-col sm:flex-row gap-3 mb-6">
+        <input type="text" name="q" value="{{ search_query }}"
+               placeholder="Search name, email, phone..."
+               class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="course"
+                class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">All Courses</option>
+            {% for c in courses %}
+            <option value="{{ c }}" {% if course_filter == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition">
+            Filter
+        </button>
+        {% if course_filter or search_query %}
+        <a href="{{ url_for('admin.leads_dashboard') }}"
+           class="text-center bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold px-6 py-2.5 rounded-xl text-sm transition">
+            Clear
+        </a>
+        {% endif %}
+    </form>
+
+    <!-- Stats Cards -->
+    {% if courses %}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {% set course_colors = ['blue', 'purple', 'red', 'green', 'yellow', 'indigo'] %}
+        {% for c in courses[:4] %}
+        {% set count = leads_page.query.filter_by(course_interest=c).count() if not course_filter else '' %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 text-center shadow-sm">
+            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{{ c }}</p>
+            <p class="text-2xl font-black text-gray-900 dark:text-white">
+                {{ leads_page.total if course_filter == c else CourseLead.query.filter_by(course_interest=c).count() if not course_filter else '-' }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Table -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        {% if leads_page.items %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">#</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Email</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Phone</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Course</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-black text-gray-400 uppercase tracking-widest">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50 dark:divide-gray-700">
+                    {% for lead in leads_page.items %}
+                    <tr class="hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition">
+                        <td class="px-4 py-3 text-gray-400 text-xs font-mono">{{ lead.id }}</td>
+                        <td class="px-4 py-3">
+                            <span class="font-bold text-gray-900 dark:text-white">{{ lead.name }}</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <a href="mailto:{{ lead.email }}" class="text-blue-600 hover:underline">{{ lead.email }}</a>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 dark:text-gray-400">
+                            {% if lead.phone %}
+                            <a href="https://wa.me/{{ lead.phone | replace(' ','') | replace('+','') }}" target="_blank"
+                               class="text-green-600 hover:underline flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
+                                {{ lead.phone }}
+                            </a>
+                            {% else %}
+                            <span class="text-gray-300">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold">
+                                {{ lead.course_interest }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-xs">
+                            {{ lead.date_added.strftime('%b %d, %Y %H:%M') if lead.date_added else '—' }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <form method="POST" action="{{ url_for('admin.delete_lead', lead_id=lead.id) }}"
+                                  onsubmit="return confirm('Delete this lead?')">
+                                <button type="submit"
+                                        class="text-red-400 hover:text-red-600 transition p-1 rounded">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if leads_page.pages > 1 %}
+        <div class="px-4 py-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-sm">
+            <p class="text-gray-500">
+                Showing {{ leads_page.per_page * (leads_page.page - 1) + 1 }}–{{ [leads_page.per_page * leads_page.page, leads_page.total] | min }} of {{ leads_page.total }}
+            </p>
+            <div class="flex gap-2">
+                {% if leads_page.has_prev %}
+                <a href="{{ url_for('admin.leads_dashboard', page=leads_page.prev_num, course=course_filter, q=search_query) }}"
+                   class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold transition">
+                    ← Prev
+                </a>
+                {% endif %}
+                {% if leads_page.has_next %}
+                <a href="{{ url_for('admin.leads_dashboard', page=leads_page.next_num, course=course_filter, q=search_query) }}"
+                   class="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-bold transition">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-20">
+            <div class="text-5xl mb-4">📭</div>
+            <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">No leads yet</h3>
+            <p class="text-gray-400 text-sm">
+                {% if course_filter or search_query %}
+                    No leads match your current filter.
+                    <a href="{{ url_for('admin.leads_dashboard') }}" class="text-blue-500 hover:underline">Clear filters</a>
+                {% else %}
+                    When visitors submit the Learn Tech form, their details will appear here.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

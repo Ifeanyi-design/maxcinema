@@ -187,6 +187,15 @@
                         </svg>
                         Notification Settings
                     </a>
+
+                    <!-- Campaign Leads -->
+                    <a href="{{ url_for('admin.leads_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-blue-400 transition mt-2 {% if request.endpoint in ['admin.leads_dashboard', 'admin.export_leads'] %}text-blue-400 font-semibold{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Course Leads
+                        <span class="bg-blue-600 text-white text-xs px-2 rounded-full">New</span>
+                    </a>
                 </nav>
             
                 <!-- User Info / Logout -->

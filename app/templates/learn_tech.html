@@ -1,317 +1,671 @@
 {% extends "base.html" %}
 
-{% block title %}Learn Tech Masterclass - MaxCinema{% endblock %}
+{% block title %}Learn Tech Masterclass — Build In-Demand Skills | MaxCinema{% endblock %}
 
-{% block content %}
+{% block style %}
 <style>
-/* Cinematic CSS specific to learn tech page */
-.cinematic-hero {
-    background: linear-gradient(to top, #0f172a, transparent), url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80');
-    background-size: cover;
-    background-position: center;
+/* ═══════════════════════════════════════════════════════════════
+   LEARN TECH PAGE — PREMIUM CINEMATIC UI v2
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
+.lt-root { font-family: 'Inter', sans-serif; }
+
+/* Animated mesh gradient hero */
+.lt-hero {
+    background: #0a0f1e;
+    position: relative;
+    overflow: hidden;
 }
-.glass-panel {
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.lt-hero-bg {
+    position: absolute; inset: 0;
+    background: 
+        radial-gradient(ellipse 80% 60% at 20% 40%, rgba(59,130,246,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 20%, rgba(139,0,6,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 80% at 60% 80%, rgba(99,102,241,0.12) 0%, transparent 60%);
+    animation: heroShift 12s ease-in-out infinite alternate;
 }
+@keyframes heroShift {
+    0%   { filter: hue-rotate(0deg) brightness(1); }
+    100% { filter: hue-rotate(15deg) brightness(1.08); }
+}
+
+/* Particle dots */
+.lt-particles {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.lt-particle {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+    animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+}
+
+/* Typewriter */
+.lt-typewriter::after {
+    content: '|';
+    animation: blink 0.9s step-end infinite;
+    color: #3b82f6;
+    margin-left: 2px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* Flip countdown blocks */
+.flip-block {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    min-width: 64px;
+    padding: 12px 8px;
+    text-align: center;
+}
+.flip-num {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+.flip-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+/* Glass panels */
+.lt-glass {
+    background: rgba(15,23,42,0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Course cards */
 .course-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
 }
 .course-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
-    border-color: #3b82f6;
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 0 40px var(--glow-color, rgba(59,130,246,0.4));
+    border-color: var(--border-glow, #3b82f6);
 }
-.whatsapp-btn {
-    background-color: #25D366;
-    color: white;
+
+/* Social proof ticker */
+.lt-ticker-wrap {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
-.whatsapp-btn:hover {
-    background-color: #128C7E;
+.lt-ticker-track {
+    display: flex;
+    gap: 32px;
+    animation: tickerScroll 30s linear infinite;
+    white-space: nowrap;
+}
+.lt-ticker-track:hover { animation-play-state: paused; }
+@keyframes tickerScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Exit-intent popup */
+.lt-exit-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+}
+.lt-exit-backdrop.active { display: flex; }
+.lt-exit-pop {
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn {
+    from { opacity:0; transform: scale(0.7) translateY(30px); }
+    to   { opacity:1; transform: scale(1) translateY(0); }
+}
+
+/* Shimmer banner */
+.lt-shimmer {
+    position: relative; overflow: hidden;
+}
+.lt-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: shimmer 3s infinite;
+}
+@keyframes shimmer { to { left: 200%; } }
+
+/* WhatsApp button */
+.wa-btn { background: #25D366; }
+.wa-btn:hover { background: #128C7E; }
+
+/* Pulse dot */
+.pulse-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 0 0 rgba(239,68,68,0.4);
+    animation: pulseDot 1.5s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+/* Section divider */
+.lt-divider {
+    height: 2px;
+    background: linear-gradient(to right, transparent, rgba(59,130,246,0.5), transparent);
 }
 </style>
+{% endblock %}
 
-<div class="min-h-screen bg-slate-900 text-white pb-20">
-    <!-- Hero Section -->
-    <section class="cinematic-hero relative h-[70vh] flex items-center justify-center pt-20">
-        <div class="absolute inset-0 bg-black/60"></div>
-        <div class="relative z-10 text-center max-w-4xl px-4">
-            <span class="text-blue-500 font-bold tracking-widest uppercase text-sm mb-4 block">HiiT Masterclass</span>
-            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 text-white leading-tight">
-                Build Skills. Create Opportunities. Shape Your Future.
+{% block content %}
+<div class="lt-root min-h-screen bg-[#050a18] text-white pb-20">
+
+    <!-- ═══════════ HERO ═══════════ -->
+    <section class="lt-hero relative min-h-[85vh] flex items-center justify-center pt-16 pb-8">
+        <div class="lt-hero-bg"></div>
+
+        <!-- Floating particles -->
+        <div class="lt-particles" id="ltParticles"></div>
+
+        <div class="relative z-10 text-center max-w-5xl mx-auto px-4">
+
+            <!-- Eyebrow label -->
+            <div class="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-300 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+                <span class="pulse-dot"></span>
+                June 29 Cohort · Enrollment Open
+            </div>
+
+            <!-- Main headline -->
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-black leading-tight mb-4 tracking-tight">
+                Build Skills.<br>
+                <span class="bg-gradient-to-r from-blue-400 via-indigo-300 to-blue-500 bg-clip-text text-transparent lt-typewriter" id="heroTagline">Create Opportunities.</span>
             </h1>
-            <p class="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                Learn the skills behind today's most in-demand careers and claim your 50% discount for the June 29 Cohort.
+
+            <p class="text-base md:text-xl text-slate-300 max-w-2xl mx-auto mb-4 leading-relaxed">
+                Learn the skills behind today's most in-demand careers. Exclusive <span class="text-yellow-400 font-black">50% discount</span> for MaxCinema members.
             </p>
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#courses" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full transition duration-300 shadow-lg shadow-blue-500/30 text-lg">
-                    Explore Masterclasses
-                </a>
-            </div>
-            
-            <!-- Trust Signals -->
-            <div class="mt-12 flex flex-wrap justify-center gap-6 text-gray-300 text-sm md:text-base font-medium">
-                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Live Instructor-Led</div>
-                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Beginner Friendly</div>
-                <div class="flex items-center gap-2"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Certificate Included</div>
-            </div>
-        </div>
-    </section>
 
-    <!-- How It Works Section -->
-    <section class="max-w-7xl mx-auto px-4 py-16">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-4">How It Works</h2>
-            <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div class="glass-panel p-6 rounded-2xl">
-                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">1</div>
-                <h3 class="font-bold mb-2">Choose Course</h3>
-                <p class="text-sm text-gray-400">Select your preferred masterclass below.</p>
+            <!-- Trust badges -->
+            <div class="flex flex-wrap justify-center gap-4 text-slate-300 text-xs md:text-sm font-semibold mb-8">
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Live Instructor-Led</span>
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Beginner Friendly</span>
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Certificate Included</span>
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>Weekend Classes</span>
             </div>
-            <div class="glass-panel p-6 rounded-2xl">
-                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">2</div>
-                <h3 class="font-bold mb-2">Request Consultation</h3>
-                <p class="text-sm text-gray-400">Leave your details or message us on WhatsApp.</p>
-            </div>
-            <div class="glass-panel p-6 rounded-2xl">
-                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">3</div>
-                <h3 class="font-bold mb-2">Get 50% Discount</h3>
-                <p class="text-sm text-gray-400">Receive your exclusive MaxCinema discount code.</p>
-            </div>
-            <div class="glass-panel p-6 rounded-2xl">
-                <div class="w-12 h-12 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4 border border-blue-500/50">4</div>
-                <h3 class="font-bold mb-2">Join June 29 Cohort</h3>
-                <p class="text-sm text-gray-400">Start learning with live expert instructors.</p>
-            </div>
-        </div>
-    </section>
 
-    <!-- Courses Section -->
-    <section id="courses" class="max-w-7xl mx-auto px-4 py-12">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold mb-4">Featured Masterclasses</h2>
-            <div class="w-24 h-1 bg-blue-600 mx-auto"></div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- CEH -->
-            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
-                <div class="h-40 bg-gradient-to-br from-red-900 to-black p-6 flex items-center justify-center relative">
-                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
-                    <h3 class="text-xl font-black text-center text-white">Certified Ethical Hacker</h3>
+            <!-- Countdown timer -->
+            <div class="mb-8">
+                <p class="text-slate-400 text-xs uppercase tracking-widest mb-3 font-bold">Cohort 1 Begins In</p>
+                <div class="flex items-center justify-center gap-3" id="heroCountdown">
+                    <div class="flip-block"><div class="flip-num" id="cnt-d">--</div><div class="flip-label">Days</div></div>
+                    <span class="text-2xl font-black text-slate-500">:</span>
+                    <div class="flip-block"><div class="flip-num" id="cnt-h">--</div><div class="flip-label">Hours</div></div>
+                    <span class="text-2xl font-black text-slate-500">:</span>
+                    <div class="flip-block"><div class="flip-num" id="cnt-m">--</div><div class="flip-label">Mins</div></div>
+                    <span class="text-2xl font-black text-slate-500">:</span>
+                    <div class="flip-block"><div class="flip-num" id="cnt-s">--</div><div class="flip-label">Secs</div></div>
                 </div>
-                <div class="p-6 flex-grow flex flex-col">
-                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Protect Systems and Networks</p>
-                    <div class="mb-6 flex items-baseline gap-2">
-                        <span class="text-2xl font-bold text-white">₦25,000</span>
-                        <span class="text-sm text-gray-500 line-through">₦50,000</span>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#courses"
+                   class="bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-10 rounded-full transition duration-300 shadow-xl shadow-blue-600/30 text-base tracking-wide">
+                    Explore Masterclasses →
+                </a>
+                <button onclick="openLeadModal('General Enquiry')"
+                   class="lt-glass hover:bg-white/10 text-white font-bold py-4 px-10 rounded-full transition text-base border border-white/20">
+                    Get Free Consultation
+                </button>
+            </div>
+        </div>
+
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-slate-500 animate-bounce">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </div>
+    </section>
+
+    <div class="lt-divider"></div>
+
+    <!-- ═══════════ SOCIAL PROOF TICKER ═══════════ -->
+    <section class="py-5 bg-[#080d1c]">
+        <div class="lt-ticker-wrap">
+            <div class="lt-ticker-track" id="ltTicker">
+                <!-- Duplicated for seamless loop -->
+            </div>
+        </div>
+    </section>
+
+    <div class="lt-divider"></div>
+
+    <!-- ═══════════ WHY LEARN TECH ═══════════ -->
+    <section class="max-w-6xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <p class="text-blue-400 text-xs font-black uppercase tracking-widest mb-3">The Opportunity</p>
+            <h2 class="text-3xl md:text-4xl font-black mb-3">Why Learn Tech <span class="text-blue-400">Now?</span></h2>
+            <div class="w-20 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 mx-auto rounded"></div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% set reasons = [
+                ('💼', 'Freelancing Income', 'Earn from clients worldwide. Tech is the #1 remote-friendly skill set.'),
+                ('🚀', 'High-Paying Careers', 'Entry-level tech roles start at ₦200k–₦500k/month locally.'),
+                ('🌍', 'Work From Anywhere', 'Remote work opportunities across Africa, Europe, and beyond.'),
+                ('📱', 'Build Your Own Apps', 'Turn your business ideas into real, working products.'),
+                ('🎓', 'Learn in Weeks', 'Structured weekend classes designed for busy people.'),
+                ('🏆', 'Industry Certificate', 'HiiT certifications recognized by leading employers.'),
+            ] %}
+            {% for icon, title, desc in reasons %}
+            <div class="lt-glass rounded-2xl p-6 group hover:border-blue-500/50 transition-all duration-300">
+                <div class="text-3xl mb-3">{{ icon }}</div>
+                <h3 class="font-black text-white text-base mb-2">{{ title }}</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">{{ desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="lt-divider"></div>
+
+    <!-- ═══════════ HOW IT WORKS ═══════════ -->
+    <section class="max-w-5xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <p class="text-blue-400 text-xs font-black uppercase tracking-widest mb-3">The Process</p>
+            <h2 class="text-3xl font-black">4 Simple Steps to Start</h2>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
+            {% set steps = [
+                ('01', 'Choose Course', 'Pick from our featured masterclasses below.'),
+                ('02', 'Claim Discount', 'Submit your details to get your 50% code.'),
+                ('03', 'Contact HiiT', 'WhatsApp us to complete your registration.'),
+                ('04', 'Start June 29', 'Join live classes with expert instructors.'),
+            ] %}
+            {% for num, title, desc in steps %}
+            <div class="relative">
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-xl font-black mx-auto mb-4 shadow-lg shadow-blue-600/30">
+                    {{ num }}
+                </div>
+                {% if not loop.last %}
+                <div class="hidden md:block absolute top-7 left-[calc(50%+36px)] right-0 h-0.5 bg-gradient-to-r from-blue-600/50 to-transparent"></div>
+                {% endif %}
+                <h3 class="font-black text-white text-sm mb-1">{{ title }}</h3>
+                <p class="text-slate-400 text-xs leading-relaxed">{{ desc }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <div class="lt-divider"></div>
+
+    <!-- ═══════════ FEATURED COURSES ═══════════ -->
+    <section id="courses" class="max-w-6xl mx-auto px-4 py-16">
+        <div class="text-center mb-12">
+            <p class="text-blue-400 text-xs font-black uppercase tracking-widest mb-3">Current Intake</p>
+            <h2 class="text-3xl md:text-4xl font-black mb-3">Featured <span class="text-blue-400">Masterclasses</span></h2>
+            <p class="text-slate-400 text-sm max-w-xl mx-auto">All courses include live instructor-led sessions, hands-on projects, and an industry certificate.</p>
+            <div class="w-20 h-1 bg-gradient-to-r from-blue-600 to-indigo-500 mx-auto rounded mt-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+            <!-- CEH -->
+            <div class="lt-glass rounded-2xl overflow-hidden course-card flex flex-col border border-white/[0.08]"
+                 style="--glow-color:rgba(239,68,68,0.4); --border-glow:#ef4444;"
+                 onclick="openLeadModal('Certified Ethical Hacker')">
+                <div class="relative h-44 bg-gradient-to-br from-red-950 via-red-900 to-black flex flex-col items-center justify-center p-5">
+                    <span class="absolute top-3 left-3 bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">50% OFF</span>
+                    <span class="absolute top-3 right-3 bg-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">🔥 Popular</span>
+                    <div class="text-4xl mb-3">🛡️</div>
+                    <h3 class="text-base font-black text-center text-white leading-tight">Certified Ethical Hacker</h3>
+                </div>
+                <div class="p-5 flex-grow flex flex-col">
+                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">Protect systems, networks, and earn a globally recognised CEH certification.</p>
+                    <div class="flex items-baseline gap-2 mb-5">
+                        <span class="text-2xl font-black text-white">₦25,000</span>
+                        <span class="text-xs text-slate-500 line-through">₦50,000</span>
+                        <span class="ml-auto text-xs text-green-400 font-bold">Save ₦25k</span>
                     </div>
-                    <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="openLeadModal('Certified Ethical Hacker')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                            Claim Discount
-                        </button>
-                    </div>
+                    <button class="w-full bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-black py-3 rounded-xl text-sm transition shadow-lg shadow-red-900/40">
+                        Claim Discount →
+                    </button>
                 </div>
             </div>
 
             <!-- UI/UX -->
-            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
-                <div class="h-40 bg-gradient-to-br from-purple-900 to-black p-6 flex items-center justify-center relative">
-                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
-                    <h3 class="text-xl font-black text-center text-white">UI/UX Design</h3>
+            <div class="lt-glass rounded-2xl overflow-hidden course-card flex flex-col border border-white/[0.08]"
+                 style="--glow-color:rgba(139,92,246,0.4); --border-glow:#8b5cf6;"
+                 onclick="openLeadModal('UI/UX Design')">
+                <div class="relative h-44 bg-gradient-to-br from-purple-950 via-purple-900 to-black flex flex-col items-center justify-center p-5">
+                    <span class="absolute top-3 left-3 bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">50% OFF</span>
+                    <div class="text-4xl mb-3">🎨</div>
+                    <h3 class="text-base font-black text-center text-white leading-tight">UI/UX Design</h3>
                 </div>
-                <div class="p-6 flex-grow flex flex-col">
-                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Design Beautiful Apps Like Netflix</p>
-                    <div class="mb-6 flex items-baseline gap-2">
-                        <span class="text-2xl font-bold text-white">₦20,000</span>
-                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                <div class="p-5 flex-grow flex flex-col">
+                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">Design beautiful, intuitive apps and websites. Master Figma and industry workflows.</p>
+                    <div class="flex items-baseline gap-2 mb-5">
+                        <span class="text-2xl font-black text-white">₦20,000</span>
+                        <span class="text-xs text-slate-500 line-through">₦40,000</span>
+                        <span class="ml-auto text-xs text-green-400 font-bold">Save ₦20k</span>
                     </div>
-                    <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="openLeadModal('UI/UX Design')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                            Claim Discount
-                        </button>
-                    </div>
+                    <button class="w-full bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-600 hover:to-purple-500 text-white font-black py-3 rounded-xl text-sm transition shadow-lg shadow-purple-900/40">
+                        Claim Discount →
+                    </button>
                 </div>
             </div>
 
             <!-- Python -->
-            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
-                <div class="h-40 bg-gradient-to-br from-blue-900 to-black p-6 flex items-center justify-center relative">
-                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
-                    <h3 class="text-xl font-black text-center text-white">Python Programming</h3>
+            <div class="lt-glass rounded-2xl overflow-hidden course-card flex flex-col border border-white/[0.08]"
+                 style="--glow-color:rgba(59,130,246,0.4); --border-glow:#3b82f6;"
+                 onclick="openLeadModal('Python Programming')">
+                <div class="relative h-44 bg-gradient-to-br from-blue-950 via-blue-900 to-black flex flex-col items-center justify-center p-5">
+                    <span class="absolute top-3 left-3 bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">50% OFF</span>
+                    <div class="text-4xl mb-3">🐍</div>
+                    <h3 class="text-base font-black text-center text-white leading-tight">Python Programming</h3>
                 </div>
-                <div class="p-6 flex-grow flex flex-col">
-                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Become a Python Developer</p>
-                    <div class="mb-6 flex items-baseline gap-2">
-                        <span class="text-2xl font-bold text-white">₦20,000</span>
-                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                <div class="p-5 flex-grow flex flex-col">
+                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">From zero to building real applications. The world's #1 most-used programming language.</p>
+                    <div class="flex items-baseline gap-2 mb-5">
+                        <span class="text-2xl font-black text-white">₦20,000</span>
+                        <span class="text-xs text-slate-500 line-through">₦40,000</span>
+                        <span class="ml-auto text-xs text-green-400 font-bold">Save ₦20k</span>
                     </div>
-                    <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="openLeadModal('Python Programming')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                            Claim Discount
-                        </button>
-                    </div>
+                    <button class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white font-black py-3 rounded-xl text-sm transition shadow-lg shadow-blue-900/40">
+                        Claim Discount →
+                    </button>
                 </div>
             </div>
 
             <!-- Data Analysis -->
-            <div class="glass-panel rounded-2xl overflow-hidden course-card flex flex-col">
-                <div class="h-40 bg-gradient-to-br from-emerald-900 to-black p-6 flex items-center justify-center relative">
-                    <span class="absolute top-2 right-2 bg-blue-600 text-xs font-bold px-2 py-1 rounded">50% OFF</span>
-                    <h3 class="text-xl font-black text-center text-white">Data Analysis</h3>
+            <div class="lt-glass rounded-2xl overflow-hidden course-card flex flex-col border border-white/[0.08]"
+                 style="--glow-color:rgba(16,185,129,0.4); --border-glow:#10b981;"
+                 onclick="openLeadModal('Data Analysis')">
+                <div class="relative h-44 bg-gradient-to-br from-emerald-950 via-emerald-900 to-black flex flex-col items-center justify-center p-5">
+                    <span class="absolute top-3 left-3 bg-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">50% OFF</span>
+                    <div class="text-4xl mb-3">📊</div>
+                    <h3 class="text-base font-black text-center text-white leading-tight">Data Analysis</h3>
                 </div>
-                <div class="p-6 flex-grow flex flex-col">
-                    <p class="text-sm text-gray-300 mb-4 font-medium h-10">Analyze the World's Data with Python</p>
-                    <div class="mb-6 flex items-baseline gap-2">
-                        <span class="text-2xl font-bold text-white">₦20,000</span>
-                        <span class="text-sm text-gray-500 line-through">₦40,000</span>
+                <div class="p-5 flex-grow flex flex-col">
+                    <p class="text-xs text-slate-300 mb-4 leading-relaxed">Analyse, visualise, and interpret data with Python & Excel. The skill every company needs.</p>
+                    <div class="flex items-baseline gap-2 mb-5">
+                        <span class="text-2xl font-black text-white">₦20,000</span>
+                        <span class="text-xs text-slate-500 line-through">₦40,000</span>
+                        <span class="ml-auto text-xs text-green-400 font-bold">Save ₦20k</span>
                     </div>
-                    <div class="mt-auto flex flex-col gap-3">
-                        <button onclick="openLeadModal('Data Analysis')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                            Claim Discount
-                        </button>
-                    </div>
+                    <button class="w-full bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-600 hover:to-emerald-500 text-white font-black py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-900/40">
+                        Claim Discount →
+                    </button>
                 </div>
             </div>
+
         </div>
-        
+
         <!-- Other courses CTA -->
-        <div class="mt-16 text-center max-w-2xl mx-auto glass-panel p-8 rounded-2xl">
-            <h3 class="text-2xl font-bold mb-4">Need another course?</h3>
-            <p class="text-gray-300 mb-6">We have over 20+ masterclasses available at a discount, including Web Development, Digital Marketing, and Cloud Computing.</p>
-            <a href="https://wa.me/2340000000000?text=Hello%2C%20I%20am%20interested%20in%20the%20other%20available%20courses%20for%20the%20MaxCinema%2050%25%20discount." target="_blank" class="whatsapp-btn font-bold py-3 px-8 rounded-xl transition inline-flex items-center gap-2">
-                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
-                Contact via WhatsApp
+        <div class="mt-12 lt-glass rounded-2xl p-8 text-center max-w-2xl mx-auto border border-white/[0.06]">
+            <p class="text-blue-400 text-xs font-black uppercase tracking-widest mb-3">20+ More Courses Available</p>
+            <h3 class="text-xl font-black mb-3">Looking for something else?</h3>
+            <p class="text-slate-400 text-sm mb-6 leading-relaxed">We offer Web Development, Digital Marketing, Cloud Computing, Graphics Design, and more — all at 50% off for MaxCinema members.</p>
+            <a href="https://wa.me/2348030000000?text=Hello%2C%20I%20am%20a%20MaxCinema%20member%20and%20I%20am%20interested%20in%20the%20other%20available%20HiiT%20courses.%20Please%20tell%20me%20more."
+               target="_blank"
+               class="wa-btn inline-flex items-center gap-2 font-black py-3 px-8 rounded-xl transition text-sm text-white shadow-lg">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
+                Browse All Courses on WhatsApp
             </a>
         </div>
     </section>
 
-    <!-- Modal for Lead Form -->
-    <div id="leadModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative animate-fade-in-up">
-            <!-- Close Button -->
-            <button onclick="closeLeadModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+
+    <!-- ═══════════ LEAD MODAL ═══════════ -->
+    <div id="leadModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden items-center justify-center p-4 flex" style="display:none;">
+        <div class="lt-glass w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative" style="animation: popIn 0.3s ease;">
+            <button onclick="closeLeadModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition z-10 p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-            
+            <!-- Modal header gradient -->
+            <div class="h-2 bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-600"></div>
             <div class="p-8">
-                <h3 class="text-2xl font-bold mb-2">Claim Your 50% Discount</h3>
-                <p class="text-gray-300 text-sm mb-6">Enter your details to generate your discount code for <span id="modalCourseName" class="font-bold text-white"></span>.</p>
-                
+                <h3 class="text-xl font-black mb-1">Claim Your 50% Discount</h3>
+                <p class="text-slate-400 text-sm mb-6">Leave your details for <span id="modalCourseName" class="text-blue-400 font-bold"></span> and we'll help you choose the right course and lock in your discount.</p>
                 <form id="leadForm" onsubmit="submitLead(event)">
                     <input type="hidden" id="course_interest" name="course_interest">
-                    
                     <div class="mb-4">
-                        <label class="block text-sm text-gray-400 mb-1">Full Name</label>
-                        <input type="text" id="name" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                        <label class="block text-xs text-slate-400 font-bold uppercase tracking-wide mb-1.5">Full Name</label>
+                        <input type="text" id="lead_name" required placeholder="e.g. Emeka Okonkwo"
+                               class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
                     </div>
-                    
                     <div class="mb-4">
-                        <label class="block text-sm text-gray-400 mb-1">Email Address</label>
-                        <input type="email" id="email" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                        <label class="block text-xs text-slate-400 font-bold uppercase tracking-wide mb-1.5">Email Address</label>
+                        <input type="email" id="lead_email" required placeholder="you@email.com"
+                               class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
                     </div>
-
                     <div class="mb-6">
-                        <label class="block text-sm text-gray-400 mb-1">Phone Number (Optional)</label>
-                        <input type="tel" id="phone" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                        <label class="block text-xs text-slate-400 font-bold uppercase tracking-wide mb-1.5">Phone Number <span class="text-slate-600 font-normal normal-case">(optional)</span></label>
+                        <input type="tel" id="lead_phone" placeholder="+234 800 000 0000"
+                               class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
                     </div>
-                    
-                    <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2">
+                    <button type="submit" id="submitBtn"
+                            class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white font-black py-3.5 rounded-xl transition flex justify-center items-center gap-2 text-sm shadow-lg shadow-blue-900/40">
                         Generate Discount Code
                     </button>
-
-                    <div class="mt-4 text-center">
-                        <span class="text-gray-500 text-xs">or</span>
+                    <div class="relative my-5 flex items-center">
+                        <div class="flex-1 h-px bg-slate-700"></div>
+                        <span class="px-3 text-slate-500 text-xs">or skip the form</span>
+                        <div class="flex-1 h-px bg-slate-700"></div>
                     </div>
-
-                    <button type="button" onclick="redirectToWhatsApp()" class="mt-4 w-full whatsapp-btn font-bold py-3 rounded-xl transition flex justify-center items-center gap-2">
+                    <button type="button" onclick="redirectToWhatsApp()"
+                            class="wa-btn w-full text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 text-sm">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
-                        Skip & Message WhatsApp
+                        Message Us on WhatsApp
                     </button>
                 </form>
-
-                <!-- Success State -->
-                <div id="successState" class="hidden text-center py-6">
-                    <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/50">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <!-- Success -->
+                <div id="successState" class="hidden text-center py-4">
+                    <div class="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/40">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                    <h3 class="text-2xl font-bold mb-2">Success!</h3>
-                    <p class="text-gray-300 mb-6">Click below to claim your discount on WhatsApp.</p>
-                    <button onclick="redirectToWhatsApp()" class="w-full whatsapp-btn font-bold py-3 rounded-xl transition flex justify-center items-center gap-2 animate-pulse">
+                    <h3 class="text-xl font-black mb-2">You're In! 🎉</h3>
+                    <p class="text-slate-400 text-sm mb-6">Your details have been saved. Click below to complete registration and claim your discount on WhatsApp.</p>
+                    <button onclick="redirectToWhatsApp()" class="wa-btn w-full text-white font-black py-3.5 rounded-xl transition flex justify-center items-center gap-2 text-sm animate-pulse">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.573-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824zm-3.423-14.416c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm.082 21.163c-1.815 0-3.594-.487-5.15-1.409l-5.736 1.504 1.529-5.594c-1.013-1.638-1.547-3.535-1.547-5.464 0-5.633 4.585-10.218 10.218-10.218 5.634 0 10.218 4.585 10.218 10.218 0 5.634-4.584 10.218-10.218 10.218z"/></svg>
-                        Get Code on WhatsApp
+                        Get Discount Code on WhatsApp
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ═══════════ EXIT-INTENT POPUP ═══════════ -->
+    <div class="lt-exit-backdrop" id="exitPopup">
+        <div class="lt-exit-pop lt-glass rounded-2xl p-8 max-w-md w-full mx-4 border border-white/10 text-center">
+            <div class="text-5xl mb-4">⏰</div>
+            <h3 class="text-2xl font-black mb-2">Wait — Don't Leave Yet!</h3>
+            <p class="text-slate-300 text-sm mb-2">The June 29 cohort starts soon. <br> Your <span class="text-yellow-400 font-black">50% discount</span> expires when intake closes.</p>
+            <div class="flex items-center justify-center gap-2 mb-6 text-slate-400 text-xs">
+                <span class="pulse-dot"></span>
+                <span id="exitCountdown" class="font-mono font-bold text-white"></span>
+                <span>remaining</span>
+            </div>
+            <button onclick="openLeadModal('General Enquiry'); document.getElementById('exitPopup').classList.remove('active');"
+                    class="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-600 hover:to-blue-500 text-white font-black py-3.5 rounded-xl mb-3 transition text-sm shadow-lg">
+                Claim My 50% Discount Now
+            </button>
+            <button onclick="document.getElementById('exitPopup').classList.remove('active'); localStorage.setItem('lt_exit_dismissed','1');"
+                    class="w-full text-slate-500 hover:text-slate-300 text-xs py-2 transition">
+                No thanks, I'll pay full price
+            </button>
+        </div>
+    </div>
+
 </div>
+<!-- End lt-root -->
 
 <script>
-    const PHONE_NUMBER = "2340000000000"; // Replace with actual phone number later
-    
-    function openLeadModal(courseName) {
-        document.getElementById('modalCourseName').textContent = courseName;
-        document.getElementById('course_interest').value = courseName;
-        document.getElementById('leadModal').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+// ═══ CONFIG ═══
+const PHONE_NUMBER  = "2348030000000"; // ← Replace with actual HiiT WhatsApp number
+const COHORT_DATE   = new Date("2026-06-29T08:00:00");
+
+// ═══ COUNTDOWN ═══
+function pad(n) { return String(n).padStart(2,'0'); }
+function updateCountdown() {
+    const diff = COHORT_DATE - Date.now();
+    if (diff <= 0) {
+        ['cnt-d','cnt-h','cnt-m','cnt-s'].forEach(id => document.getElementById(id).textContent = '00');
+        return;
     }
+    document.getElementById('cnt-d').textContent = pad(Math.floor(diff / 864e5));
+    document.getElementById('cnt-h').textContent = pad(Math.floor(diff % 864e5 / 36e5));
+    document.getElementById('cnt-m').textContent = pad(Math.floor(diff % 36e5 / 6e4));
+    document.getElementById('cnt-s').textContent = pad(Math.floor(diff % 6e4 / 1e3));
 
-    function closeLeadModal() {
-        document.getElementById('leadModal').classList.add('hidden');
-        document.body.style.overflow = 'auto';
-        // Reset state
-        document.getElementById('leadForm').reset();
-        document.getElementById('leadForm').classList.remove('hidden');
-        document.getElementById('successState').classList.add('hidden');
+    // Exit popup countdown too
+    const el = document.getElementById('exitCountdown');
+    if (el) {
+        const d = Math.floor(diff/864e5), h = Math.floor(diff%864e5/36e5), m = Math.floor(diff%36e5/6e4);
+        el.textContent = d+'d '+pad(h)+'h '+pad(m)+'m';
     }
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
 
-    function redirectToWhatsApp() {
-        const course = document.getElementById('course_interest').value;
-        let text = encodeURIComponent(`Hello, I am interested in the ${course} course and would like to claim my 50% discount.`);
-        window.open(`https://wa.me/${PHONE_NUMBER}?text=${text}`, '_blank');
-        closeLeadModal();
+// ═══ PARTICLES ═══
+(function spawnParticles() {
+    const container = document.getElementById('ltParticles');
+    if (!container) return;
+    for (let i = 0; i < 35; i++) {
+        const p = document.createElement('div');
+        p.className = 'lt-particle';
+        p.style.cssText = `
+            left:${Math.random()*100}%;
+            animation-duration:${6+Math.random()*14}s;
+            animation-delay:-${Math.random()*20}s;
+            width:${1+Math.random()*3}px;
+            height:${1+Math.random()*3}px;
+            opacity:${0.2+Math.random()*0.5};
+        `;
+        container.appendChild(p);
     }
+})();
 
-    async function submitLead(e) {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = 'Saving...';
-        submitBtn.disabled = true;
+// ═══ SOCIAL PROOF TICKER ═══
+(function buildTicker() {
+    const proofs = [
+        '🎓 Chukwuma from Abuja just claimed his Python discount',
+        '✅ Fatima from Lagos enrolled in UI/UX Design',
+        '🔐 Emmanuel signed up for Ethical Hacking',
+        '📊 Ada from Port Harcourt joined Data Analysis',
+        '🎨 Daniel from Enugu claimed his 50% discount',
+        '🐍 Blessing from Kaduna is now a Python student',
+        '🏆 Michael from Ibadan secured his June 29 spot',
+        '💼 Grace from Owerri enrolled in UI/UX Design',
+    ];
+    const track = document.getElementById('ltTicker');
+    if (!track) return;
+    const doubled = [...proofs, ...proofs];
+    doubled.forEach(text => {
+        const span = document.createElement('span');
+        span.className = 'flex-shrink-0 text-xs text-slate-400 font-medium';
+        span.textContent = text;
+        track.appendChild(span);
+    });
+})();
 
-        const payload = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            phone: document.getElementById('phone').value,
-            course_interest: document.getElementById('course_interest').value
-        };
+// ═══ MODAL ═══
+let currentCourse = '';
+function openLeadModal(courseName) {
+    currentCourse = courseName;
+    document.getElementById('modalCourseName').textContent = courseName === 'General Enquiry' ? 'your selected course' : courseName;
+    document.getElementById('course_interest').value = courseName;
+    document.getElementById('leadModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeLeadModal() {
+    document.getElementById('leadModal').style.display = 'none';
+    document.body.style.overflow = '';
+    document.getElementById('leadForm').reset();
+    document.getElementById('leadForm').style.display = 'block';
+    document.getElementById('successState').classList.add('hidden');
+}
+function redirectToWhatsApp() {
+    const course = document.getElementById('course_interest').value;
+    const msg = course && course !== 'General Enquiry'
+        ? `Hello, I am a MaxCinema member interested in the ${course} course. I would like to claim my 50% discount and join the June 29 cohort.`
+        : `Hello, I am a MaxCinema member interested in the HiiT courses. Please tell me more about the available courses and the 50% discount.`;
+    window.open(`https://wa.me/${PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    closeLeadModal();
+}
+document.getElementById('leadModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLeadModal();
+});
 
-        try {
-            const res = await fetch('/api/leads/submit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            
-            if (data.success) {
-                // Hide form, show success
-                document.getElementById('leadForm').classList.add('hidden');
-                document.getElementById('successState').classList.remove('hidden');
-            } else {
-                alert('Error saving details: ' + (data.error || 'Unknown error'));
-            }
-        } catch (err) {
-            console.error(err);
-            alert('A network error occurred. Please try WhatsApp directly.');
-        } finally {
-            submitBtn.innerHTML = 'Generate Discount Code';
-            submitBtn.disabled = false;
+// ═══ AJAX SUBMIT ═══
+async function submitLead(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Saving...';
+    btn.disabled = true;
+    try {
+        const res  = await fetch('/api/leads/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                name:            document.getElementById('lead_name').value,
+                email:           document.getElementById('lead_email').value,
+                phone:           document.getElementById('lead_phone').value,
+                course_interest: document.getElementById('course_interest').value,
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('leadForm').style.display = 'none';
+            document.getElementById('successState').classList.remove('hidden');
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
         }
+    } catch {
+        alert('Network error. Please use WhatsApp directly.');
+    } finally {
+        btn.innerHTML = 'Generate Discount Code';
+        btn.disabled = false;
     }
+}
+
+// ═══ EXIT-INTENT ═══
+let exitShown = false;
+function showExitPopup() {
+    if (exitShown) return;
+    if (localStorage.getItem('lt_exit_dismissed')) return;
+    exitShown = true;
+    document.getElementById('exitPopup').classList.add('active');
+}
+document.addEventListener('mouseleave', function(e) {
+    if (e.clientY <= 5) showExitPopup();
+});
+// Mobile: show after 45 seconds of scrolling past 60%
+setTimeout(function() {
+    const scrollPct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    if (scrollPct > 0.6) showExitPopup();
+}, 45000);
 </script>
+
 {% endblock %}
