@@ -2332,7 +2332,8 @@ def leads_dashboard():
         total_trailers=total_trailers,
         total_users=total_users,
         total_views=total_views,
-        total_requests=total_requests
+        total_requests=total_requests,
+        CourseLead=CourseLead
     )
 
 
