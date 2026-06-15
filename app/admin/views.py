@@ -2295,7 +2295,7 @@ def leads_dashboard():
     if search_query:
         like = f"%{search_query}%"
         q = q.filter(
-            db.or_(
+            or_(
                 CourseLead.name.ilike(like),
                 CourseLead.email.ilike(like),
                 CourseLead.phone.ilike(like),
@@ -2313,6 +2313,12 @@ def leads_dashboard():
     ]
 
     total_leads = CourseLead.query.count()
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = Series.query.count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     return render_template(
         'admin/leads.html',
@@ -2321,6 +2327,12 @@ def leads_dashboard():
         course_filter=course_filter,
         search_query=search_query,
         total_leads=total_leads,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests
     )
 
 
