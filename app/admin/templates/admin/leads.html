@@ -3,7 +3,9 @@
 {% block title %}Course Leads — MaxCinema Admin{% endblock %}
 
 {% block content %}
-<div class="p-4 sm:p-6 lg:p-8">
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto md:pl-6 pt-[70px] md:pt-0 p-4 sm:p-6 lg:p-8">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -162,5 +164,6 @@
         </div>
         {% endif %}
     </div>
+</div>
 </div>
 {% endblock %}
