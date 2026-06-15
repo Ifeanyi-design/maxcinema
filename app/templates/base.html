@@ -56,32 +56,47 @@
       data-pop-url="{{ ads.pop_url or '' }}"
       data-country="{{ country or 'XX' }}"
       class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
-    <!-- LEARN TECH CAMPAIGN BANNER — Premium v2 -->
+    <!-- ═══════════════════════════════════════════════════════════
+         HIIT CAMPAIGN — GLOBAL CONFIG (change date here only)
+         ═══════════════════════════════════════════════════════════ -->
+    <script>
+        // ← UPDATE THIS DATE to set the cohort date across ALL pages
+        window.HIIT_COHORT_DATE = new Date("2026-07-27T08:00:00");
+        // ← UPDATE THIS to the correct HiiT WhatsApp number (verify before go-live)
+        window.HIIT_WHATSAPP   = "2347038039526";
+    </script>
+
+    <!-- LEARN TECH CAMPAIGN BANNER — Premium v3 -->
     <div id="campaign-banner"
          style="display:none;"
-         class="relative overflow-hidden z-[60] w-full text-white text-center text-xs sm:text-sm font-bold"
+         class="relative overflow-hidden z-[60] w-full text-white"
          role="banner">
         <!-- Gradient background -->
-        <div class="absolute inset-0 bg-gradient-to-r from-blue-800 via-indigo-700 to-blue-800"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0f1e] via-[#1e1b4b] to-[#0a0f1e]"></div>
         <!-- Shimmer sweep -->
         <div class="absolute inset-0 pointer-events-none"
-             style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
-                    animation:bannerShimmer 3s infinite;
-                    transform:translateX(-100%);">
-        </div>
+             style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+                    animation:bannerShimmer 4s infinite;
+                    transform:translateX(-100%);"></div>
         <style>
         @keyframes bannerShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
         </style>
         <!-- Content -->
-        <div class="relative z-10 flex items-center justify-center gap-2 sm:gap-4 px-4 py-2.5 pr-10">
-            <span class="hidden sm:flex items-center gap-1">
+        <div class="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2.5 pr-10 text-center">
+            <!-- Live dot -->
+            <span class="hidden sm:flex items-center gap-1.5">
                 <span class="inline-block w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-black text-green-300 uppercase tracking-widest">Live</span>
             </span>
-            <span class="font-black text-yellow-300 uppercase tracking-widest text-[10px] sm:text-xs border border-yellow-400/40 px-2 py-0.5 rounded-full">HiiT</span>
-            <span class="text-white/90">Cohort 1 Begins In:</span>
-            <span id="countdown-timer" class="font-mono text-yellow-300 font-black text-sm tabular-nums min-w-[120px] text-left"></span>
+            <!-- Badge -->
+            <span class="font-black text-yellow-300 uppercase tracking-widest text-[10px] border border-yellow-400/40 px-2 py-0.5 rounded-full">HiiT</span>
+            <!-- Text -->
+            <span class="text-white/90 text-xs font-semibold">50% Off — Cohort Begins July 27:</span>
+            <!-- Countdown -->
+            <span id="countdown-timer" class="font-mono text-yellow-300 font-black text-sm tabular-nums min-w-[108px] text-left"></span>
+            <!-- CTA — visible on ALL screen sizes -->
             <a href="{{ url_for('main.learn_tech') }}"
-               class="hidden sm:inline-flex items-center gap-1 bg-white text-blue-700 font-black text-[11px] uppercase tracking-wide px-3 py-1 rounded-full hover:bg-yellow-300 hover:text-blue-900 transition-all duration-200 shadow-lg">
+               class="inline-flex items-center gap-1 bg-white text-blue-800 font-black text-[11px] uppercase tracking-wide px-3 py-1 rounded-full hover:bg-yellow-300 hover:text-blue-900 transition-all duration-200 shadow-lg">
                 Claim 50% Off →
             </a>
         </div>
@@ -96,26 +111,24 @@
         </button>
     </div>
     <script>
-        // Only show if not dismissed
         (function() {
             if (!localStorage.getItem('lt_banner_dismissed')) {
                 document.getElementById('campaign-banner').style.display = 'block';
             }
+            function updateTopCountdown() {
+                const distance = window.HIIT_COHORT_DATE.getTime() - Date.now();
+                const timerEl  = document.getElementById("countdown-timer");
+                if (!timerEl) return;
+                if (distance < 0) { timerEl.textContent = "Intake Closing"; return; }
+                const d = Math.floor(distance / 864e5);
+                const h = Math.floor(distance % 864e5 / 36e5);
+                const m = Math.floor(distance % 36e5 / 6e4);
+                const s = Math.floor(distance % 6e4 / 1e3);
+                timerEl.textContent = d + "d " + String(h).padStart(2,'0') + "h " + String(m).padStart(2,'0') + "m " + String(s).padStart(2,'0') + "s";
+            }
+            setInterval(updateTopCountdown, 1000);
+            updateTopCountdown();
         })();
-        function updateTopCountdown() {
-            const targetDate = new Date("2026-06-29T08:00:00").getTime();
-            const distance   = targetDate - Date.now();
-            const timerEl    = document.getElementById("countdown-timer");
-            if (!timerEl) return;
-            if (distance < 0) { timerEl.textContent = "Intake Closed"; return; }
-            const d = Math.floor(distance / 864e5);
-            const h = Math.floor(distance % 864e5 / 36e5);
-            const m = Math.floor(distance % 36e5 / 6e4);
-            const s = Math.floor(distance % 6e4 / 1e3);
-            timerEl.textContent = d + "d " + String(h).padStart(2,'0') + "h " + String(m).padStart(2,'0') + "m " + String(s).padStart(2,'0') + "s";
-        }
-        setInterval(updateTopCountdown, 1000);
-        updateTopCountdown();
     </script>
     
 
