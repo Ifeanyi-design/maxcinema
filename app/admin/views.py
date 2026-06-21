@@ -256,11 +256,11 @@ def _send_release_notifications(video):
 
             if email_enabled and row.email:
                 try:
-                    html_text = (
-                        f"<p>Good news! '<strong>{video.name}</strong>' is now available on MaxCinema.</p>"
-                        f"<p><a href=\"{release_url}\">Open release page</a></p>"
-                        "<p>You requested this notification.</p>"
-                    )
+                    html_text = render_template(
+    "emails/release_notification.html",
+    video=video,
+    release_url=release_url
+)
                     ok, err = _send_email_notification(
                         to_email=row.email,
                         subject=f"Now Available: {video.name}",
