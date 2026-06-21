@@ -1,90 +1,111 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ video.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ video.name }} is out now!</title>
 </head>
-<body style="margin:0;padding:0;background:#0f1115;font-family:Arial,sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
 
-<table width="100%" cellpadding="0" cellspacing="0">
-<tr>
-<td align="center" style="padding:40px 20px;">
+    <div style="display: none; max-height: 0px; overflow: hidden; color: #0a0a0a; font-size: 1px; line-height: 1px; mso-hide: all;">
+        🎬 The title you requested has just been released on MaxCinema. Watch it now!
+    </div>
 
-<table width="600" cellpadding="0" cellspacing="0"
-       style="background:#181b22;border-radius:12px;overflow:hidden;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #0a0a0a; width: 100%;">
+        <tr>
+            <td align="center" style="padding: 40px 15px;">
+                
+                <table width="100%" max-width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background-color: #121212; border-radius: 16px; overflow: hidden; border: 1px solid #1f1f1f; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    
+                    <tr>
+                        <td align="center" style="background-color: #830506; background-image: linear-gradient(to right, #6a0405, #830506); padding: 25px 20px;">
+                            <a href="https://maxcinema.name.ng" style="text-decoration: none;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">
+                                    <span style="margin-right: 8px;">🎬</span>MAXCINEMA
+                                </h1>
+                            </a>
+                        </td>
+                    </tr>
 
-    <tr>
-        <td style="background:#e50914;padding:20px;text-align:center;">
-            <h1 style="margin:0;color:white;">
-                🎬 MaxCinema
-            </h1>
-        </td>
-    </tr>
+                    <tr>
+                        <td align="center" style="background-color: #000000;">
+                            {% if video.image %}
+                            <img src="{{ video.image }}" alt="{{ video.name }}" width="600" style="display: block; width: 100%; max-width: 600px; height: auto; border: 0;">
+                            {% else %}
+                            <div style="padding: 60px 20px; background-color: #1f1f1f; color: #444444; font-size: 40px;">🎬</div>
+                            {% endif %}
+                        </td>
+                    </tr>
 
-    <tr>
-        <td>
-            <img src="{{ video.image }}"
-                 alt="{{ video.name }}"
-                 width="600"
-                 style="display:block;width:100%;">
-        </td>
-    </tr>
+                    <tr>
+                        <td align="center" style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 15px 0; color: #ffffff; font-size: 26px; font-weight: bold; line-height: 1.3;">
+                                {{ video.name }}
+                            </h2>
 
-    <tr>
-        <td style="padding:30px;color:white;">
+                            <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 25px;">
+                                <tr>
+                                    {% if video.year_produced %}
+                                    <td style="background-color: #2a2a2a; color: #cccccc; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold;">
+                                        {{ video.year_produced }}
+                                    </td>
+                                    {% endif %}
+                                    
+                                    {% if video.rating %}
+                                    <td width="10"></td> <td style="background-color: #2a2a2a; color: #f5c518; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold;">
+                                        ★ {{ video.rating }}
+                                    </td>
+                                    {% endif %}
+                                    
+                                    {% if video.type %}
+                                    <td width="10"></td> <td style="background-color: #2a2a2a; color: #cccccc; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; text-transform: capitalize;">
+                                        {{ video.type }}
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            </table>
 
-            <h2 style="margin-top:0;">
-                {{ video.name }} is now available!
-            </h2>
+                            {% if video.description %}
+                            <p style="margin: 0 0 20px 0; color: #cfcfcf; font-size: 14px; font-style: italic; line-height: 1.5;">
+                                "{{ video.description[:120] ~ '...' if video.description|length > 120 else video.description }}"
+                            </p>
+                            {% endif %}
 
-            <p style="color:#cfcfcf;line-height:1.7;">
-                The title you requested has just been released on MaxCinema.
-            </p>
+                            <p style="margin: 0 0 35px 0; color: #a0a0a0; font-size: 16px; line-height: 1.6;">
+                                The wait is over! The title you added to your watchlist is officially available to watch and download on MaxCinema.
+                            </p>
 
-            <p style="color:#cfcfcf;">
-                {{ video.year_produced }}
-                {% if video.rating %}
-                • ⭐ {{ video.rating }}
-                {% endif %}
-            </p>
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center" style="border-radius: 8px; background-color: #830506;">
+                                        <a href="{{ release_url }}" target="_blank" style="display: inline-block; padding: 16px 36px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 8px; border: 1px solid #830506;">
+                                            Watch Now
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-            <div style="text-align:center;margin:30px 0;">
+                    <tr>
+                        <td align="center" style="background-color: #0d0d0d; padding: 25px 30px; border-top: 1px solid #1f1f1f;">
+                            <p style="margin: 0 0 10px 0; color: #555555; font-size: 12px; line-height: 1.5;">
+                                You are receiving this email because you opted in for release notifications on <strong>MaxCinema</strong>.
+                            </p>
+                            
+                            <p style="margin: 0 0 15px 0;">
+                                <a href="https://maxcinema.name.ng" style="color: #830506; font-size: 12px; text-decoration: underline;">Manage Notifications</a>
+                            </p>
+                            
+                            <p style="margin: 0; color: #444444; font-size: 12px;">
+                                © 2026 MaxCinema. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
 
-                <a href="{{ release_url }}"
-                   style="
-                   background:#e50914;
-                   color:white;
-                   text-decoration:none;
-                   padding:14px 30px;
-                   border-radius:8px;
-                   font-weight:bold;
-                   display:inline-block;
-                   ">
-                    Watch / Download Now
-                </a>
-
-            </div>
-
-        </td>
-    </tr>
-
-    <tr>
-        <td style="
-            background:#12151c;
-            padding:20px;
-            text-align:center;
-            color:#999;
-            font-size:13px;
-        ">
-            You received this email because you requested a release notification on MaxCinema.
-        </td>
-    </tr>
-
-</table>
-
-</td>
-</tr>
-</table>
-
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
