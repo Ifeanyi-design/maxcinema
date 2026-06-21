@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ video.name }}</title>
+</head>
+<body style="margin:0;padding:0;background:#0f1115;font-family:Arial,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr>
+<td align="center" style="padding:40px 20px;">
+
+<table width="600" cellpadding="0" cellspacing="0"
+       style="background:#181b22;border-radius:12px;overflow:hidden;">
+
+    <tr>
+        <td style="background:#e50914;padding:20px;text-align:center;">
+            <h1 style="margin:0;color:white;">
+                🎬 MaxCinema
+            </h1>
+        </td>
+    </tr>
+
+    <tr>
+        <td>
+            <img src="{{ video.image }}"
+                 alt="{{ video.name }}"
+                 width="600"
+                 style="display:block;width:100%;">
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:30px;color:white;">
+
+            <h2 style="margin-top:0;">
+                {{ video.name }} is now available!
+            </h2>
+
+            <p style="color:#cfcfcf;line-height:1.7;">
+                The title you requested has just been released on MaxCinema.
+            </p>
+
+            <p style="color:#cfcfcf;">
+                {{ video.year_produced }}
+                {% if video.rating %}
+                • ⭐ {{ video.rating }}
+                {% endif %}
+            </p>
+
+            <div style="text-align:center;margin:30px 0;">
+
+                <a href="{{ release_url }}"
+                   style="
+                   background:#e50914;
+                   color:white;
+                   text-decoration:none;
+                   padding:14px 30px;
+                   border-radius:8px;
+                   font-weight:bold;
+                   display:inline-block;
+                   ">
+                    Watch / Download Now
+                </a>
+
+            </div>
+
+        </td>
+    </tr>
+
+    <tr>
+        <td style="
+            background:#12151c;
+            padding:20px;
+            text-align:center;
+            color:#999;
+            font-size:13px;
+        ">
+            You received this email because you requested a release notification on MaxCinema.
+        </td>
+    </tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
