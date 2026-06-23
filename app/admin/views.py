@@ -234,7 +234,7 @@ def _send_release_notifications(video):
     if video.type == "movie":
         release_url = f"{site_url.rstrip('/')}/watch_movie/movie/{video.slug or video.name}/{video.id}"
     else:  # series
-        # For series, link to the series page without a specific episode
+        # For series, link to the first episode (season 1, episode 1)
         release_url = f"{site_url.rstrip('/')}/watch_series/series/{video.slug or video.name}/{video.id}/s1/e1"
     
     plain_text = (
