@@ -230,7 +230,13 @@ def _send_release_notifications(video):
         return {"queued": 0, "emailed": 0, "telegram": 0, "marked": 0, "errors": []}
 
     site_url = os.getenv("SITE_BASE_URL", "https://maxcinema.name.ng")
-    release_url = f"{site_url.rstrip('/')}/download/{video.type}/{video.slug or video.name}/{video.id}"
+    # Generate correct watch URL based on video type
+    if video.type == "movie":
+        release_url = f"{site_url.rstrip('/')}/watch_movie/movie/{video.slug or video.name}/{video.id}"
+    else:  # series
+        # For series, link to the series page without a specific episode
+        release_url = f"{site_url.rstrip('/')}/watch_series/series/{video.slug or video.name}/{video.id}/s1/e1"
+    
     plain_text = (
         f"Good news! '{video.name}' is now available on MaxCinema.\n\n"
         f"Open: {release_url}\n\n"
