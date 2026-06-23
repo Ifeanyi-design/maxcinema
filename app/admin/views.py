@@ -232,10 +232,10 @@ def _send_release_notifications(video):
     site_url = os.getenv("SITE_BASE_URL", "https://maxcinema.name.ng")
     # Generate correct watch URL based on video type
     if video.type == "movie":
-        release_url = f"{site_url.rstrip('/')}/watch_movie/movie/{video.slug or video.name}/{video.id}"
+        release_url = f"{site_url.rstrip('/')}/watch_movie/movie/{video.slug or slugify(video.name)}/{video.id}"
     else:  # series
         # For series, link to the first episode (season 1, episode 1)
-        release_url = f"{site_url.rstrip('/')}/watch_series/series/{video.slug or video.name}/{video.id}/s1/e1"
+        release_url = f"{site_url.rstrip('/')}/watch_series/series/{video.slug or slugify(video.name)}/{video.id}/s1/e1"
     
     plain_text = (
         f"Good news! '{video.name}' is now available on MaxCinema.\n\n"
@@ -760,8 +760,10 @@ def delete_video(video_id, prev):
         return redirect(url_for('admin.dashboard'))
     elif prev == "movie":
         return redirect(url_for('admin.view_movies'))
-    if prev == "serie":
+    elif prev == "serie":
         return redirect(url_for('admin.view_series'))
+    elif prev == "search":
+        return redirect(url_for('admin.search'))
 
 
 
