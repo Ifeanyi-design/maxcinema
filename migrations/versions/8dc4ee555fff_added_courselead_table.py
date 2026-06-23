@@ -30,7 +30,7 @@ def upgrade():
     with op.batch_alter_table('course_lead', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_course_lead_date_added'), ['date_added'], unique=False)
 
-    op.drop_table('alembic_version')
+    
     with op.batch_alter_table('sports_sport', schema=None) as batch_op:
         batch_op.drop_constraint(batch_op.f('sports_sport_slug_key'), type_='unique')
         batch_op.drop_index(batch_op.f('ix_sports_sport_slug'))
