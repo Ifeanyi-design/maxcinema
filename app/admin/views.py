@@ -259,3 +259,49 @@ def dashboard():
         needs_past_due=needs_past_due,
         needs_inactive=needs_inactive
     )
+
+
+@admin_bp.route('/requests')
+@login_required
+@admin_required
+def view_requests():
+    requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).all()
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+    return render_template(
+        'admin/requests.html',
+        requests=requests,
+        total_movies=total_movies,
+        total_series=total_series,
+        total_trailers=total_trailers,
+        total_users=total_users,
+        total_views=total_views,
+        total_requests=total_requests,
+    )
+
+
+@admin_bp.route('/requests/update/<int:id>/<status>')
+@login_required
+@admin_required
+def update_request_status(id, status):
+    req = MovieRequest.query.get_or_404(id)
+    if status in ('Filled', 'Rejected', 'Pending'):
+        req.status = status
+        db.session.commit()
+        flash(f'Request marked as {status}.', 'success')
+    return redirect(url_for('admin.view_requests'))
+
+
+@admin_bp.route('/requests/delete/<int:id>')
+@login_required
+@admin_required
+def delete_request(id):
+    req = MovieRequest.query.get_or_404(id)
+    db.session.delete(req)
+    db.session.commit()
+    flash('Request deleted.', 'success')
+    return redirect(url_for('admin.view_requests'))
