@@ -1,16 +1,19 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, TIMESTAMP
 from sqlalchemy.types import DateTime, Boolean, JSON
 from sqlalchemy.orm import Session
+
+load_dotenv()
 
 # =========================================================
 # CONFIGURATION
 # =========================================================
 LOCAL_DB_URI = "sqlite:///instance/maxcinema.db"
 
-# PASTE YOUR NEON URL HERE
-# Ensure it starts with postgresql://
-NEON_DB_URI = "postgresql://neondb_owner:npg_GjPbLC7T9rtZ@ep-withered-shadow-a4a0d1w6-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+NEON_DB_URI = os.environ.get("DATABASE_URL")
+if not NEON_DB_URI:
+    raise RuntimeError("DATABASE_URL environment variable is required for migration")
 
 def run_migration():
     print("🔌 Connecting to databases...")

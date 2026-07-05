@@ -13,3 +13,5 @@ instance/
 
 # EXCEPTIONS: We WANT to upload the DB for now
 !instance/maxcinema.db
+
+backup_service/

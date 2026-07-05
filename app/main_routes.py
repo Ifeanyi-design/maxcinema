@@ -25,22 +25,28 @@ from .models import (
 
 main_bp = Blueprint("main", __name__)
 
+# Simple in-memory cache for sidebar data (5 minute TTL)
+_sidebar_cache = {"data": None, "timestamp": 0}
+_SIDEBAR_CACHE_TTL = 300  # 5 minutes
 
 
 # # ---------------- Admin Required ----------------
-# def admin_required(f):
-#     @wraps(f)
-#     def decorated_function(*args, **kwargs):
-#         if not current_user.is_authenticated or not current_user.is_admin:
-#             abort(403)
-#         return f(*args, **kwargs)
-#     return decorated_function
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
 
 # @login_manager.user_loader
 # def load_user(user_id):
 #     return User.query.get(int(user_id))
 
 def get_sidebar_data_safe():
+    now = time.time()
+    if _sidebar_cache["data"] and (now - _sidebar_cache["timestamp"]) < _SIDEBAR_CACHE_TTL:
+        return _sidebar_cache["data"]
     try:
         series_trend = AllVideo.query.filter_by(
             trending=True, type="series", active=True
@@ -54,7 +60,10 @@ def get_sidebar_data_safe():
             Trailer.views.desc()
         ).limit(5).all()
 
-        return series_trend, movie_trend, trending_trailers
+        result = series_trend, movie_trend, trending_trailers
+        _sidebar_cache["data"] = result
+        _sidebar_cache["timestamp"] = now
+        return result
     except Exception as e:
         db.session.rollback()
         print(f"Sidebar load failed: {e}")
@@ -172,28 +181,31 @@ def build_comment_badges():
     """
     Build badge map keyed by normalized identity (email first, fallback to name).
     Uses both volume and recency to rank active commenters.
+    Single query with CASE for recent count to avoid N+1.
     """
     three_months_ago = datetime.utcnow() - timedelta(days=90)
     rows = (
         db.session.query(
             Comment.email,
             func.min(Comment.name),
-            func.count(Comment.id)
+            func.count(Comment.id),
+            func.sum(
+                func.cast(
+                    (Comment.date_added >= three_months_ago),
+                    db.Integer
+                )
+            )
         )
         .group_by(Comment.email)
         .all()
     )
 
     badge_map = {}
-    for email, any_name, total_count in rows:
+    for email, any_name, total_count, recent_count in rows:
         identity = (email or any_name or "").strip().lower()
         if not identity:
             continue
-        recent_count = Comment.query.filter(
-            Comment.email == email,
-            Comment.date_added >= three_months_ago
-        ).count() if email else 0
-        score = int(total_count or 0) + (int(recent_count) * 2)
+        score = int(total_count or 0) + (int(recent_count or 0) * 2)
         badge = _comment_badge_for_score(score)
         if badge:
             badge_map[identity] = badge
@@ -1741,10 +1753,9 @@ def vote_poll(poll_id):
     return jsonify({'success': True, 'totals': totals, 'total_votes': total_votes})
 
 @main_bp.route("/admin/uploads")
+@login_required
+@admin_required
 def admin_uploads():
-    # # Only allow admins
-    # if not current_user.is_admin:
-    #     return redirect(url_for('index'))
 
     # Get all videos and episodes
     movies = AllVideo.query.order_by(AllVideo.id.desc()).all()

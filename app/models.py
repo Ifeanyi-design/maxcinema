@@ -362,6 +362,19 @@ class WatchlistNotify(db.Model):
     video = db.relationship('AllVideo', lazy='joined')
 
 
+class EmailHistory(db.Model):
+    __tablename__ = "email_history"
+
+    id = db.Column(db.Integer, primary_key=True)
+    to_email = db.Column(db.String(120), nullable=False, index=True)
+    subject = db.Column(db.String(255), nullable=False)
+    body = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default="sent", index=True)  # sent, failed
+    error_message = db.Column(db.Text, nullable=True)
+    sent_by = db.Column(db.String(120), nullable=True)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
 class WeeklyPoll(db.Model):
     __tablename__ = "weekly_poll"
 

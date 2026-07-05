@@ -1,0 +1,97 @@
+{% extends "admin/base.html" %}
+{% block title %}Email Tools{% endblock %}
+
+{% block content %}
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Sidebar -->
+    {% include "admin/sidebar.html" %}
+
+    <!-- Main Content -->
+    <div class="flex-1">
+        <h1 class="text-2xl font-bold mb-6">Email Tools</h1>
+
+        {% if not email_enabled %}
+        <div class="bg-amber-950/70 border border-amber-700 text-amber-200 rounded-xl px-4 py-3 mb-6">
+            Email provider <strong>{{ email_provider }}</strong> is not configured. Set environment variables to enable email sending.
+        </div>
+        {% endif %}
+
+        <!-- Compose Form -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">Compose Email</h2>
+            <form method="POST" action="{{ url_for('admin.email_compose') }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">To</label>
+                        <select name="to_email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+                            <option value="">Select recipient...</option>
+                            {% for user in users %}
+                            <option value="{{ user.email }}">{{ user.username }} ({{ user.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Template (optional)</label>
+                        <select name="template" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            <option value="">No template (plain text)</option>
+                            <option value="welcome">Welcome email</option>
+                            <option value="generic_notification">Generic notification</option>
+                            <option value="custom_message">Custom message with CTA</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Subject</label>
+                    <input type="text" name="subject" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Email subject..." required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Body</label>
+                    <textarea name="body" rows="6" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Email body..." required></textarea>
+                </div>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition" {% if not email_enabled %}disabled{% endif %}>
+                    Send Email
+                </button>
+            </form>
+        </div>
+
+        <!-- Email History -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h2 class="text-lg font-semibold mb-4">Email History</h2>
+            {% if history %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-gray-700">
+                            <th class="pb-3 font-medium">To</th>
+                            <th class="pb-3 font-medium">Subject</th>
+                            <th class="pb-3 font-medium">Status</th>
+                            <th class="pb-3 font-medium">Sent By</th>
+                            <th class="pb-3 font-medium">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700">
+                        {% for email in history %}
+                        <tr class="text-gray-300">
+                            <td class="py-3">{{ email.to_email }}</td>
+                            <td class="py-3">{{ email.subject }}</td>
+                            <td class="py-3">
+                                {% if email.status == 'sent' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-950/70 text-emerald-300 border border-emerald-700">Sent</span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-950/70 text-red-300 border border-red-700" title="{{ email.error_message }}">Failed</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">{{ email.sent_by or '-' }}</td>
+                            <td class="py-3">{{ email.sent_at.strftime('%Y-%m-%d %H:%M') if email.sent_at else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-gray-500">No emails sent yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

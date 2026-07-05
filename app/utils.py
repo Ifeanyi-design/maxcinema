@@ -1,3 +1,4 @@
+import os
 from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason, Episode as TMDBEpisode
 from slugify import slugify
 from datetime import datetime
@@ -13,9 +14,9 @@ except ImportError:
 
 # ⚙️ CONFIGURATION
 tmdb = TMDb()
-tmdb.api_key = '3d6b99b6b66197eff0bbee7faab6cf5e'
+tmdb.api_key = os.environ.get("TMDB_API_KEY", "")
 tmdb.language = 'en'
-tmdb.debug = False 
+tmdb.debug = False
 
 class ContentImporter:
     def __init__(self):

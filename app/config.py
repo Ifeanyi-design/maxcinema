@@ -8,7 +8,9 @@ root_dir = os.path.dirname(basedir)
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY", "supersecretkey")
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY environment variable is required")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SITE_BASE_URL = (os.environ.get("SITE_BASE_URL") or "https://maxcinema.name.ng").rstrip("/")
     INDEXNOW_ENABLED = (os.environ.get("INDEXNOW_ENABLED") or "1").strip().lower() not in {
@@ -76,8 +78,8 @@ class Config:
     # OTHER CONFIGS
     # =========================================================
 
-    BYTESCALE_API_KEY = "secret_W23MTTR8MonEUU4EF5zqMexEmbTJ"
-    BYTESCALE_ACCOUNT_ID = "W23MTTR"
+    BYTESCALE_API_KEY = os.environ.get("BYTESCALE_API_KEY", "")
+    BYTESCALE_ACCOUNT_ID = os.environ.get("BYTESCALE_ACCOUNT_ID", "")
     DEFAULT_IMAGE_UPLOAD_URL = "https://image.tmdb.org/t/p/w500"
     BYTESCALE_UPLOAD_URL = (
         f"https://api.bytescale.com/v2/accounts/{BYTESCALE_ACCOUNT_ID}/uploads"

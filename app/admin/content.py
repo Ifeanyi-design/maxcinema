@@ -1,0 +1,178 @@
+from flask import render_template, redirect, url_for, request, flash
+from flask_login import login_required
+
+from . import admin_bp
+from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, Season, Episode
+from ..indexnow import submit_for_video, submit_for_episode, urls_for_video, submit_indexnow_urls
+from ..utils import ContentImporter
+from .helpers import admin_required
+
+
+@admin_bp.route('/admin/import-tmdb', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_tmdb():
+    if request.method == 'POST':
+        try:
+            importer = ContentImporter()
+            tmdb_id = request.form.get('tmdb_id', '').strip()
+            media_type = request.form.get('media_type', 'movie').strip()
+            season_input = request.form.get('season_range', '').strip() or None
+            episode_input = request.form.get('episode_range', '').strip() or None
+
+            if not tmdb_id:
+                flash("Please enter a TMDB ID.", "error")
+                return redirect(url_for('admin.import_tmdb'))
+
+            if media_type == 'movie':
+                result = importer.import_movie(int(tmdb_id))
+            else:
+                result = importer.import_series(int(tmdb_id), season_input, episode_input)
+
+            flash(result, "success" if "Error" not in result else "error")
+        except Exception as e:
+            flash(f"Import failed: {str(e)}", "error")
+
+        return redirect(url_for('admin.import_tmdb'))
+
+    return render_template('admin/import.html')
+
+
+@admin_bp.route('/admin/series/<int:series_id>/season/<int:season_num>/bulk-links', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def bulk_link_season(series_id, season_num):
+    series = AllVideo.query.get_or_404(series_id)
+    season = Season.query.filter_by(series_id=series.series.id, season_number=season_num).first_or_404()
+
+    if request.method == 'POST':
+        links_text = (request.form.get('links') or '').strip()
+        links = [l.strip() for l in links_text.split('\n') if l.strip()]
+
+        episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
+
+        if not episodes:
+            flash("No episodes found in this season.", "error")
+            return redirect(url_for('admin.bulk_link_season', series_id=series_id, season_num=season_num))
+
+        updated = 0
+        for i, episode in enumerate(episodes):
+            if i < len(links):
+                episode.download_link = links[i]
+                updated += 1
+
+        db.session.commit()
+        flash(f"Updated {updated} episode(s) with download links.", "success")
+        return redirect(url_for('admin.view_episodes', prev='serie', name=series.slug, ns=season_num, season_id=season.id))
+
+    episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
+    return render_template('admin/bulk_links.html', series=series, season=season, episodes=episodes)
+
+
+@admin_bp.route('/admin/incomplete-content')
+@login_required
+@admin_required
+def view_incomplete_content():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    videos = AllVideo.query.filter_by(active=True).all()
+    incomplete = []
+    for v in videos:
+        has_link = bool((v.download_link or "").strip() or (v.dub_download_link or "").strip() or (v.backup_link or "").strip())
+        if not has_link:
+            incomplete.append(v)
+
+    return render_template('admin/incomplete_content.html', incomplete=incomplete, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+
+
+@admin_bp.route('/admin/incomplete-series')
+@login_required
+@admin_required
+def view_incomplete_series():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    all_series = AllVideo.query.filter_by(type='series', active=True).all()
+    incomplete = []
+    for s in all_series:
+        if s.series and s.series.current_season_incomplete:
+            incomplete.append(s)
+
+    return render_template('admin/incomplete_series.html', incomplete=incomplete, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+
+
+@admin_bp.route('/admin/season/<int:season_id>/set-completed', methods=['POST'])
+@login_required
+@admin_required
+def set_season_completed(season_id):
+    season = Season.query.get_or_404(season_id)
+    season.completed = True
+    db.session.commit()
+    flash(f"Season {season.season_number} marked as completed.", "success")
+    return redirect(url_for('admin.view_episodes', prev='serie', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id))
+
+
+@admin_bp.route('/admin/season/<int:season_id>/set-incomplete', methods=['POST'])
+@login_required
+@admin_required
+def set_season_incomplete(season_id):
+    season = Season.query.get_or_404(season_id)
+    season.completed = False
+    db.session.commit()
+    flash(f"Season {season.season_number} marked as incomplete.", "success")
+    return redirect(url_for('admin.view_episodes', prev='serie', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id))
+
+
+@admin_bp.route('/admin/search')
+@login_required
+@admin_required
+def search():
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
+    total_requests = MovieRequest.query.filter_by(status='Pending').count()
+
+    q = request.args.get('q', '').strip()
+    results = []
+    if q:
+        results = AllVideo.query.filter(
+            AllVideo.name.ilike(f'%{q}%')
+        ).all()
+
+    return render_template('admin/search.html', results=results, q=q, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+
+
+@admin_bp.route('/admin/indexnow/resubmit', methods=['POST'])
+@login_required
+@admin_required
+def resubmit_indexnow():
+    from .helpers import _collect_manual_indexnow_urls
+    try:
+        urls = _collect_manual_indexnow_urls()
+        from ..indexnow import submit_indexnow_urls
+        result = submit_indexnow_urls(urls)
+    except Exception as e:
+        db.session.rollback()
+        flash(f'IndexNow resubmit failed: {e}', 'error')
+        return redirect(url_for('admin.dashboard'))
+
+    if result.get('ok'):
+        flash(f"IndexNow resubmitted {len(result.get('submitted', []))} URL(s).", 'success')
+    else:
+        reason = result.get('reason') or result.get('response_text') or 'unknown error'
+        status = result.get('status_code')
+        details = f" ({status})" if status else ""
+        flash(f"IndexNow resubmit did not complete{details}: {reason}", 'warning')
+
+    return redirect(url_for('admin.dashboard'))

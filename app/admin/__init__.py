@@ -8,3 +8,15 @@ admin_bp = Blueprint(
 )
 
 from . import views
+from . import movies
+from . import series
+from . import trailers
+from . import users
+from . import storage
+from . import notifications
+from . import analytics
+from . import polls
+from . import leads
+from . import content
+from . import email
+from . import backup

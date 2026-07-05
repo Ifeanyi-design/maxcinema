@@ -188,6 +188,20 @@
                         Notification Settings
                     </a>
 
+                    <a href="{{ url_for('admin.email_compose') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.email_compose' %}text-yellow-400 font-semibold{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        Email Center
+                    </a>
+
+                    <a href="{{ url_for('admin.backup_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.backup_dashboard' %}text-yellow-400 font-semibold{% endif %}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                        </svg>
+                        Backup System
+                    </a>
+
                     <!-- Campaign Leads -->
                     <a href="{{ url_for('admin.leads_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-blue-400 transition mt-2 {% if request.endpoint in ['admin.leads_dashboard', 'admin.export_leads'] %}text-blue-400 font-semibold{% endif %}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
