@@ -15,9 +15,8 @@ from ..models import (
 )
 from .helpers import admin_required
 
-# Simple in-memory cache for stats (10 minute TTL)
 _stats_cache = {"data": {}, "timestamp": 0}
-_STATS_CACHE_TTL = 600  # 10 minutes
+_STATS_CACHE_TTL = 600
 
 
 @admin_bp.route('/stats')
@@ -30,54 +29,38 @@ def stats_dashboard():
         days = 7
     elif range_param == '90d':
         days = 90
-    elif range_param == '30d':
-        days = 30
 
     since = datetime.utcnow() - timedelta(days=days)
+    since_7d = datetime.utcnow() - timedelta(days=7)
+    since_30d = datetime.utcnow() - timedelta(days=30)
 
-    now = time.time()
-    use_cache = (now - _stats_cache["timestamp"]) < _STATS_CACHE_TTL
+    total_movies = AllVideo.query.filter_by(type='movie').count()
+    total_series = AllVideo.query.filter_by(type='series').count()
+    total_content = total_movies + total_series
+    total_trailers = Trailer.query.count()
+    total_users = User.query.count()
+    total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
+    total_downloads = db.session.query(func.sum(AllVideo.downloads)).scalar() or 0
+    total_comments = Comment.query.count()
+    total_ratings = Rating.query.count()
 
-    if use_cache and "totals" in _stats_cache["data"]:
-        totals = _stats_cache["data"]["totals"]
-        total_movies = totals["total_movies"]
-        total_series = totals["total_series"]
-        total_trailers = totals["total_trailers"]
-        total_users = totals["total_users"]
-        total_views = totals["total_views"]
-        total_downloads = totals["total_downloads"]
-        total_comments = totals["total_comments"]
-        total_ratings = totals["total_ratings"]
-        pending_requests = totals["pending_requests"]
-        filled_requests = totals["filled_requests"]
-        rejected_requests = totals["rejected_requests"]
-    else:
-        total_movies = AllVideo.query.filter_by(type='movie').count()
-        total_series = AllVideo.query.filter_by(type='series').count()
-        total_trailers = Trailer.query.count()
-        total_users = User.query.count()
-        total_views = db.session.query(func.sum(AllVideo.views)).scalar() or 0
-        total_downloads = db.session.query(func.sum(AllVideo.downloads)).scalar() or 0
-        total_comments = Comment.query.count()
-        total_ratings = Rating.query.count()
-        pending_requests = MovieRequest.query.filter_by(status='Pending').count()
-        filled_requests = MovieRequest.query.filter_by(status='Filled').count()
-        rejected_requests = MovieRequest.query.filter_by(status='Rejected').count()
+    pending_requests = MovieRequest.query.filter_by(status='Pending').count()
+    filled_requests = MovieRequest.query.filter_by(status='Filled').count()
+    rejected_requests = MovieRequest.query.filter_by(status='Rejected').count()
+    req_total = pending_requests + filled_requests + rejected_requests
+    fill_rate = round((filled_requests / req_total * 100), 1) if req_total > 0 else 0
 
-        _stats_cache["data"]["totals"] = {
-            "total_movies": total_movies,
-            "total_series": total_series,
-            "total_trailers": total_trailers,
-            "total_users": total_users,
-            "total_views": total_views,
-            "total_downloads": total_downloads,
-            "total_comments": total_comments,
-            "total_ratings": total_ratings,
-            "pending_requests": pending_requests,
-            "filled_requests": filled_requests,
-            "rejected_requests": rejected_requests,
-        }
-        _stats_cache["timestamp"] = now
+    req_selected = MovieRequest.query.filter(MovieRequest.date_added >= since).count()
+    req_7d = MovieRequest.query.filter(MovieRequest.date_added >= since_7d).count()
+    req_30d = MovieRequest.query.filter(MovieRequest.date_added >= since_30d).count()
+    stale_cutoff = datetime.utcnow() - timedelta(days=7)
+    stale_pending = MovieRequest.query.filter(
+        MovieRequest.status == 'Pending',
+        MovieRequest.date_added < stale_cutoff
+    ).count()
+
+    range_labels = {'7d': 'Last 7 Days', '30d': 'Last 30 Days', '90d': 'Last 90 Days'}
+    selected_range_label = range_labels.get(range_param, 'Last 30 Days')
 
     top_movies = (
         AllVideo.query
@@ -86,6 +69,9 @@ def stats_dashboard():
         .limit(5)
         .all()
     )
+    top_movie_names = [m.name for m in top_movies]
+    top_movie_views = [m.views for m in top_movies]
+
     top_series = (
         AllVideo.query
         .filter_by(type='series', active=True)
@@ -93,62 +79,75 @@ def stats_dashboard():
         .limit(5)
         .all()
     )
+    top_series_names = [s.name for s in top_series]
+    top_series_downloads = [s.downloads for s in top_series]
 
-    top_searches = (
-        SearchTerm.query
-        .order_by(SearchTerm.count.desc())
-        .limit(10)
-        .all()
-    )
+    req_stats = [pending_requests, filled_requests, rejected_requests]
 
-    recent_searches = (
-        SearchTerm.query
-        .order_by(SearchTerm.last_searched.desc())
-        .limit(10)
-        .all()
-    )
+    req_trend_labels = []
+    req_trend_counts = []
+    for i in range(days, -1, -1):
+        day = datetime.utcnow() - timedelta(days=i)
+        day_str = day.strftime('%m/%d')
+        count = MovieRequest.query.filter(
+            func.date(MovieRequest.date_added) == day.date()
+        ).count()
+        req_trend_labels.append(day_str)
+        req_trend_counts.append(count)
 
-    no_result_searches = (
-        SearchTerm.query
-        .filter(SearchTerm.count <= 2)
-        .order_by(SearchTerm.count.desc())
-        .limit(10)
-        .all()
-    )
+    top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+    recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(10).all()
+    likely_no_result_terms = SearchTerm.query.filter(SearchTerm.count <= 2).order_by(SearchTerm.count.desc()).limit(10).all()
 
-    ad_events = (
-        AnalyticsEvent.query
-        .filter(AnalyticsEvent.date_added >= since)
-        .all()
-    )
-
-    ad_stats = defaultdict(lambda: {"views": 0, "clicks": 0})
+    ad_events = AnalyticsEvent.query.filter(AnalyticsEvent.date_added >= since).all()
+    ad_stats = defaultdict(lambda: {"views": 0, "clicks": 0, "mobile_views": 0, "desktop_views": 0})
     for event in ad_events:
         if event.event == "ad_slot_view":
             ad_stats[event.target]["views"] += 1
+            if getattr(event, 'device', '') == 'mobile':
+                ad_stats[event.target]["mobile_views"] += 1
+            else:
+                ad_stats[event.target]["desktop_views"] += 1
         elif event.event == "ad_slot_click":
             ad_stats[event.target]["clicks"] += 1
 
-    ad_performance = []
+    ad_labels = []
+    ad_views_series = []
+    ad_clicks_series = []
+    ad_placement_rows = []
+    ad_total_views = 0
+    ad_total_clicks = 0
+    ad_mobile_total = 0
     for placement, stats in sorted(ad_stats.items(), key=lambda x: x[1]["views"], reverse=True):
         ctr = (stats["clicks"] / stats["views"] * 100) if stats["views"] > 0 else 0
-        ad_performance.append({
+        ad_labels.append(placement)
+        ad_views_series.append(stats["views"])
+        ad_clicks_series.append(stats["clicks"])
+        ad_total_views += stats["views"]
+        ad_total_clicks += stats["clicks"]
+        ad_mobile_total += stats["mobile_views"]
+        ad_placement_rows.append({
             "placement": placement,
             "views": stats["views"],
             "clicks": stats["clicks"],
-            "ctr": round(ctr, 2)
+            "ctr": round(ctr, 2),
+            "mobile_views": stats["mobile_views"],
+            "desktop_views": stats["desktop_views"],
         })
+    ad_overall_ctr = round((ad_total_clicks / ad_total_views * 100), 2) if ad_total_views > 0 else 0
+    ad_mobile_share = round((ad_mobile_total / ad_total_views * 100), 1) if ad_total_views > 0 else 0
 
     storage_servers = StorageServer.query.all()
-    storage_health = []
+    server_stats = []
     for server in storage_servers:
-        storage_health.append({
+        used = server.used_storage_gb or 0
+        total = server.max_storage_gb or 1
+        percent = round((used / total * 100), 1) if total > 0 else 0
+        server_stats.append({
             "name": server.name,
-            "type": server.server_type,
-            "used": server.used_storage_gb,
-            "max": server.max_storage_gb,
-            "available": server.available_storage(),
-            "active": server.active
+            "used": used,
+            "total": total,
+            "percent": percent,
         })
 
     content_performance = []
@@ -156,38 +155,57 @@ def stats_dashboard():
     for v in all_videos:
         score = (v.views * 1) + (v.downloads * 3) + ((v.rating or 0) * 100)
         content_performance.append({
-            "id": v.id,
             "name": v.name,
             "type": v.type,
             "views": v.views,
             "downloads": v.downloads,
-            "rating": v.rating or 0,
-            "score": round(score, 1)
+            "comments": 0,
+            "score": round(score, 1),
         })
-    content_performance.sort(key=lambda x: x["score"], reverse=True)
 
     return render_template(
         'admin/stats.html',
         total_movies=total_movies,
         total_series=total_series,
+        total_content=total_content,
         total_trailers=total_trailers,
         total_users=total_users,
         total_views=total_views,
         total_downloads=total_downloads,
         total_comments=total_comments,
         total_ratings=total_ratings,
-        top_movies=top_movies,
-        top_series=top_series,
         pending_requests=pending_requests,
         filled_requests=filled_requests,
         rejected_requests=rejected_requests,
+        fill_rate=fill_rate,
+        req_filled=filled_requests,
+        req_total=req_total,
+        req_selected=req_selected,
+        req_7d=req_7d,
+        req_30d=req_30d,
+        stale_pending=stale_pending,
+        selected_range=range_param,
+        selected_range_label=selected_range_label,
+        top_movie_names=top_movie_names,
+        top_movie_views=top_movie_views,
+        top_series_names=top_series_names,
+        top_series_downloads=top_series_downloads,
+        req_stats=req_stats,
+        req_trend_labels=req_trend_labels,
+        req_trend_counts=req_trend_counts,
         top_searches=top_searches,
         recent_searches=recent_searches,
-        no_result_searches=no_result_searches,
-        ad_performance=ad_performance,
-        storage_health=storage_health,
-        content_performance=content_performance,
-        range_param=range_param
+        likely_no_result_terms=likely_no_result_terms,
+        ad_labels=ad_labels,
+        ad_views_series=ad_views_series,
+        ad_clicks_series=ad_clicks_series,
+        ad_placement_rows=ad_placement_rows,
+        ad_total_views=ad_total_views,
+        ad_total_clicks=ad_total_clicks,
+        ad_overall_ctr=ad_overall_ctr,
+        ad_mobile_share=ad_mobile_share,
+        server_stats=server_stats,
+        top_content_rows=content_performance,
     )
 
 
