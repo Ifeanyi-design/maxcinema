@@ -8,7 +8,7 @@ from ..utils import ContentImporter
 from .helpers import admin_required
 
 
-@admin_bp.route('/admin/import-tmdb', methods=['GET', 'POST'])
+@admin_bp.route('/import-tmdb', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def import_tmdb():
@@ -38,7 +38,7 @@ def import_tmdb():
     return render_template('admin/import.html')
 
 
-@admin_bp.route('/admin/series/<int:series_id>/season/<int:season_num>/bulk-links', methods=['GET', 'POST'])
+@admin_bp.route('/series/<int:series_id>/season/<int:season_num>/bulk-links', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def bulk_link_season(series_id, season_num):
@@ -69,7 +69,7 @@ def bulk_link_season(series_id, season_num):
     return render_template('admin/bulk_links.html', series=series, season=season, episodes=episodes)
 
 
-@admin_bp.route('/admin/incomplete-content')
+@admin_bp.route('/incomplete-content')
 @login_required
 @admin_required
 def view_incomplete_content():
@@ -81,16 +81,24 @@ def view_incomplete_content():
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     videos = AllVideo.query.filter_by(active=True).all()
-    incomplete = []
+    movies = []
+    episodes = []
     for v in videos:
         has_link = bool((v.download_link or "").strip() or (v.dub_download_link or "").strip() or (v.backup_link or "").strip())
         if not has_link:
-            incomplete.append(v)
+            if v.type == 'movie':
+                movies.append(v)
 
-    return render_template('admin/incomplete_content.html', incomplete=incomplete, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+    eps = Episode.query.all()
+    for ep in eps:
+        has_link = bool((ep.download_link or "").strip() or (ep.dub_download_link or "").strip() or (ep.backup_link or "").strip())
+        if not has_link:
+            episodes.append(ep)
+
+    return render_template('admin/incomplete_content.html', movies=movies, episodes=episodes, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
-@admin_bp.route('/admin/incomplete-series')
+@admin_bp.route('/incomplete-series')
 @login_required
 @admin_required
 def view_incomplete_series():
@@ -101,16 +109,47 @@ def view_incomplete_series():
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
+    q = request.args.get('q', '').strip()
+    sort = request.args.get('sort', 'updated').strip()
+    direction = request.args.get('dir', 'desc').strip()
+
     all_series = AllVideo.query.filter_by(type='series', active=True).all()
     incomplete = []
     for s in all_series:
         if s.series and s.series.current_season_incomplete:
-            incomplete.append(s)
+            current_season = None
+            for season in s.series.seasons:
+                if not season.completed:
+                    current_season = season
+                    break
+            if current_season:
+                incomplete.append({
+                    'title': s.name,
+                    'slug': s.slug,
+                    'season_number': current_season.season_number,
+                    'season_eps_count': len(current_season.episodes),
+                    'season_num_episodes_field': current_season.num_episodes if hasattr(current_season, 'num_episodes') else None,
+                    'updated_at': s.updated_at,
+                    'series_id': s.id,
+                    'season_id': current_season.id,
+                })
 
-    return render_template('admin/incomplete_series.html', incomplete=incomplete, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+    if sort == 'name':
+        incomplete.sort(key=lambda x: x['title'] or '', reverse=(direction == 'desc'))
+    elif sort == 'season':
+        incomplete.sort(key=lambda x: x['season_number'], reverse=(direction == 'desc'))
+    elif sort == 'eps':
+        incomplete.sort(key=lambda x: x['season_eps_count'], reverse=(direction == 'desc'))
+    else:
+        incomplete.sort(key=lambda x: x['updated_at'] or '', reverse=(direction == 'desc'))
+
+    if q:
+        incomplete = [i for i in incomplete if q.lower() in (i['title'] or '').lower()]
+
+    return render_template('admin/incomplete_series.html', incomplete=incomplete, q=q, sort=sort, direction=direction, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
-@admin_bp.route('/admin/season/<int:season_id>/set-completed', methods=['POST'])
+@admin_bp.route('/season/<int:season_id>/set-completed', methods=['POST'])
 @login_required
 @admin_required
 def set_season_completed(season_id):
@@ -121,7 +160,7 @@ def set_season_completed(season_id):
     return redirect(url_for('admin.view_episodes', prev='serie', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id))
 
 
-@admin_bp.route('/admin/season/<int:season_id>/set-incomplete', methods=['POST'])
+@admin_bp.route('/season/<int:season_id>/set-incomplete', methods=['POST'])
 @login_required
 @admin_required
 def set_season_incomplete(season_id):
@@ -132,7 +171,7 @@ def set_season_incomplete(season_id):
     return redirect(url_for('admin.view_episodes', prev='serie', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id))
 
 
-@admin_bp.route('/admin/search')
+@admin_bp.route('/search')
 @login_required
 @admin_required
 def search():
@@ -153,7 +192,7 @@ def search():
     return render_template('admin/search.html', results=results, q=q, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
-@admin_bp.route('/admin/indexnow/resubmit', methods=['POST'])
+@admin_bp.route('/indexnow/resubmit', methods=['POST'])
 @login_required
 @admin_required
 def resubmit_indexnow():

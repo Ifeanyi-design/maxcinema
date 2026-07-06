@@ -8,7 +8,7 @@ from ..models import AllVideo, db, Trailer, MovieRequest, User, WeeklyPoll, Week
 from .helpers import admin_required
 
 
-@admin_bp.route('/admin/polls', methods=['GET', 'POST'])
+@admin_bp.route('/polls', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def manage_polls():
@@ -59,7 +59,7 @@ def manage_polls():
     return render_template('admin/polls.html', polls=polls, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
-@admin_bp.route('/admin/polls/activate/<int:poll_id>')
+@admin_bp.route('/polls/activate/<int:poll_id>')
 @login_required
 @admin_required
 def activate_poll(poll_id):
@@ -71,7 +71,7 @@ def activate_poll(poll_id):
     return redirect(url_for('admin.manage_polls'))
 
 
-@admin_bp.route('/admin/polls/delete/<int:poll_id>')
+@admin_bp.route('/polls/delete/<int:poll_id>')
 @login_required
 @admin_required
 def delete_poll(poll_id):

@@ -7,7 +7,7 @@
     {% include "admin/sidebar.html" %}
 
     <!-- Main Content -->
-    <div class="flex-1">
+    <div class="flex-1 pt-4 lg:pt-0">
         <h1 class="text-2xl font-bold mb-6">Backup System</h1>
 
         <!-- Service Status -->
@@ -38,15 +38,26 @@
             </div>
 
             <!-- Trigger Backup -->
-            <form method="POST" action="{{ url_for('admin.backup_trigger') }}" class="flex items-center gap-4">
+            <form id="backupForm" method="POST" action="{{ url_for('admin.backup_trigger') }}" class="flex items-center gap-4">
                 <label class="flex items-center gap-2 text-sm text-gray-300">
                     <input type="checkbox" name="include_telegram" checked class="rounded bg-gray-700 border-gray-600 text-red-600 focus:ring-red-500">
                     Upload to Telegram
                 </label>
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition">
+                <button type="submit" id="backupBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition">
                     Backup Now
                 </button>
             </form>
+
+            <!-- Backup Progress (hidden by default) -->
+            <div id="backupProgress" class="hidden mt-4">
+                <div class="flex items-center gap-3">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                    <span class="text-gray-300">Backup in progress...</span>
+                </div>
+                <div class="mt-2 bg-gray-900 rounded-full h-2">
+                    <div id="backupBar" class="bg-red-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
             {% else %}
             <div class="bg-red-950/70 border border-red-700 text-red-200 rounded-xl px-4 py-3 mb-4">
                 <p class="font-medium">Backup service is not reachable.</p>
@@ -85,26 +96,98 @@
             {% endif %}
         </div>
 
-        <!-- Restore -->
+        <!-- Restore Options -->
         {% if service_reachable %}
-        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
-            <h2 class="text-lg font-semibold mb-4">Restore from Backup</h2>
-            <form method="POST" action="{{ url_for('admin.backup_restore') }}">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Restore from Local Backup -->
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <h2 class="text-lg font-semibold mb-4">Restore from Backup</h2>
+                <form method="POST" action="{{ url_for('admin.backup_restore') }}">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Select backup file</label>
+                        <select name="filepath" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
+                            <option value="">Choose a backup...</option>
+                            {% for backup in backups %}
+                            <option value="{{ backup.filepath }}">{{ backup.filename }} ({{ backup.size_mb }} MB)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2 rounded-lg transition" onclick="return confirm('This will OVERWRITE your current database. Are you sure?')">
+                        Restore This Backup
+                    </button>
+                </form>
+            </div>
+
+            <!-- Restore from Telegram -->
+            <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <h2 class="text-lg font-semibold mb-4">Restore from Telegram</h2>
+                <form method="POST" action="{{ url_for('admin.backup_restore') }}">
+                    <input type="hidden" name="source" value="telegram">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Telegram File ID (leave empty for latest)</label>
+                        <input type="text" name="telegram_file_id" placeholder="Optional: specific Telegram file ID" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                    </div>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition" onclick="return confirm('This will OVERWRITE your current database from Telegram. Are you sure?')">
+                        Restore from Telegram
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Upload Backup File -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 mt-6">
+            <h2 class="text-lg font-semibold mb-4">Upload Backup File</h2>
+            <form method="POST" action="{{ url_for('admin.backup_upload') }}" enctype="multipart/form-data">
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Select backup file</label>
-                    <select name="filepath" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
-                        <option value="">Choose a backup...</option>
-                        {% for backup in backups %}
-                        <option value="{{ backup.filepath }}">{{ backup.filename }} ({{ backup.size_mb }} MB)</option>
-                        {% endfor %}
-                    </select>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Select backup file (.sql or .sql.gz)</label>
+                    <input type="file" name="backup_file" accept=".sql,.sql.gz,.gz" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
                 </div>
-                <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-medium px-6 py-2 rounded-lg transition" onclick="return confirm('This will OVERWRITE your current database. Are you sure?')">
-                    Restore This Backup
-                </button>
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-medium px-6 py-2 rounded-lg transition" onclick="return confirm('This will upload the backup file to the backup service. Continue?')">
+                        Upload to Backup Service
+                    </button>
+                </div>
             </form>
         </div>
         {% endif %}
     </div>
 </div>
+
+<script>
+document.getElementById('backupForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const btn = document.getElementById('backupBtn');
+    const progress = document.getElementById('backupProgress');
+    const bar = document.getElementById('backupBar');
+    
+    btn.disabled = true;
+    btn.textContent = 'Starting...';
+    progress.classList.remove('hidden');
+    bar.style.width = '10%';
+    
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        bar.style.width = '100%';
+        if (data.success) {
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            alert('Backup failed: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.textContent = 'Backup Now';
+            progress.classList.add('hidden');
+        }
+    })
+    .catch(err => {
+        bar.style.width = '100%';
+        setTimeout(() => location.reload(), 1000);
+    });
+});
+</script>
 {% endblock %}

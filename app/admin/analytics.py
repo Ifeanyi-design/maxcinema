@@ -20,7 +20,7 @@ _stats_cache = {"data": {}, "timestamp": 0}
 _STATS_CACHE_TTL = 600  # 10 minutes
 
 
-@admin_bp.route('/admin/stats')
+@admin_bp.route('/stats')
 @login_required
 @admin_required
 def stats_dashboard():
@@ -202,5 +202,8 @@ def search_terms_page():
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
-    terms = SearchTerm.query.order_by(SearchTerm.count.desc()).all()
-    return render_template('admin/search_terms.html', terms=terms, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+    page = request.args.get('page', 1, type=int)
+    per_page = 30
+    pagination = SearchTerm.query.order_by(SearchTerm.count.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template('admin/search_terms.html', search_terms=pagination, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)

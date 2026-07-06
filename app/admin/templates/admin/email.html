@@ -7,8 +7,8 @@
     {% include "admin/sidebar.html" %}
 
     <!-- Main Content -->
-    <div class="flex-1">
-        <h1 class="text-2xl font-bold mb-6">Email Tools</h1>
+    <div class="flex-1 pt-4 lg:pt-0">
+        <h1 class="text-2xl font-bold mb-6">Email Center</h1>
 
         {% if not email_enabled %}
         <div class="bg-amber-950/70 border border-amber-700 text-amber-200 rounded-xl px-4 py-3 mb-6">
@@ -20,23 +20,65 @@
         <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 mb-6">
             <h2 class="text-lg font-semibold mb-4">Compose Email</h2>
             <form method="POST" action="{{ url_for('admin.email_compose') }}">
+                <!-- Recipient Mode Toggle -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Recipient Mode</label>
+                    <div class="flex gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="recipient_mode" value="single" checked class="text-red-600 focus:ring-red-500" onchange="toggleRecipientMode(this.value)">
+                            <span class="text-sm text-gray-300">Single User</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="recipient_mode" value="all" class="text-red-600 focus:ring-red-500" onchange="toggleRecipientMode(this.value)">
+                            <span class="text-sm text-gray-300">All Users</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="recipient_mode" value="custom" class="text-red-600 focus:ring-red-500" onchange="toggleRecipientMode(this.value)">
+                            <span class="text-sm text-gray-300">Custom Email</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Single User Select -->
+                <div id="single-recipient" class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Select User</label>
+                    <select name="to_email" id="to_email_select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        <option value="">Select recipient...</option>
+                        {% for user in users %}
+                        <option value="{{ user.email }}">{{ user.username }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- All Users (hidden field) -->
+                <div id="all-recipient" class="hidden mb-4">
+                    <input type="hidden" name="to_email" value="__ALL_USERS__">
+                    <div class="bg-blue-950/50 border border-blue-700 rounded-lg px-4 py-2 text-blue-200 text-sm">
+                        This email will be sent to <strong>{{ users|length }}</strong> registered user{{ 's' if users|length != 1 else '' }}.
+                    </div>
+                </div>
+
+                <!-- Custom Email -->
+                <div id="custom-recipient" class="hidden mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                    <input type="email" name="custom_email" placeholder="recipient@example.com" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">To</label>
-                        <select name="to_email" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" required>
-                            <option value="">Select recipient...</option>
-                            {% for user in users %}
-                            <option value="{{ user.email }}">{{ user.username }} ({{ user.email }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
                         <label class="block text-sm font-medium text-gray-300 mb-1">Template (optional)</label>
-                        <select name="template" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        <select name="template" id="template_select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
                             <option value="">No template (plain text)</option>
                             <option value="welcome">Welcome email</option>
                             <option value="generic_notification">Generic notification</option>
                             <option value="custom_message">Custom message with CTA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Priority</label>
+                        <select name="priority" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            <option value="normal">Normal</option>
+                            <option value="high">High Priority</option>
                         </select>
                     </div>
                 </div>
@@ -46,11 +88,14 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-1">Body</label>
-                    <textarea name="body" rows="6" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Email body..." required></textarea>
+                    <textarea name="body" rows="8" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent font-mono text-sm" placeholder="Type your email content here... You can use {username} as a placeholder for the recipient's name." required></textarea>
                 </div>
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition" {% if not email_enabled %}disabled{% endif %}>
-                    Send Email
-                </button>
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-medium px-6 py-2 rounded-lg transition" {% if not email_enabled %}disabled{% endif %}>
+                        Send Email
+                    </button>
+                    <span class="text-gray-500 text-sm">Press Ctrl+Enter to send</span>
+                </div>
             </form>
         </div>
 
@@ -94,4 +139,22 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleRecipientMode(mode) {
+    document.getElementById('single-recipient').classList.toggle('hidden', mode !== 'single');
+    document.getElementById('all-recipient').classList.toggle('hidden', mode !== 'all');
+    document.getElementById('custom-recipient').classList.toggle('hidden', mode !== 'custom');
+    
+    if (mode === 'single' || mode === 'all') {
+        document.getElementById('to_email_select').required = (mode === 'single');
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.target.closest('form').submit();
+    }
+});
+</script>
 {% endblock %}

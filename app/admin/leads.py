@@ -21,7 +21,9 @@ def leads_dashboard():
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     course_filter = request.args.get('course', '').strip()
-    search = request.args.get('search', '').strip()
+    search = request.args.get('q', '').strip()
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
 
     query = CourseLead.query
 
@@ -33,17 +35,19 @@ def leads_dashboard():
             (CourseLead.email.ilike(f'%{search}%'))
         )
 
-    leads = query.order_by(CourseLead.date_added.desc()).all()
+    total_leads = query.count()
+    leads_page = query.order_by(CourseLead.date_added.desc()).paginate(page=page, per_page=per_page, error_out=False)
 
     courses = db.session.query(CourseLead.course_interest).distinct().all()
     courses = [c[0] for c in courses]
 
     return render_template(
         'admin/leads.html',
-        leads=leads,
+        leads_page=leads_page,
+        total_leads=total_leads,
         courses=courses,
         course_filter=course_filter,
-        search=search,
+        search_query=search,
         total_movies=total_movies,
         total_series=total_series,
         total_trailers=total_trailers,

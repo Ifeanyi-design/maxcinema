@@ -112,6 +112,10 @@ def delete_video(video_id, prev):
         return redirect(url_for('admin.view_series'))
     elif prev == "search":
         return redirect(url_for('admin.search'))
+    elif prev == "incomplete":
+        return redirect(url_for('admin.view_incomplete_content'))
+    else:
+        return redirect(url_for('admin.dashboard'))
 
 
 @admin_bp.route('/movies/add/<prev>', methods=['GET', 'POST'])

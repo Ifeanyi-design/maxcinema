@@ -13,7 +13,7 @@ from .helpers import (
 )
 
 
-@admin_bp.route('/admin/watchlist-notify')
+@admin_bp.route('/watchlist-notify')
 @login_required
 @admin_required
 def watchlist_notify_page():
@@ -42,7 +42,7 @@ def watchlist_notify_page():
     )
 
 
-@admin_bp.route('/admin/watchlist-notify/mark/<int:row_id>')
+@admin_bp.route('/watchlist-notify/mark/<int:row_id>')
 @login_required
 @admin_required
 def mark_watchlist_notified(row_id):
@@ -57,7 +57,7 @@ def mark_watchlist_notified(row_id):
     return redirect(url_for('admin.watchlist_notify_page'))
 
 
-@admin_bp.route('/admin/notification-settings', methods=['GET', 'POST'])
+@admin_bp.route('/notification-settings', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def notification_settings():
@@ -147,7 +147,7 @@ def notification_settings():
     )
 
 
-@admin_bp.route('/admin/release-notify/<int:video_id>')
+@admin_bp.route('/release-notify/<int:video_id>')
 @login_required
 @admin_required
 def release_notify(video_id):

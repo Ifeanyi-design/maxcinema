@@ -1,14 +1,15 @@
 """Admin backup dashboard — UI to interact with the backup service API."""
 
 import os
+import threading
 
 import requests
-from flask import render_template, request, flash, redirect, url_for
+from flask import render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required
 
 from . import admin_bp
 from .helpers import admin_required
-from ..models import AllVideo, Series, Trailer, User, db
+from ..models import AllVideo, Trailer, User, db
 
 
 def _backup_api_url(endpoint=""):
@@ -22,7 +23,7 @@ def _backup_api_key():
     return os.environ.get("BACKUP_API_KEY", "")
 
 
-def _call_backup_api(endpoint, method="GET", json_data=None):
+def _call_backup_api(endpoint, method="GET", json_data=None, files=None, timeout=300):
     """Call the backup service API and return (success, data_or_error)."""
     url = _backup_api_url(endpoint)
     api_key = _backup_api_key()
@@ -30,13 +31,15 @@ def _call_backup_api(endpoint, method="GET", json_data=None):
     if not api_key:
         return False, "BACKUP_API_KEY not configured"
 
-    headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+    headers = {"X-API-Key": api_key}
+    if not files:
+        headers["Content-Type"] = "application/json"
 
     try:
         if method == "POST":
-            resp = requests.post(url, headers=headers, json=json_data or {}, timeout=300)
+            resp = requests.post(url, headers=headers, json=json_data, files=files, timeout=timeout)
         else:
-            resp = requests.get(url, headers=headers, timeout=30)
+            resp = requests.get(url, headers=headers, timeout=timeout)
 
         if resp.status_code == 200:
             return True, resp.json()
@@ -49,12 +52,19 @@ def _call_backup_api(endpoint, method="GET", json_data=None):
         return False, str(e)
 
 
-@admin_bp.route('/admin/backup')
+def _run_backup_async(include_telegram):
+    """Run backup in background thread."""
+    try:
+        _call_backup_api("backup", method="POST", json_data={"include_telegram": include_telegram}, timeout=600)
+    except Exception:
+        pass
+
+
+@admin_bp.route('/backup')
 @login_required
 @admin_required
 def backup_dashboard():
     """Backup service dashboard."""
-    # Get sidebar counts
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
@@ -62,13 +72,8 @@ def backup_dashboard():
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = 0
 
-    # Check backup service status
     status_ok, status_data = _call_backup_api("health")
-
-    # Get backup list
     list_ok, list_data = _call_backup_api("list")
-
-    # Get detailed status
     detail_ok, detail_data = _call_backup_api("status")
 
     backups = []
@@ -102,47 +107,73 @@ def backup_dashboard():
     )
 
 
-@admin_bp.route('/admin/backup/trigger', methods=['POST'])
+@admin_bp.route('/backup/trigger', methods=['POST'])
 @login_required
 @admin_required
 def backup_trigger():
-    """Trigger a new backup."""
+    """Trigger a new backup (async, returns JSON)."""
     include_telegram = request.form.get("include_telegram", "on") == "on"
 
-    ok, data = _call_backup_api("backup", method="POST", json_data={
-        "include_telegram": include_telegram,
-    })
+    thread = threading.Thread(target=_run_backup_async, args=(include_telegram,), daemon=True)
+    thread.start()
 
-    if ok:
-        size = data.get("backup", {}).get("size_mb", "?")
-        duration = data.get("backup", {}).get("duration", "?")
-        telegram = "uploaded" if data.get("telegram", {}).get("success") else "skipped"
-        flash(f"Backup completed: {size} MB in {duration}s (Telegram: {telegram})", "success")
-    else:
-        flash(f"Backup failed: {data}", "danger")
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify({"success": True, "message": "Backup started"})
 
+    flash("Backup started in background. It may take a few minutes.", "info")
     return redirect(url_for("admin.backup_dashboard"))
 
 
-@admin_bp.route('/admin/backup/restore', methods=['POST'])
+@admin_bp.route('/backup/restore', methods=['POST'])
 @login_required
 @admin_required
 def backup_restore():
-    """Trigger a restore from a backup file."""
+    """Trigger a restore from a backup file or Telegram."""
+    source = request.form.get("source", "local").strip()
     filepath = request.form.get("filepath", "").strip()
+    telegram_file_id = request.form.get("telegram_file_id", "").strip()
 
-    if not filepath:
-        flash("No backup file selected.", "danger")
-        return redirect(url_for("admin.backup_dashboard"))
+    json_data = {}
+    if source == "telegram":
+        if telegram_file_id:
+            json_data["telegram_file_id"] = telegram_file_id
+        else:
+            json_data["use_latest_telegram"] = True
+    else:
+        if not filepath:
+            flash("No backup file selected.", "danger")
+            return redirect(url_for("admin.backup_dashboard"))
+        json_data["filepath"] = filepath
 
-    ok, data = _call_backup_api("restore", method="POST", json_data={
-        "filepath": filepath,
-    })
+    ok, data = _call_backup_api("restore", method="POST", json_data=json_data, timeout=600)
 
     if ok:
         duration = data.get("duration", "?")
         flash(f"Restore completed in {duration}s", "success")
     else:
         flash(f"Restore failed: {data}", "danger")
+
+    return redirect(url_for("admin.backup_dashboard"))
+
+
+@admin_bp.route('/backup/upload', methods=['POST'])
+@login_required
+@admin_required
+def backup_upload():
+    """Upload a backup file to the backup service."""
+    backup_file = request.files.get("backup_file")
+    if not backup_file or not backup_file.filename:
+        flash("No file selected.", "danger")
+        return redirect(url_for("admin.backup_dashboard"))
+
+    filename = backup_file.filename
+    files = {"file": (filename, backup_file.stream, backup_file.content_type)}
+
+    ok, data = _call_backup_api("upload", method="POST", files=files, timeout=300)
+
+    if ok:
+        flash(f"Backup file '{filename}' uploaded successfully.", "success")
+    else:
+        flash(f"Upload failed: {data}", "danger")
 
     return redirect(url_for("admin.backup_dashboard"))
