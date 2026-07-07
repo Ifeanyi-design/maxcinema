@@ -16,9 +16,9 @@ def import_tmdb():
         try:
             importer = ContentImporter()
             tmdb_id = request.form.get('tmdb_id', '').strip()
-            media_type = request.form.get('media_type', 'movie').strip()
-            season_input = request.form.get('season_range', '').strip() or None
-            episode_input = request.form.get('episode_range', '').strip() or None
+            media_type = request.form.get('type', 'movie').strip()
+            season_input = request.form.get('seasons', '').strip() or None
+            episode_input = request.form.get('episodes', '').strip() or None
 
             if not tmdb_id:
                 flash("Please enter a TMDB ID.", "error")
@@ -42,11 +42,14 @@ def import_tmdb():
 @login_required
 @admin_required
 def bulk_link_season(series_id, season_num):
-    series = AllVideo.query.get_or_404(series_id)
-    season = Season.query.filter_by(series_id=series.series.id, season_number=season_num).first_or_404()
+    video = AllVideo.query.get_or_404(series_id)
+    if not video.series:
+        flash("Series not found for this video.", "error")
+        return redirect(url_for('admin.dashboard'))
+    season = Season.query.filter_by(series_id=video.series.id, season_number=season_num).first_or_404()
 
     if request.method == 'POST':
-        links_text = (request.form.get('links') or '').strip()
+        links_text = (request.form.get('link_list') or '').strip()
         links = [l.strip() for l in links_text.split('\n') if l.strip()]
 
         episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
@@ -63,10 +66,10 @@ def bulk_link_season(series_id, season_num):
 
         db.session.commit()
         flash(f"Updated {updated} episode(s) with download links.", "success")
-        return redirect(url_for('admin.view_episodes', prev='serie', name=series.slug, ns=season_num, season_id=season.id))
+        return redirect(url_for('admin.view_episodes', prev='serie', name=video.slug, ns=season_num, season_id=season.id))
 
     episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
-    return render_template('admin/bulk_links.html', series=series, season=season, episodes=episodes)
+    return render_template('admin/bulk_links.html', video=video, season=season, episodes=episodes)
 
 
 @admin_bp.route('/incomplete-content')
@@ -183,13 +186,21 @@ def search():
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
 
     q = request.args.get('q', '').strip()
-    results = []
+    movies = []
+    series = []
+    trailers = []
+    users = []
     if q:
-        results = AllVideo.query.filter(
-            AllVideo.name.ilike(f'%{q}%')
-        ).all()
+        results = AllVideo.query.filter(AllVideo.name.ilike(f'%{q}%')).all()
+        for v in results:
+            if v.type == 'movie':
+                movies.append(v)
+            elif v.type == 'series':
+                series.append(v)
+        trailers = Trailer.query.filter(Trailer.name.ilike(f'%{q}%')).all()
+        users = User.query.filter(User.username.ilike(f'%{q}%')).all()
 
-    return render_template('admin/search.html', results=results, q=q, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
+    return render_template('admin/search.html', movies=movies, series=series, trailers=trailers, users=users, q=q, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 
 
 @admin_bp.route('/indexnow/resubmit', methods=['POST'])
