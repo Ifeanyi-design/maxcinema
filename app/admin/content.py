@@ -42,11 +42,8 @@ def import_tmdb():
 @login_required
 @admin_required
 def bulk_link_season(series_id, season_num):
-    video = AllVideo.query.get_or_404(series_id)
-    if not video.series:
-        flash("Series not found for this video.", "error")
-        return redirect(url_for('admin.dashboard'))
-    season = Season.query.filter_by(series_id=video.series.id, season_number=season_num).first_or_404()
+    series_obj = Series.query.get_or_404(series_id)
+    season = Season.query.filter_by(series_id=series_obj.id, season_number=season_num).first_or_404()
 
     if request.method == 'POST':
         links_text = (request.form.get('link_list') or '').strip()
@@ -66,10 +63,10 @@ def bulk_link_season(series_id, season_num):
 
         db.session.commit()
         flash(f"Updated {updated} episode(s) with download links.", "success")
-        return redirect(url_for('admin.view_episodes', prev='serie', name=video.slug, ns=season_num, season_id=season.id))
+        return redirect(url_for('admin.view_episodes', prev='serie', name=series_obj.all_video.slug, ns=season_num, season_id=season.id))
 
     episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
-    return render_template('admin/bulk_links.html', video=video, season=season, episodes=episodes)
+    return render_template('admin/bulk_links.html', series=series_obj, season=season, episodes=episodes)
 
 
 @admin_bp.route('/incomplete-content')

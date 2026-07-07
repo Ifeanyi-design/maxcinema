@@ -108,11 +108,13 @@ class ContentImporter:
     # --- IMPORT MOVIE ---
     def import_movie(self, tmdb_id):
         print(f"🔍 SEARCHING MOVIE ID: {tmdb_id}")
+        if not tmdb.api_key:
+            return "Error: TMDB_API_KEY not set in environment variables."
         try:
             m = self.movie_api.details(tmdb_id, append_to_response="credits,videos")
         except Exception as e:
             print(f"❌ TMDB FETCH ERROR: {e}")
-            return f"Error: Could not find Movie ID {tmdb_id}."
+            return f"Error: Could not find Movie ID {tmdb_id}. Check that TMDB_API_KEY is set and the ID is valid."
 
         try:
             # FIX 1: Check NAME and TYPE
@@ -161,11 +163,13 @@ class ContentImporter:
     # --- IMPORT SERIES ---
     def import_series(self, tmdb_id, season_input=None, episode_input=None):
         print(f"🔍 SEARCHING SERIES ID: {tmdb_id}")
+        if not tmdb.api_key:
+            return "Error: TMDB_API_KEY not set in environment variables."
         try:
             s = self.tv_api.details(tmdb_id, append_to_response="credits,videos")
         except Exception as e:
             print(f"❌ TMDB FETCH ERROR: {e}")
-            return f"Error: Could not find Series ID {tmdb_id}"
+            return f"Error: Could not find Series ID {tmdb_id}. Check that TMDB_API_KEY is set and the ID is valid."
 
         try:
             # FIX 1: Ensure we look for a SERIES, not a Movie
