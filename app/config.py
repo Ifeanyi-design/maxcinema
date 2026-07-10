@@ -21,42 +21,63 @@ class Config:
     INDEXNOW_ENDPOINT = (os.environ.get("INDEXNOW_ENDPOINT") or "https://api.indexnow.org/indexnow").strip()
 
     # =========================================================
-    # 🚀 DATABASE CONFIG (SAFE FOR NEON + SQLITE)
+    # 🚀 DATABASE CONFIG (DYNAMIC FOR NEON, AZURE, & SQLITE)
     # =========================================================
 
     CLOUD_DB_URL = os.environ.get("DATABASE_URL")
 
-    # Fix 'channel_binding' crash automatically (Neon)
-    if CLOUD_DB_URL and "channel_binding=require" in CLOUD_DB_URL:
-        CLOUD_DB_URL = (
-            CLOUD_DB_URL
-            .replace("&channel_binding=require", "")
-            .replace("?channel_binding=require", "")
-        )
-
     if CLOUD_DB_URL:
-        # ==============================
-        # ☁️ NEON / POSTGRES CONFIG
-        # ==============================
+        # Fix 'channel_binding' crash automatically if present
+        if "channel_binding=require" in CLOUD_DB_URL:
+            CLOUD_DB_URL = (
+                CLOUD_DB_URL
+                .replace("&channel_binding=require", "")
+                .replace("?channel_binding=require", "")
+            )
+
         SQLALCHEMY_DATABASE_URI = CLOUD_DB_URL
-        SQLALCHEMY_ENGINE_OPTIONS = {
-            "poolclass": NullPool,     # Force fresh connection (Neon-safe)
-            "pool_pre_ping": True,
-            "connect_args": {
-                "connect_timeout": 60,  # Allow Neon to wake up
-                "keepalives": 1,
-                "keepalives_idle": 30,
-                "keepalives_interval": 10,
-                "keepalives_count": 5,
-            },
-        }
-        print("☁️  VERSION 2: INSTANT BOOT LOADING... (Targeting Cloud)")
+        
+        # Smart Check: Detect if the cloud database is Neon
+        is_neon = "neon.tech" in CLOUD_DB_URL
+
+        if is_neon:
+            # ==============================
+            # ☁️ NEON SPECIFIC CONFIG
+            # ==============================
+            SQLALCHEMY_ENGINE_OPTIONS = {
+                "poolclass": NullPool,     # Force fresh connection (Neon-safe)
+                "pool_pre_ping": True,
+                "connect_args": {
+                    "connect_timeout": 60,  # Allow Neon to wake up
+                    "keepalives": 1,
+                    "keepalives_idle": 30,
+                    "keepalives_interval": 10,
+                    "keepalives_count": 5,
+                },
+            }
+            print("☁️  DATABASE LAYER: Loaded NEON Config (NullPool Enabled).")
+        else:
+            # ==============================
+            # ⚡ AZURE / PRODUCTION POOL CONFIG
+            # ==============================
+            SQLALCHEMY_ENGINE_OPTIONS = {
+                "pool_size": 10,             # Keep 10 active connections open for speed
+                "max_overflow": 20,          # Handle burst traffic up to 30 connections
+                "pool_timeout": 30,          # Error out if connection takes >30s
+                "pool_recycle": 1800,        # Refresh connections every 30 mins
+                "pool_pre_ping": True,       # Check connection health before querying
+                "connect_args": {
+                    "connect_timeout": 30,
+                    "sslmode": "require"     # 🔒 Enforced SSL for Azure security
+                },
+            }
+            print("⚡ DATABASE LAYER: Loaded AZURE Production Config (Connection Pooling Enabled).")
 
     else:
         # ==============================
         # 🏠 SQLITE CONFIG (LOCAL / HF)
         # ==============================
-        print("🏠 VERSION 2: No Cloud URL found. Using Local SQLite.")
+        print("🏠 DATABASE LAYER: No Cloud URL found. Using Local SQLite.")
 
         if os.path.exists(os.path.join(root_dir, "maxcinema.db")):
             SQLALCHEMY_DATABASE_URI = (
