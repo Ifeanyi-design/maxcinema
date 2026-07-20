@@ -30,7 +30,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for req in requests %}
+                    {% for req in requests.items %}
                     <tr>
                         <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                             <p class="text-gray-900 whitespace-no-wrap">{{ req.date_added.strftime('%b %d, %Y') }}</p>
@@ -91,6 +91,20 @@
                 </tbody>
             </table>
         </div>
+
+        {% if requests.pages > 1 %}
+        <div class="flex items-center justify-between mt-4 px-2">
+            <p class="text-sm text-gray-500">Page {{ requests.page }} of {{ requests.pages }} ({{ requests.total }} total)</p>
+            <div class="flex gap-2">
+                {% if requests.has_prev %}
+                <a href="{{ url_for('admin.view_requests', page=requests.prev_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">← Prev</a>
+                {% endif %}
+                {% if requests.has_next %}
+                <a href="{{ url_for('admin.view_requests', page=requests.next_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">Next →</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -43,7 +43,7 @@
                 <h2 class="text-2xl font-bold mt-8 mb-4">All Users</h2>
                 
                 {% if len_users > 1 %}
-                    {% for user in users %}
+                    {% for user in users.items %}
                         {% if user.id != current_user.id %}
                             <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-700 py-4 gap-4">
                                 
@@ -91,6 +91,20 @@
                     <p class="text-gray-400 mt-4">No other users found.</p>
                 {% endif %}
             </div>
+
+            {% if users.pages > 1 %}
+            <div class="flex items-center justify-between mt-6 px-2">
+                <p class="text-sm text-gray-400">Page {{ users.page }} of {{ users.pages }} ({{ users.total }} total)</p>
+                <div class="flex gap-2">
+                    {% if users.has_prev %}
+                    <a href="{{ url_for('admin.view_users', page=users.prev_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">← Prev</a>
+                    {% endif %}
+                    {% if users.has_next %}
+                    <a href="{{ url_for('admin.view_users', page=users.next_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">Next →</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
 
             <div class="mt-8">
                 <a href="{{ url_for('admin.add_user') }}"

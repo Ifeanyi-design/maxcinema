@@ -9,17 +9,19 @@ from .helpers import admin_required
 
 
 @admin_bp.route("/users")
+@admin_bp.route("/users/<int:page>")
 @login_required
 @admin_required
-def view_users():
+def view_users(page=1):
+    per_page = 30
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
     total_users = User.query.count()
     total_views = db.session.query(db.func.sum(AllVideo.views)).scalar() or 0
     total_requests = MovieRequest.query.filter_by(status='Pending').count()
-    users = User.query.all()
-    len_users = len(users)
+    users = User.query.order_by(User.username).paginate(page=page, per_page=per_page, error_out=False)
+    len_users = users.total
     user = True
     return render_template("admin/users.html", user=user, len_users=len_users, users=users, total_movies=total_movies, total_series=total_series, total_trailers=total_trailers, total_users=total_users, total_views=total_views, total_requests=total_requests)
 

@@ -317,7 +317,6 @@ def index(page=1):
                                   .limit(10).all()
 
     data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
-    videos = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).all()
     upcoming_video_rows = (
         AllVideo.query
         .filter(

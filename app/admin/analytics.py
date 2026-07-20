@@ -15,7 +15,7 @@ from ..models import (
 )
 from .helpers import admin_required
 
-_stats_cache = {"data": {}, "timestamp": 0}
+_stats_cache = {"context": {}, "timestamp": {}}
 _STATS_CACHE_TTL = 600
 
 
@@ -29,6 +29,12 @@ def stats_dashboard():
         days = 7
     elif range_param == '90d':
         days = 90
+
+    # Serve from cache if fresh (per-range)
+    now = time.time()
+    cache_ts = _stats_cache["timestamp"].get(range_param, 0)
+    if now - cache_ts < _STATS_CACHE_TTL and range_param in _stats_cache["context"]:
+        return render_template('admin/stats.html', **_stats_cache["context"][range_param])
 
     since = datetime.utcnow() - timedelta(days=days)
     since_7d = datetime.utcnow() - timedelta(days=7)
@@ -163,8 +169,7 @@ def stats_dashboard():
             "score": round(score, 1),
         })
 
-    return render_template(
-        'admin/stats.html',
+    context = dict(
         total_movies=total_movies,
         total_series=total_series,
         total_content=total_content,
@@ -207,6 +212,12 @@ def stats_dashboard():
         server_stats=server_stats,
         top_content_rows=content_performance,
     )
+
+    # Cache per range for 10 minutes
+    _stats_cache["context"][range_param] = context
+    _stats_cache["timestamp"][range_param] = time.time()
+
+    return render_template('admin/stats.html', **context)
 
 
 @admin_bp.route('/search-terms')

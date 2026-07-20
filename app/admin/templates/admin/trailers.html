@@ -15,9 +15,9 @@
             <h1 class="text-4xl lg:text-3xl font-bold">Trailers</h1>
             <a href="{{ url_for('admin.add_trailer', prev='trailer') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Trailer</a>
         </div>
-        {% if trailers %}
+        {% if trailers.items %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for trailer in trailers %}
+            {% for trailer in trailers.items %}
             <div class="relative bg-gray-800 rounded-xl shadow-lg overflow-hidden group hover:scale-105 transform transition">
                 <img src="{{ trailer.image or '' }}" alt="{{ trailer.slug }}" class="w-full aspect-[3/5] object-cover" loading="lazy" decoding="async">
                 <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-4 lg:p-3 pb-4 sm:pb-2transition-opacity">
@@ -37,6 +37,20 @@
         </div>
         {% else %}
         <p class="text-gray-400">No trailers available yet.</p>
+        {% endif %}
+
+        {% if trailers.pages > 1 %}
+        <div class="flex items-center justify-between mt-6 px-2">
+            <p class="text-sm text-gray-400">Page {{ trailers.page }} of {{ trailers.pages }} ({{ trailers.total }} total)</p>
+            <div class="flex gap-2">
+                {% if trailers.has_prev %}
+                <a href="{{ url_for('admin.view_trailers', page=trailers.prev_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">← Prev</a>
+                {% endif %}
+                {% if trailers.has_next %}
+                <a href="{{ url_for('admin.view_trailers', page=trailers.next_num) }}" class="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white text-sm">Next →</a>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
     </div>
 </div>

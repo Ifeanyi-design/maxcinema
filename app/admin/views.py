@@ -262,10 +262,12 @@ def dashboard():
 
 
 @admin_bp.route('/requests')
+@admin_bp.route('/requests/<int:page>')
 @login_required
 @admin_required
-def view_requests():
-    requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).all()
+def view_requests(page=1):
+    per_page = 30
+    requests = MovieRequest.query.order_by(MovieRequest.date_added.desc()).paginate(page=page, per_page=per_page, error_out=False)
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
     total_trailers = Trailer.query.count()
