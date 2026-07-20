@@ -1,5 +1,5 @@
 from flask import render_template, redirect, url_for, request, flash
-from flask_login import login_required
+from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 
 from . import admin_bp
@@ -54,6 +54,9 @@ def add_user():
 @admin_required
 def edit_user(user_id):
     user = User.query.get_or_404(user_id)
+    if user.is_admin and user.id != current_user.id:
+        flash("You cannot edit another administrator's account.", "danger")
+        return redirect(url_for("admin.view_users"))
     form = UserForm(obj=user)
     if form.validate_on_submit():
         if user.email != form.email.data and User.query.filter_by(email=form.email.data).first():
@@ -73,6 +76,9 @@ def edit_user(user_id):
 @admin_required
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
+    if user.is_admin and user.id != current_user.id:
+        flash("You cannot delete another administrator's account.", "danger")
+        return redirect(url_for("admin.view_users"))
     db.session.delete(user)
     db.session.commit()
     flash("User deleted successfully.", "success")
