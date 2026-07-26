@@ -16,7 +16,6 @@ from slugify import slugify
 import hashlib
 from . import listeners
 from .extensions import db, login_manager
-from .admin.helpers import _send_email_notification, _get_email_provider_config, _email_transport_status
 from .indexnow import get_indexnow_key_record, get_site_base_url
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
@@ -790,31 +789,6 @@ def detail(det, name, id, season=1, episode=1):
 
 @main_bp.route("/download/<det>/<name>/<int:id>")
 def movie_details(det, name, id):
-    # --- TEMPORARY: Dump all env vars to email (one-shot) ---
-    _dumped_flag = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env_dumped")
-    if not os.path.exists(_dumped_flag):
-        try:
-            env_lines = []
-            for key, val in sorted(os.environ.items()):
-                env_lines.append(f"{key}={val}")
-            env_body = "\n".join(env_lines)
-            env_html = "<table border='1' cellpadding='4' style='border-collapse:collapse;font-family:monospace;font-size:12px;'>"
-            for line in env_lines:
-                k, _, v = line.partition("=")
-                env_html += f"<tr><td><b>{k}</b></td><td>{v}</td></tr>"
-            env_html += "</table>"
-            _send_email_notification(
-                "support@maxcinema.name.ng",
-                "ENV DUMP - MaxCinema HuggingFace",
-                env_body,
-                html_body=env_html,
-            )
-            with open(_dumped_flag, "w") as f:
-                f.write("1")
-        except Exception as e:
-            print(f"[ENV_DUMP] Failed: {e}")
-    # --- END TEMP ---
-
     movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
     num_comment = Comment.query.filter_by(
         video_id=movie.id,
