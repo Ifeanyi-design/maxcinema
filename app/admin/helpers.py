@@ -3,6 +3,7 @@ import smtplib
 import time
 from email.message import EmailMessage
 from functools import wraps
+from urllib.parse import parse_qs, unquote, urlparse
 
 import requests
 from flask import render_template, abort, url_for
@@ -10,11 +11,52 @@ from flask_login import current_user
 from slugify import slugify
 
 from . import admin_bp
-from ..models import AllVideo, WatchlistNotify, db, Trailer
+from ..models import AllVideo, WatchlistNotify, EmailHistory, db, Trailer
 
 
 def _has_download_payload(video):
     return bool((video.download_link or "").strip() or (video.dub_download_link or "").strip() or (video.backup_link or "").strip())
+
+
+def _normalize_download_link(value, storage_server=None):
+    if value is None:
+        return None
+
+    raw = str(value).strip()
+    if not raw:
+        return None
+
+    parsed = urlparse(raw)
+    if not parsed.scheme or not parsed.netloc:
+        return raw
+
+    if storage_server and getattr(storage_server, "base_url", None):
+        base_parsed = urlparse((storage_server.base_url or "").strip())
+        if base_parsed.netloc and parsed.netloc.lower() == base_parsed.netloc.lower():
+            source_path = parsed.path or ""
+            base_path = (base_parsed.path or "").rstrip("/")
+            if base_path and source_path.startswith(f"{base_path}/"):
+                source_path = source_path[len(base_path) + 1 :]
+            else:
+                source_path = source_path.lstrip("/")
+            if source_path:
+                return unquote(source_path)
+
+    path_segments = [segment for segment in (parsed.path or "").split("/") if segment]
+    if "watch" in path_segments:
+        watch_index = path_segments.index("watch")
+        if watch_index + 1 < len(path_segments):
+            token = (path_segments[watch_index + 1] or "").strip()
+            if token:
+                return unquote(token)
+
+    query = parse_qs(parsed.query or "")
+    for key in ("code", "file", "id", "hash", "token"):
+        values = query.get(key) or []
+        if values and (values[0] or "").strip():
+            return values[0].strip()
+
+    return raw
 
 
 def _get_email_provider_config():
@@ -194,8 +236,9 @@ def _send_telegram_notification(target, text, bot_token=None, default_chat_id=No
 
 
 def _send_release_notifications(video):
-    rows = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).all()
-    if not rows:
+    pending_query = WatchlistNotify.query.filter_by(video_id=video.id, notified=False)
+    queued = pending_query.count()
+    if queued == 0:
         return {"queued": 0, "emailed": 0, "telegram": 0, "marked": 0, "errors": []}
 
     site_url = os.getenv("SITE_BASE_URL", "https://www.maxcinema.name.ng")
@@ -221,12 +264,32 @@ def _send_release_notifications(video):
     telegram = 0
     marked = 0
     errors = []
+    batch_size = 20
 
+    sender = "system"
     try:
+        if getattr(current_user, "is_authenticated", False):
+            sender = getattr(current_user, "email", "") or "admin"
+    except Exception:
+        sender = "system"
+
+    while True:
+        rows = (
+            WatchlistNotify.query
+            .filter_by(video_id=video.id, notified=False)
+            .order_by(WatchlistNotify.id.asc())
+            .limit(batch_size)
+            .all()
+        )
+        if not rows:
+            break
+
         for row in rows:
             sent_any = False
 
             if email_enabled and row.email:
+                email_success = False
+                email_error = None
                 try:
                     html_text = render_template(
                         "emails/release_notification.html",
@@ -243,8 +306,19 @@ def _send_release_notifications(video):
                         raise RuntimeError(err or "email send failed")
                     emailed += 1
                     sent_any = True
+                    email_success = True
                 except Exception as e:
-                    errors.append(f"email:{row.email}:{e}")
+                    email_error = str(e)
+                    errors.append(f"email:{row.email}:{email_error}")
+                finally:
+                    db.session.add(EmailHistory(
+                        to_email=row.email,
+                        subject=f"Now Available: {video.name}",
+                        body=plain_text,
+                        status="sent" if email_success else "failed",
+                        error_message=None if email_success else email_error,
+                        sent_by=sender,
+                    ))
 
             if tg_enabled:
                 try:
@@ -268,13 +342,14 @@ def _send_release_notifications(video):
                 row.notified = True
                 marked += 1
 
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        errors.append(f"fatal:{e}")
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                errors.append(f"commit:row:{row.id}:{e}")
 
     return {
-        "queued": len(rows),
+        "queued": queued,
         "emailed": emailed,
         "telegram": telegram,
         "marked": marked,

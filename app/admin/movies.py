@@ -6,7 +6,7 @@ from . import admin_bp
 from .forms import AllVideoForm
 from ..models import AllVideo, Genre, StorageServer, Movie, Series, db, Trailer, MovieRequest, User, RecentItem, Comment
 from ..indexnow import submit_for_video, urls_for_video, submit_indexnow_urls
-from .helpers import admin_required, _has_download_payload, _send_release_notifications
+from .helpers import admin_required, _has_download_payload, _send_release_notifications, _normalize_download_link
 
 
 @admin_bp.route('/edit_video/<prev>/<int:video_id>', methods=["GET", "POST"])
@@ -27,6 +27,10 @@ def edit_video(video_id, prev):
         form.genres.data = [g.id for g in video.genres]
 
     if form.validate_on_submit():
+        selected_server = None
+        if form.storage_server_id.data:
+            selected_server = StorageServer.query.get(form.storage_server_id.data)
+
         video.name = form.name.data
         video.slug = form.slug.data
         video.description = form.description.data
@@ -39,8 +43,8 @@ def edit_video(video_id, prev):
         video.released_date = form.released_date.data
         video.star_cast = form.star_cast.data
         video.source = form.source.data
-        video.download_link = form.download_link.data
-        video.dub_download_link = form.dub_download_link.data
+        video.download_link = _normalize_download_link(form.download_link.data, selected_server)
+        video.dub_download_link = _normalize_download_link(form.dub_download_link.data, selected_server)
         video.image = form.image.data
         video.type = form.type.data
         video.trailer_url = form.trailer_url.data
@@ -149,8 +153,8 @@ def add_movie(prev):
             released_date=form.released_date.data,
             backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
-            download_link=form.download_link.data,
-            dub_download_link=form.dub_download_link.data,
+            download_link=_normalize_download_link(form.download_link.data, StorageServer.query.get(form.storage_server_id.data) if form.storage_server_id.data else None),
+            dub_download_link=_normalize_download_link(form.dub_download_link.data, StorageServer.query.get(form.storage_server_id.data) if form.storage_server_id.data else None),
             image=form.image.data,
             type=form.type.data,
             featured=form.featured.data,

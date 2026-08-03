@@ -13,7 +13,7 @@ from ..indexnow import (
     submit_for_video, submit_for_episode, urls_for_video,
     submit_indexnow_urls, build_episode_url,
 )
-from .helpers import admin_required
+from .helpers import admin_required, _normalize_download_link
 
 
 @admin_bp.route('/series/add/<prev>', methods=['GET', 'POST'])
@@ -26,6 +26,10 @@ def add_series(prev):
     form.storage_server_id.choices = [(s.id, s.name) for s in StorageServer.query.filter_by(active=True).all()]
 
     if form.validate_on_submit():
+        selected_server = None
+        if form.storage_server_id.data:
+            selected_server = StorageServer.query.get(form.storage_server_id.data)
+
         base_slug = slugify(form.name.data)
         slug = base_slug
         counter = 1
@@ -44,8 +48,8 @@ def add_series(prev):
             subtitles=form.subtitles.data,
             star_cast=form.star_cast.data,
             source=form.source.data,
-            download_link=form.download_link.data,
-            dub_download_link=form.dub_download_link.data,
+            download_link=_normalize_download_link(form.download_link.data, selected_server),
+            dub_download_link=_normalize_download_link(form.dub_download_link.data, selected_server),
             backup_link=form.backup_link.data,
             trailer_url=form.trailer_url.data,
             released_date=form.released_date.data,
@@ -231,6 +235,9 @@ def add_episode(season_id, prev):
             new_episode = Episode()
             form.populate_obj(new_episode)
             new_episode.season_id = season.id
+            selected_server = StorageServer.query.get(new_episode.storage_server_id) if new_episode.storage_server_id else None
+            new_episode.download_link = _normalize_download_link(new_episode.download_link, selected_server)
+            new_episode.dub_download_link = _normalize_download_link(new_episode.dub_download_link, selected_server)
 
             db.session.add(new_episode)
             db.session.commit()
@@ -274,6 +281,9 @@ def edit_episode(name, prev, series_id, season_id, episode_id):
         original_season_id = episode.season_id
 
         form.populate_obj(episode)
+        selected_server = StorageServer.query.get(episode.storage_server_id) if episode.storage_server_id else None
+        episode.download_link = _normalize_download_link(episode.download_link, selected_server)
+        episode.dub_download_link = _normalize_download_link(episode.dub_download_link, selected_server)
 
         if form.season_id.data:
             if Season.query.get(form.season_id.data):

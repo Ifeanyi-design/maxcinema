@@ -19,6 +19,12 @@
             </div>
         </div>
 
+        {% if stats_warnings %}
+        <div class="mb-5 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-xs md:text-sm text-yellow-200">
+            {{ stats_warnings[0] }}
+        </div>
+        {% endif %}
+
         <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8 gap-4 mb-8">
             <article class="rounded-2xl border border-cyan-500/20 bg-gradient-to-b from-cyan-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-cyan-300 tracking-wider">Total Content</p>

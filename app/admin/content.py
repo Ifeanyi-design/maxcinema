@@ -5,7 +5,7 @@ from . import admin_bp
 from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, Season, Episode
 from ..indexnow import submit_for_video, submit_for_episode, urls_for_video, submit_indexnow_urls
 from ..utils import ContentImporter
-from .helpers import admin_required
+from .helpers import admin_required, _normalize_download_link
 
 
 @admin_bp.route('/import-tmdb', methods=['GET', 'POST'])
@@ -47,7 +47,7 @@ def bulk_link_season(series_id, season_num):
 
     if request.method == 'POST':
         links_text = (request.form.get('link_list') or '').strip()
-        links = [l.strip() for l in links_text.split('\n') if l.strip()]
+        raw_links = [l.strip() for l in links_text.split('\n') if l.strip()]
 
         episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
 
@@ -56,9 +56,17 @@ def bulk_link_season(series_id, season_num):
             return redirect(url_for('admin.bulk_link_season', series_id=series_id, season_num=season_num))
 
         updated = 0
+        normalized_links = []
+        default_server = series_obj.all_video.storage_server if series_obj and series_obj.all_video else None
+        for line in raw_links:
+            normalized = _normalize_download_link(line, default_server)
+            if normalized:
+                normalized_links.append(normalized)
+
         for i, episode in enumerate(episodes):
-            if i < len(links):
-                episode.download_link = links[i]
+            if i < len(normalized_links):
+                episode_server = episode.storage_server or default_server
+                episode.download_link = _normalize_download_link(normalized_links[i], episode_server)
                 updated += 1
 
         db.session.commit()

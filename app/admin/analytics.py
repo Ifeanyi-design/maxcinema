@@ -39,6 +39,7 @@ def stats_dashboard():
     since = datetime.utcnow() - timedelta(days=days)
     since_7d = datetime.utcnow() - timedelta(days=7)
     since_30d = datetime.utcnow() - timedelta(days=30)
+    stats_warnings = []
 
     total_movies = AllVideo.query.filter_by(type='movie').count()
     total_series = AllVideo.query.filter_by(type='series').count()
@@ -92,20 +93,54 @@ def stats_dashboard():
 
     req_trend_labels = []
     req_trend_counts = []
-    for i in range(days, -1, -1):
-        day = datetime.utcnow() - timedelta(days=i)
-        day_str = day.strftime('%m/%d')
-        count = MovieRequest.query.filter(
-            func.date(MovieRequest.date_added) == day.date()
-        ).count()
-        req_trend_labels.append(day_str)
-        req_trend_counts.append(count)
+    try:
+        trend_rows = (
+            db.session.query(
+                func.date(MovieRequest.date_added).label("day"),
+                func.count(MovieRequest.id).label("count"),
+            )
+            .filter(MovieRequest.date_added >= since)
+            .group_by(func.date(MovieRequest.date_added))
+            .all()
+        )
+        trend_map = {}
+        for row in trend_rows:
+            day_key = row.day
+            if hasattr(day_key, "strftime"):
+                trend_map[day_key.strftime("%Y-%m-%d")] = row.count
+            else:
+                trend_map[str(day_key)] = row.count
 
-    top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
-    recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(10).all()
-    likely_no_result_terms = SearchTerm.query.filter(SearchTerm.count <= 2).order_by(SearchTerm.count.desc()).limit(10).all()
+        for i in range(days, -1, -1):
+            day = datetime.utcnow() - timedelta(days=i)
+            req_trend_labels.append(day.strftime('%m/%d'))
+            req_trend_counts.append(trend_map.get(day.strftime("%Y-%m-%d"), 0))
+    except Exception:
+        db.session.rollback()
+        stats_warnings.append("Request trend aggregation is temporarily unavailable.")
+        for i in range(days, -1, -1):
+            day = datetime.utcnow() - timedelta(days=i)
+            req_trend_labels.append(day.strftime('%m/%d'))
+            req_trend_counts.append(0)
 
-    ad_events = AnalyticsEvent.query.filter(AnalyticsEvent.date_added >= since).all()
+    try:
+        top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
+        recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(10).all()
+        likely_no_result_terms = SearchTerm.query.filter(SearchTerm.count <= 2).order_by(SearchTerm.count.desc()).limit(10).all()
+    except Exception:
+        db.session.rollback()
+        top_searches = []
+        recent_searches = []
+        likely_no_result_terms = []
+        stats_warnings.append("Search analytics is temporarily unavailable.")
+
+    ad_events = []
+    try:
+        ad_events = AnalyticsEvent.query.filter(AnalyticsEvent.date_added >= since).all()
+    except Exception:
+        db.session.rollback()
+        stats_warnings.append("Ad analytics table is unavailable. Run migrations on Heroku.")
+
     ad_stats = defaultdict(lambda: {"views": 0, "clicks": 0, "mobile_views": 0, "desktop_views": 0})
     for event in ad_events:
         if event.event == "ad_slot_view":
@@ -182,6 +217,7 @@ def stats_dashboard():
         pending_requests=pending_requests,
         filled_requests=filled_requests,
         rejected_requests=rejected_requests,
+        req_rejected=rejected_requests,
         fill_rate=fill_rate,
         req_filled=filled_requests,
         req_total=req_total,
@@ -211,6 +247,7 @@ def stats_dashboard():
         ad_mobile_share=ad_mobile_share,
         server_stats=server_stats,
         top_content_rows=content_performance,
+        stats_warnings=stats_warnings,
     )
 
     # Cache per range for 10 minutes
