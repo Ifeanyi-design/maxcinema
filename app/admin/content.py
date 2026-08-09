@@ -1,3 +1,6 @@
+import re
+from urllib.parse import urlparse
+
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 
@@ -6,6 +9,20 @@ from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, Season, 
 from ..indexnow import submit_for_video, submit_for_episode, urls_for_video, submit_indexnow_urls
 from ..utils import ContentImporter
 from .helpers import admin_required
+
+
+def _normalize_bulk_link(raw_link: str) -> str:
+    link = (raw_link or "").strip()
+    if not link:
+        return ""
+    # If it's a full URL, try to extract the episode code from /watch/<code>
+    parsed = urlparse(link)
+    path = parsed.path if parsed.scheme else link
+    m = re.search(r"/watch/([^/?#]+)", path)
+    if m:
+        return m.group(1).strip()
+    # Fallback: if the user pasted just the code, keep it.
+    return link
 
 
 @admin_bp.route('/import-tmdb', methods=['GET', 'POST'])
@@ -47,7 +64,9 @@ def bulk_link_season(series_id, season_num):
 
     if request.method == 'POST':
         links_text = (request.form.get('link_list') or '').strip()
-        links = [l.strip() for l in links_text.split('\n') if l.strip()]
+        raw_links = [l.strip() for l in links_text.split('\n') if l.strip()]
+        links = [_normalize_bulk_link(link) for link in raw_links]
+        links = [link for link in links if link]
 
         episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
 
