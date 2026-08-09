@@ -11,18 +11,40 @@ from ..utils import ContentImporter
 from .helpers import admin_required
 
 
+def _extract_watch_code(text: str) -> str | None:
+    m = re.search(r"/watch/([^/?#\s]+)", text)
+    return m.group(1).strip() if m else None
+
+
 def _normalize_bulk_link(raw_link: str) -> str:
     link = (raw_link or "").strip()
     if not link:
         return ""
     # If it's a full URL, try to extract the episode code from /watch/<code>
-    parsed = urlparse(link)
-    path = parsed.path if parsed.scheme else link
-    m = re.search(r"/watch/([^/?#]+)", path)
-    if m:
-        return m.group(1).strip()
-    # Fallback: if the user pasted just the code, keep it.
-    return link
+    code = _extract_watch_code(link)
+    # Fallback: if the user pasted just the code (no /watch/ segment), keep it.
+    return code if code else link
+
+
+def normalize_bulk_links(links_text: str) -> list:
+    """Split pasted text into individual episode codes/links.
+
+    Handles normal newline-separated input, \\r\\n / lone \\r line endings,
+    and the edge case where the paste collapses into a single line but still
+    contains multiple /watch/<code> URLs jammed together.
+    """
+    text = (links_text or "").strip()
+    if not text:
+        return []
+
+    lines = [l.strip() for l in re.split(r"[\r\n]+", text) if l.strip()]
+
+    if len(lines) <= 1:
+        codes = re.findall(r"/watch/([^/?#\s]+)", text)
+        if len(codes) > 1:
+            return [c.strip() for c in codes]
+
+    return [_normalize_bulk_link(line) for line in lines]
 
 
 @admin_bp.route('/import-tmdb', methods=['GET', 'POST'])
@@ -64,9 +86,7 @@ def bulk_link_season(series_id, season_num):
 
     if request.method == 'POST':
         links_text = (request.form.get('link_list') or '').strip()
-        raw_links = [l.strip() for l in links_text.split('\n') if l.strip()]
-        links = [_normalize_bulk_link(link) for link in raw_links]
-        links = [link for link in links if link]
+        links = [link for link in normalize_bulk_links(links_text) if link]
 
         episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
 
