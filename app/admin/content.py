@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 
 from . import admin_bp
-from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, Season, Episode
+from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, Season, Episode, StorageServer
 from ..indexnow import submit_for_video, submit_for_episode, urls_for_video, submit_indexnow_urls
 from ..utils import ContentImporter
 from .helpers import admin_required
@@ -88,6 +88,22 @@ def bulk_link_season(series_id, season_num):
         links_text = (request.form.get('link_list') or '').strip()
         links = [link for link in normalize_bulk_links(links_text) if link]
 
+        # Which storage server these pasted links belong to (replaces the old
+        # unused "distribute_telegram" checkbox with an explicit server pick).
+        storage_server_id_raw = (request.form.get('storage_server_id') or '').strip()
+        storage_server = None
+        if storage_server_id_raw:
+            try:
+                storage_server = StorageServer.query.filter_by(
+                    id=int(storage_server_id_raw), active=True
+                ).first()
+            except ValueError:
+                storage_server = None
+
+        if not storage_server:
+            flash("Please select a valid, active storage server for these links.", "error")
+            return redirect(url_for('admin.bulk_link_season', series_id=series_id, season_num=season_num))
+
         episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
 
         if not episodes:
@@ -98,14 +114,22 @@ def bulk_link_season(series_id, season_num):
         for i, episode in enumerate(episodes):
             if i < len(links):
                 episode.download_link = links[i]
+                episode.storage_server_id = storage_server.id
                 updated += 1
 
         db.session.commit()
-        flash(f"Updated {updated} episode(s) with download links.", "success")
+        flash(f"Updated {updated} episode(s) with download links on {storage_server.name}.", "success")
         return redirect(url_for('admin.view_episodes', prev='serie', name=series_obj.all_video.slug, ns=season_num, season_id=season.id))
 
     episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
-    return render_template('admin/bulk_links.html', series=series_obj, season=season, episodes=episodes)
+    storage_servers = StorageServer.query.filter_by(active=True).order_by(StorageServer.name).all()
+    return render_template(
+        'admin/bulk_links.html',
+        series=series_obj,
+        season=season,
+        episodes=episodes,
+        storage_servers=storage_servers,
+    )
 
 
 @admin_bp.route('/incomplete-content')
