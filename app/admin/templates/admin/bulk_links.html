@@ -19,8 +19,13 @@
                         {% for ep in episodes %}
                         <div class="flex justify-between border-b border-gray-800 py-2 text-sm">
                             <span>Ep {{ ep.episode_number }}: {{ ep.name }}</span>
-                            <span class="{{ 'text-green-500' if ep.download_link else 'text-red-500' }}">
-                                {{ 'Has Link ✅' if ep.download_link else 'No Link ❌' }}
+                            <span class="text-right">
+                                <span class="{{ 'text-green-500' if ep.download_link else 'text-red-500' }}">
+                                    {{ 'Has Link ✅' if ep.download_link else 'No Link ❌' }}
+                                </span>
+                                <span class="block text-xs text-gray-500">
+                                    {{ ep.storage_server.name if ep.storage_server else 'No server assigned' }}
+                                </span>
                             </span>
                         </div>
                         {% endfor %}
@@ -34,12 +39,28 @@
                               placeholder="Paste your links (one per line)..."
                               required></textarea>
                     
-                    <div class="mt-4 flex items-center bg-gray-700/50 p-3 rounded border border-gray-600">
-                        <input type="checkbox" id="distribute_telegram" name="distribute_telegram" class="w-5 h-5 text-green-600 rounded focus:ring-green-500 bg-gray-700 border-gray-600" checked>
-                        <label for="distribute_telegram" class="ml-3 text-sm font-medium text-gray-200">
-                            Distribute across <b>Telegram Servers</b> (Round-Robin)
-                            <p class="text-xs text-gray-400 font-normal">If checked, links will cycle: Server A → Server B → Server A...</p>
+                    <div class="mt-4 bg-gray-700/50 p-3 rounded border border-gray-600">
+                        <label for="storage_server_id" class="block text-sm font-medium text-gray-200 mb-2">
+                            Storage Server
                         </label>
+                        {% if storage_servers %}
+                        <select id="storage_server_id" name="storage_server_id"
+                                class="w-full bg-gray-900 text-white border border-gray-600 rounded p-2 focus:border-yellow-500 focus:outline-none"
+                                required>
+                            <option value="" disabled selected>-- Select storage server --</option>
+                            {% for server in storage_servers %}
+                            <option value="{{ server.id }}">{{ server.name }} ({{ server.server_type }})</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-400 font-normal mt-2">
+                            Every episode updated in this batch will be assigned to the server you pick here.
+                        </p>
+                        {% else %}
+                        <p class="text-sm text-red-400">
+                            No active storage servers configured.
+                            <a href="{{ url_for('admin.add_storage_server') }}" class="text-blue-400 hover:text-blue-300 underline">Add one first</a>.
+                        </p>
+                        {% endif %}
                     </div>
 
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded mt-4 transition">
