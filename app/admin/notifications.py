@@ -1,7 +1,8 @@
 import os
+import threading
 from datetime import datetime
 
-from flask import render_template, redirect, url_for, request, flash
+from flask import render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_required
 from sqlalchemy import func
 
@@ -9,7 +10,8 @@ from . import admin_bp
 from ..models import AllVideo, db, Trailer, MovieRequest, User, Series, WatchlistNotify
 from .helpers import (
     admin_required, _get_email_provider_config, _email_transport_status,
-    _send_email_notification, _send_telegram_notification, _send_release_notifications,
+    _send_email_notification, _send_telegram_notification,
+    _send_release_notifications_async,
 )
 
 
@@ -152,19 +154,31 @@ def notification_settings():
 @admin_required
 def release_notify(video_id):
     video = AllVideo.query.get_or_404(video_id)
-    summary = _send_release_notifications(video)
-    if summary["queued"] == 0:
+
+    pending_count = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).count()
+    if pending_count == 0:
         flash("No pending notifications for this video.", "info")
-    elif summary["errors"]:
-        flash(
-            f"Notifications: email {summary['emailed']}, telegram {summary['telegram']}, "
-            f"marked {summary['marked']}/{summary['queued']}. Errors: {'; '.join(summary['errors'][:3])}",
-            "warning"
-        )
-    else:
-        flash(
-            f"Notifications sent: email {summary['emailed']}, telegram {summary['telegram']}, "
-            f"marked {summary['marked']}/{summary['queued']}.",
-            "success"
-        )
+        return redirect(url_for('admin.dashboard'))
+
+    # Fire the actual sending on a background thread instead of blocking this
+    # request. Email + Telegram sends can each take up to 45s per person and
+    # this loop used to run inline, which routinely blew past Heroku's 30s
+    # router timeout and got the whole worker killed mid-batch (see the
+    # H12 / WORKER TIMEOUT crash on this exact route). Sends are now
+    # committed one row at a time inside _send_release_notifications, so a
+    # thread getting cut off mid-run can't cause duplicate notifications --
+    # it just leaves the remaining rows pending for the next click.
+    app = current_app._get_current_object()
+    threading.Thread(
+        target=_send_release_notifications_async,
+        args=(app, video.id),
+        daemon=True,
+    ).start()
+
+    flash(
+        f"Sending notifications for '{video.name}' in the background "
+        f"({pending_count} pending). This can take a few minutes for a "
+        f"large list -- check back on the watchlist page to see it drop.",
+        "success"
+    )
     return redirect(url_for('admin.dashboard'))
