@@ -88,6 +88,10 @@ def bulk_link_season(series_id, season_num):
         links_text = (request.form.get('link_list') or '').strip()
         links = [link for link in normalize_bulk_links(links_text) if link]
 
+        # 'scratch'  -> overwrite starting from episode 1, ignoring existing links
+        # 'continue' -> only fill episodes that don't already have a link, in order
+        mode = (request.form.get('mode') or 'scratch').strip()
+
         # Which storage server these pasted links belong to (replaces the old
         # unused "distribute_telegram" checkbox with an explicit server pick).
         storage_server_id_raw = (request.form.get('storage_server_id') or '').strip()
@@ -110,15 +114,35 @@ def bulk_link_season(series_id, season_num):
             flash("No episodes found in this season.", "error")
             return redirect(url_for('admin.bulk_link_season', series_id=series_id, season_num=season_num))
 
+        if mode == 'continue':
+            target_episodes = [ep for ep in episodes if not (ep.download_link or '').strip()]
+        else:
+            target_episodes = episodes
+
+        if not target_episodes:
+            flash("Every episode in this season already has a link — nothing to continue.", "warning")
+            return redirect(url_for('admin.bulk_link_season', series_id=series_id, season_num=season_num))
+
         updated = 0
-        for i, episode in enumerate(episodes):
+        for i, episode in enumerate(target_episodes):
             if i < len(links):
                 episode.download_link = links[i]
                 episode.storage_server_id = storage_server.id
                 updated += 1
 
         db.session.commit()
-        flash(f"Updated {updated} episode(s) with download links on {storage_server.name}.", "success")
+
+        leftover_links = len(links) - updated
+        remaining_unlinked = len(target_episodes) - updated
+        mode_label = "continuing from unlinked episodes" if mode == 'continue' else "from scratch"
+
+        msg = f"Updated {updated} episode(s) with download links on {storage_server.name} ({mode_label})."
+        if leftover_links > 0:
+            msg += f" {leftover_links} pasted link(s) were unused — more links than target episodes."
+        if remaining_unlinked > 0:
+            msg += f" {remaining_unlinked} target episode(s) still have no link — fewer links than episodes."
+
+        flash(msg, "success" if leftover_links == 0 and remaining_unlinked == 0 else "warning")
         return redirect(url_for('admin.view_episodes', prev='serie', name=series_obj.all_video.slug, ns=season_num, season_id=season.id))
 
     episodes = Episode.query.filter_by(season_id=season.id).order_by(Episode.episode_number).all()
