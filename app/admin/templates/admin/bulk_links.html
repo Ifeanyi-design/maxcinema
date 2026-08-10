@@ -63,9 +63,18 @@
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded mt-4 transition">
-                        🚀 Auto-Match & Save Links
+                    <button type="submit" name="mode" value="scratch"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded mt-4 transition">
+                        🚀 Save From Scratch (Overwrite All)
                     </button>
+                    <button type="submit" name="mode" value="continue"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded mt-3 transition">
+                        ➡️ Continue (Skip Episodes That Already Have a Link)
+                    </button>
+                    <p class="text-xs text-gray-400 mt-2">
+                        <b>Save From Scratch</b> assigns your pasted links to episodes in order, starting at Episode 1, overwriting any existing links.
+                        <b>Continue</b> skips episodes that already have a link and fills only the remaining ones, in order.
+                    </p>
                 </form>
 
             </div>
