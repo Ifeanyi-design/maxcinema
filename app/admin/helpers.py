@@ -267,8 +267,16 @@ def _send_release_notifications(video):
             if sent_any:
                 row.notified = True
                 marked += 1
-
-        db.session.commit()
+                # Commit right after each successful send. If this batch gets
+                # interrupted (crash, timeout, dyno restart) partway through,
+                # everyone already notified stays marked notified=True, so a
+                # retry only picks up the remaining rows instead of
+                # re-notifying people who already got a message.
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    errors.append(f"commit:{row.id}:{e}")
     except Exception as e:
         db.session.rollback()
         errors.append(f"fatal:{e}")
@@ -280,6 +288,36 @@ def _send_release_notifications(video):
         "marked": marked,
         "errors": errors[:8]
     }
+
+
+def _send_release_notifications_async(app, video_id):
+    """Run _send_release_notifications outside the request/response cycle.
+
+    Runs on a background thread so the admin's click returns instantly
+    instead of holding a web worker (and Heroku's 30s router limit)
+    hostage for however long email/Telegram sends take. Each row is
+    committed individually inside _send_release_notifications, so if this
+    thread gets cut off (dyno restart, deploy) partway through, everyone
+    already notified stays marked notified=True and a retry only picks up
+    what's left -- no duplicate sends.
+
+    Note: this runs inside the same web dyno process. It is not a durable
+    job queue -- if the dyno restarts mid-run, whatever hasn't been sent
+    yet simply waits for the next manual "notify" click. That's an
+    acceptable tradeoff for a single-dyno app with no Redis/worker
+    dyno; if volume grows enough that this matters, move this to a
+    proper task queue (RQ/Celery + a worker dyno) instead.
+    """
+    with app.app_context():
+        try:
+            video = AllVideo.query.get(video_id)
+            if video is None:
+                return
+            _send_release_notifications(video)
+        except Exception:
+            db.session.rollback()
+        finally:
+            db.session.remove()
 
 
 def _collect_manual_indexnow_urls(limit_per_type=25):
