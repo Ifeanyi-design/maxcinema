@@ -486,14 +486,21 @@ def _find_or_create_match_competition(raw, sport, provider_name):
 def _find_or_create_match_team(raw, side, sport, provider_name):
     slug = _slug(raw.get(f"{side}_team_slug") or raw.get(f"{side}_team"), f"{side}-team")
     team = SportsTeam.query.filter_by(sport_id=sport.id, slug=slug).first()
+    logo = raw.get(f"{side}_team_logo") or raw.get(f"{side}_logo")
+    provider_id = str(raw.get(f"{side}_team_provider_id") or raw.get(f"{side}_id") or slug)
     if team:
+        if not team.logo_url and logo:
+            team.logo_url = logo
+        if not team.provider_team_id and provider_id:
+            team.provider_team_id = provider_id
         return team
     team = SportsTeam(
         sport=sport,
         slug=slug,
         name=raw.get(f"{side}_team") or slug.replace("-", " ").title(),
         provider_name=provider_name,
-        provider_team_id=str(raw.get(f"{side}_team_provider_id") or slug),
+        provider_team_id=provider_id,
+        logo_url=logo,
     )
     db.session.add(team)
     return team

@@ -279,11 +279,44 @@ def teams():
 
 @api_bp.route("/teams/<slug>")
 def team_detail(slug):
+    slug_norm = _slug(slug)
     team = (
-        SportsTeam.query.join(SportsSport)
-        .filter(SportsSport.slug == "football", SportsTeam.slug == slug)
-        .first_or_404()
+        SportsTeam.query
+        .filter(
+            or_(
+                SportsTeam.slug == slug,
+                SportsTeam.slug == slug_norm,
+                SportsTeam.name.ilike(slug.replace("-", " ")),
+                SportsTeam.name.ilike(slug),
+            )
+        )
+        .first()
     )
+    if not team and slug.isdigit():
+        team = SportsTeam.query.get(int(slug))
+
+    if not team:
+        # Check by provider_team_id
+        team = SportsTeam.query.filter_by(provider_team_id=slug).first()
+
+    if not team:
+        # Dynamically create team if not found so team pages always load
+        sport = SportsSport.query.filter_by(slug="football").first()
+        if not sport:
+            sport = SportsSport(name="Football", slug="football", enabled=True)
+            db.session.add(sport)
+            db.session.flush()
+        team_name = slug.replace("-", " ").title()
+        team = SportsTeam(
+            sport=sport,
+            slug=slug_norm,
+            name=team_name,
+            provider_name="manual",
+            provider_team_id=slug_norm,
+        )
+        db.session.add(team)
+        db.session.commit()
+
     match_filter = or_(SportsMatch.home_team_id == team.id, SportsMatch.away_team_id == team.id)
     recent = (
         SportsMatch.query.filter_by(archived=False)
@@ -305,13 +338,15 @@ def team_detail(slug):
         .order_by(SportsCompetition.name.asc(), SportsStanding.position.asc())
         .all()
     )
-    standings = [
-        {
-            "competition": competition_payload(row.competition),
-            **standing_payload(row),
-        }
-        for row in table_rows
-    ]
+    standings = []
+    for row in table_rows:
+        comp_payload = competition_payload(row.competition) if row.competition else None
+        st_data = standing_payload(row)
+        standings.append({
+            "competition": comp_payload,
+            **st_data,
+        })
+
     return jsonify(
         {
             "team": team_payload(team),
@@ -320,6 +355,7 @@ def team_detail(slug):
             "standings": standings,
         }
     )
+
 
 
 @api_bp.route("/matches/<int:match_id>")
