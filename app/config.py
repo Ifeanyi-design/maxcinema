@@ -102,8 +102,9 @@ class Config:
     # ---- Sports Hub ----
     SPORTS_PROVIDER = os.environ.get("SPORTS_PROVIDER", "thesportsdb")
     SPORTS_TSDB_KEY = os.environ.get("SPORTS_TSDB_KEY", "3")
-    # Optional JSON override of tracked leagues, e.g. '[{"id":"4328","name":"English Premier League","country":"England","featured":true}]'
     SPORTS_TSDB_LEAGUES = os.environ.get("SPORTS_TSDB_LEAGUES")
+    SPORTS_APIFOOTBALL_KEY = os.environ.get("SPORTS_APIFOOTBALL_KEY")
+    SPORTS_APIFOOTBALL_HOST = os.environ.get("SPORTS_APIFOOTBALL_HOST", "https://v3.football.api-sports.io")
 
     BYTESCALE_API_KEY = os.environ.get("BYTESCALE_API_KEY", "")
     BYTESCALE_ACCOUNT_ID = os.environ.get("BYTESCALE_ACCOUNT_ID", "")

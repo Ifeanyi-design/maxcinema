@@ -250,5 +250,12 @@ def get_provider(provider_name=None):
             except Exception:  # noqa: BLE001
                 leagues = None
         return TheSportsDBProvider(api_key=key, leagues=leagues)
+    if name == "api-football":
+        # Lazy import to avoid a circular import with providers_apifootball at boot.
+        from .providers_apifootball import ApiFootballProvider
+
+        key = current_app.config.get("SPORTS_APIFOOTBALL_KEY")
+        host = current_app.config.get("SPORTS_APIFOOTBALL_HOST")
+        return ApiFootballProvider(api_key=key, host=host)
     provider_class = PROVIDERS.get(name, MockFootballProvider)
     return provider_class()
