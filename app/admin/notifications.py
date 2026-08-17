@@ -156,6 +156,9 @@ def release_notify(video_id):
     video = AllVideo.query.get_or_404(video_id)
 
     pending_count = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).count()
+    current_app.logger.info(
+        f"[release-notify-trigger] video_id={video_id} '{video.name}' pending={pending_count}"
+    )
     if pending_count == 0:
         flash("No pending notifications for this video.", "info")
         return redirect(url_for('admin.dashboard'))
