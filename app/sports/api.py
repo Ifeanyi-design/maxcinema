@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from flask import Blueprint, current_app, jsonify, request
+from sqlalchemy import or_
 
 from .services import (
     get_enabled_competitions,
@@ -19,6 +20,7 @@ from ..models import (
     SportsSport,
     SportsStanding,
     SportsStreamSource,
+    SportsTeam,
 )
 
 
@@ -242,6 +244,77 @@ def matches():
 
     matches = query.limit(limit).all()
     return jsonify({"matches": [match_payload(m) for m in matches], "count": len(matches)})
+
+
+@api_bp.route("/teams")
+def teams():
+    """List football teams already represented in the sports database."""
+    competition = request.args.get("competition")
+    query_text = (request.args.get("q") or "").strip()
+    try:
+        limit = min(int(request.args.get("limit", 100)), 200)
+    except (TypeError, ValueError):
+        limit = 100
+
+    query = SportsTeam.query.join(SportsSport).filter(SportsSport.slug == "football")
+    if query_text:
+        query = query.filter(SportsTeam.name.ilike(f"%{query_text}%"))
+    if competition:
+        query = (
+            query.join(
+                SportsMatch,
+                or_(SportsMatch.home_team_id == SportsTeam.id, SportsMatch.away_team_id == SportsTeam.id),
+            )
+            .join(SportsCompetition, SportsMatch.competition_id == SportsCompetition.id)
+            .filter(SportsCompetition.slug == competition, SportsMatch.archived.is_(False))
+        )
+    teams = query.order_by(SportsTeam.name.asc()).distinct().limit(limit).all()
+    return jsonify({"teams": [team_payload(team) for team in teams], "count": len(teams)})
+
+
+@api_bp.route("/teams/<slug>")
+def team_detail(slug):
+    team = (
+        SportsTeam.query.join(SportsSport)
+        .filter(SportsSport.slug == "football", SportsTeam.slug == slug)
+        .first_or_404()
+    )
+    match_filter = or_(SportsMatch.home_team_id == team.id, SportsMatch.away_team_id == team.id)
+    recent = (
+        SportsMatch.query.filter_by(archived=False)
+        .filter(match_filter, SportsMatch.status.in_(list(FINISHED_STATUSES)))
+        .order_by(SportsMatch.kickoff_at.desc().nullslast())
+        .limit(10)
+        .all()
+    )
+    upcoming = (
+        SportsMatch.query.filter_by(archived=False)
+        .filter(match_filter, SportsMatch.status.notin_(list(FINISHED_STATUSES)))
+        .order_by(SportsMatch.kickoff_at.asc().nullslast())
+        .limit(10)
+        .all()
+    )
+    table_rows = (
+        SportsStanding.query.join(SportsCompetition)
+        .filter(SportsStanding.team_id == team.id, SportsCompetition.hidden.is_(False))
+        .order_by(SportsCompetition.name.asc(), SportsStanding.position.asc())
+        .all()
+    )
+    standings = [
+        {
+            "competition": competition_payload(row.competition),
+            **standing_payload(row),
+        }
+        for row in table_rows
+    ]
+    return jsonify(
+        {
+            "team": team_payload(team),
+            "recent_matches": [match_payload(match) for match in recent],
+            "upcoming_matches": [match_payload(match) for match in upcoming],
+            "standings": standings,
+        }
+    )
 
 
 @api_bp.route("/matches/<int:match_id>")
