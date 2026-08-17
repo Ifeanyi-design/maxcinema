@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 
 from flask import current_app
 
-from .providers_thedb import TheSportsDBProvider
-
 
 @dataclass(frozen=True)
 class ProviderResult:
@@ -232,7 +230,6 @@ PROVIDERS = {
     "mock": MockFootballProvider,
     "mock-football": MockFootballProvider,
     "demo": DemoSportsProvider,
-    "thesportsdb": TheSportsDBProvider,
 }
 
 
@@ -240,6 +237,9 @@ def get_provider(provider_name=None):
     configured_name = provider_name or current_app.config.get("SPORTS_PROVIDER") or "thesportsdb"
     name = str(configured_name).lower()
     if name == "thesportsdb":
+        # Lazy import to avoid a circular import with providers_thedb at boot.
+        from .providers_thedb import TheSportsDBProvider
+
         key = current_app.config.get("SPORTS_TSDB_KEY")
         leagues = current_app.config.get("SPORTS_TSDB_LEAGUES")
         if isinstance(leagues, str) and leagues.strip().startswith("["):
