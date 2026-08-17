@@ -62,9 +62,11 @@ def _int(value):
 class ApiFootballProvider(SportsProvider):
     name = "api-football"
 
-    def __init__(self, api_key=None, host=None, leagues=None):
+    def __init__(self, api_key=None, host=None, rapidapi_host=None, leagues=None):
         self.api_key = api_key
         self.host = (host or DEFAULT_HOST).rstrip("/")
+        self.rapidapi_host = (rapidapi_host or "").strip()
+        self.use_rapidapi = bool(self.rapidapi_host)
         self.leagues = leagues or APIFOOTBALL_LEAGUES
         if not self.api_key:
             _log.warning("ApiFootballProvider initialized without an API key")
@@ -74,8 +76,15 @@ class ApiFootballProvider(SportsProvider):
         if not self.api_key:
             _log.warning("apifootball: no API key set; skipping %s", path)
             return {}
-        url = f"{self.host}/{path}"
-        headers = {"x-apisports-key": self.api_key}
+        if self.use_rapidapi:
+            url = f"https://{self.rapidapi_host}/v3/{path}"
+            headers = {
+                "X-RapidAPI-Key": self.api_key,
+                "X-RapidAPI-Host": self.rapidapi_host,
+            }
+        else:
+            url = f"{self.host}/{path}"
+            headers = {"x-apisports-key": self.api_key}
         try:
             resp = requests.get(url, params=params, headers=headers, timeout=20)
             data = resp.json()

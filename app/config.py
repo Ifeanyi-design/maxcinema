@@ -105,6 +105,7 @@ class Config:
     SPORTS_TSDB_LEAGUES = os.environ.get("SPORTS_TSDB_LEAGUES")
     SPORTS_APIFOOTBALL_KEY = os.environ.get("SPORTS_APIFOOTBALL_KEY")
     SPORTS_APIFOOTBALL_HOST = os.environ.get("SPORTS_APIFOOTBALL_HOST", "https://v3.football.api-sports.io")
+    SPORTS_APIFOOTBALL_RAPIDAPI_HOST = os.environ.get("SPORTS_APIFOOTBALL_RAPIDAPI_HOST")
 
     BYTESCALE_API_KEY = os.environ.get("BYTESCALE_API_KEY", "")
     BYTESCALE_ACCOUNT_ID = os.environ.get("BYTESCALE_ACCOUNT_ID", "")

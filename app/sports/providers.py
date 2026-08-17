@@ -256,6 +256,7 @@ def get_provider(provider_name=None):
 
         key = current_app.config.get("SPORTS_APIFOOTBALL_KEY")
         host = current_app.config.get("SPORTS_APIFOOTBALL_HOST")
-        return ApiFootballProvider(api_key=key, host=host)
+        rapidapi_host = current_app.config.get("SPORTS_APIFOOTBALL_RAPIDAPI_HOST")
+        return ApiFootballProvider(api_key=key, host=host, rapidapi_host=rapidapi_host)
     provider_class = PROVIDERS.get(name, MockFootballProvider)
     return provider_class()
