@@ -73,6 +73,8 @@ def competition_payload(c):
         "current_season": c.current_season,
         "featured": bool(c.featured),
         "sport": c.sport.slug if c.sport else "football",
+        "provider_competition_id": c.provider_competition_id,
+        "provider_name": c.provider_name,
     }
 
 
@@ -86,6 +88,9 @@ def team_payload(t):
         "short_name": t.short_name,
         "abbr": _abbr(t.name, t.short_name),
         "logo_url": t.logo_url,
+        "country": t.country,
+        "provider_team_id": t.provider_team_id,
+        "provider_name": t.provider_name,
     }
 
 
