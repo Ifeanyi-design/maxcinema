@@ -99,6 +99,12 @@ class Config:
     # OTHER CONFIGS
     # =========================================================
 
+    # ---- Sports Hub ----
+    SPORTS_PROVIDER = os.environ.get("SPORTS_PROVIDER", "thesportsdb")
+    SPORTS_TSDB_KEY = os.environ.get("SPORTS_TSDB_KEY", "3")
+    # Optional JSON override of tracked leagues, e.g. '[{"id":"4328","name":"English Premier League","country":"England","featured":true}]'
+    SPORTS_TSDB_LEAGUES = os.environ.get("SPORTS_TSDB_LEAGUES")
+
     BYTESCALE_API_KEY = os.environ.get("BYTESCALE_API_KEY", "")
     BYTESCALE_ACCOUNT_ID = os.environ.get("BYTESCALE_ACCOUNT_ID", "")
     DEFAULT_IMAGE_UPLOAD_URL = "https://image.tmdb.org/t/p/w500"

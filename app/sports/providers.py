@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 from flask import current_app
 
+from .providers_thedb import TheSportsDBProvider
+
 
 @dataclass(frozen=True)
 class ProviderResult:
@@ -230,10 +232,23 @@ PROVIDERS = {
     "mock": MockFootballProvider,
     "mock-football": MockFootballProvider,
     "demo": DemoSportsProvider,
+    "thesportsdb": TheSportsDBProvider,
 }
 
 
 def get_provider(provider_name=None):
-    configured_name = provider_name or current_app.config.get("SPORTS_PROVIDER") or "mock"
-    provider_class = PROVIDERS.get(str(configured_name).lower(), MockFootballProvider)
+    configured_name = provider_name or current_app.config.get("SPORTS_PROVIDER") or "thesportsdb"
+    name = str(configured_name).lower()
+    if name == "thesportsdb":
+        key = current_app.config.get("SPORTS_TSDB_KEY")
+        leagues = current_app.config.get("SPORTS_TSDB_LEAGUES")
+        if isinstance(leagues, str) and leagues.strip().startswith("["):
+            import json
+
+            try:
+                leagues = json.loads(leagues)
+            except Exception:  # noqa: BLE001
+                leagues = None
+        return TheSportsDBProvider(api_key=key, leagues=leagues)
+    provider_class = PROVIDERS.get(name, MockFootballProvider)
     return provider_class()
