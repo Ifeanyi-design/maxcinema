@@ -144,4 +144,7 @@ def create_app(config_class=Config):
     from .sports import sports_bp
     app.register_blueprint(sports_bp)
 
+    from .sports.cli import sports_cli
+    app.cli.add_command(sports_cli)
+
     return app
