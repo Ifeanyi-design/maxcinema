@@ -211,7 +211,7 @@ def _send_release_notifications(video):
     )
 
     email_cfg = _get_email_provider_config()
-    email_enabled, _ = _email_transport_status(email_cfg)
+    email_enabled, email_provider = _email_transport_status(email_cfg)
 
     tg_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     tg_default_chat = os.getenv("TELEGRAM_NOTIFY_CHAT_ID", "").strip()
@@ -221,6 +221,17 @@ def _send_release_notifications(video):
     telegram = 0
     marked = 0
     errors = []
+
+    # Rows that gave an email but email transport isn't configured at all --
+    # without this, those rows just get silently skipped below with zero
+    # trace of why nobody got emailed.
+    if not email_enabled:
+        emailless_count = sum(1 for r in rows if r.email)
+        if emailless_count:
+            errors.append(
+                f"email:{email_provider}:not configured -- {emailless_count} "
+                f"row(s) wanted email but no SMTP/Resend credentials are set"
+            )
 
     try:
         for row in rows:
@@ -312,10 +323,18 @@ def _send_release_notifications_async(app, video_id):
         try:
             video = AllVideo.query.get(video_id)
             if video is None:
+                app.logger.warning(f"[release-notify] video_id={video_id} not found, skipping")
                 return
-            _send_release_notifications(video)
+            summary = _send_release_notifications(video)
+            app.logger.info(
+                f"[release-notify] video_id={video_id} '{video.name}': "
+                f"queued={summary['queued']} emailed={summary['emailed']} "
+                f"telegram={summary['telegram']} marked={summary['marked']} "
+                f"errors={summary['errors']}"
+            )
         except Exception:
             db.session.rollback()
+            app.logger.exception(f"[release-notify] video_id={video_id} background send crashed")
         finally:
             db.session.remove()
 
