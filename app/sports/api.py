@@ -52,6 +52,15 @@ def _abbr(name, short_name):
     return "".join(parts[:3]).upper() or "TBD"
 
 
+def _iso(value):
+    """Safely serialize a datetime; tolerate values already stored as strings."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
 def competition_payload(c):
     return {
         "id": c.id,
@@ -91,7 +100,7 @@ def match_payload(m):
         "status": m.status or "scheduled",
         "provider_status": m.provider_status,
         "minute": m.minute,
-        "kickoff_at": m.kickoff_at.isoformat() if m.kickoff_at else None,
+        "kickoff_at": _iso(m.kickoff_at),
         "featured": bool(m.featured),
     }
 
@@ -242,22 +251,29 @@ def match_detail(match_id):
         events = get_match_events(match_id)
     except Exception:
         events = []
-    streams = SportsStreamSource.query.filter_by(match_id=match.id, enabled=True).order_by(
-        SportsStreamSource.priority.asc()
-    ).all()
-    if not streams and match.competition_id:
-        streams = (
-            SportsStreamSource.query.filter_by(competition_id=match.competition_id, enabled=True)
-            .order_by(SportsStreamSource.priority.asc())
-            .all()
+    try:
+        streams = SportsStreamSource.query.filter_by(match_id=match.id, enabled=True).order_by(
+            SportsStreamSource.priority.asc()
+        ).all()
+        if not streams and match.competition_id:
+            streams = (
+                SportsStreamSource.query.filter_by(competition_id=match.competition_id, enabled=True)
+                .order_by(SportsStreamSource.priority.asc())
+                .all()
+            )
+        return jsonify(
+            {
+                "match": match_payload(match),
+                "events": events,
+                "streams": [stream_payload(s) for s in streams],
+            }
         )
-    return jsonify(
-        {
-            "match": match_payload(match),
-            "events": events,
-            "streams": [stream_payload(s) for s in streams],
-        }
-    )
+    except Exception as exc:
+        current_app.logger.exception("match_detail serialization failed for %s", match_id)
+        return (
+            jsonify({"match": None, "events": events, "streams": [], "error": str(exc)}),
+            200,
+        )
 
 
 @api_bp.route("/competitions/<slug>/standings")
