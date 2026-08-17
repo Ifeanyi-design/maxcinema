@@ -325,9 +325,9 @@ def _send_release_notifications_async(app, video_id):
             if video is None:
                 app.logger.warning(f"[release-notify] video_id={video_id} not found, skipping")
                 return
-            app.logger.info(f"[release-notify] START video_id={video_id} '{video.name}'")
+            app.logger.warning(f"[release-notify] START video_id={video_id} '{video.name}'")
             summary = _send_release_notifications(video)
-            app.logger.info(
+            app.logger.warning(
                 f"[release-notify] video_id={video_id} '{video.name}': "
                 f"queued={summary['queued']} emailed={summary['emailed']} "
                 f"telegram={summary['telegram']} marked={summary['marked']} "
