@@ -6,7 +6,7 @@ from .models import (
 )
 import json
 import os
-from flask import Flask, request
+from flask import Flask, request, has_request_context
 from .config import Config
 from werkzeug.middleware.proxy_fix import ProxyFix
 from .extensions import db, migrate, login_manager
@@ -103,6 +103,11 @@ def create_app(config_class=Config):
         )
 
     def get_country_code() -> str:
+        # Background threads (release notifications, etc.) have an app context
+        # but no request context; guard so render_template can't crash on `request`.
+        if not has_request_context():
+            return "XX"
+
         # Cloudflare header (best)
         cc = request.headers.get("CF-IPCountry")
         if cc and len(cc) == 2:
