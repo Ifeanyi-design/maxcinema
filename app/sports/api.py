@@ -15,7 +15,9 @@ from ..extensions import db
 from ..models import (
     SportsCompetition,
     SportsMatch,
+    SportsMatchEvent,
     SportsSport,
+    SportsStanding,
     SportsStreamSource,
 )
 
@@ -127,6 +129,36 @@ def stream_payload(s):
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+import re
+
+_PREFIX_RE = re.compile(
+    r"^(german|spanish|italian|french|english|portuguese|dutch|turkish)\s+",
+    re.IGNORECASE,
+)
+
+
+def _norm_name(name: str) -> str:
+    return _PREFIX_RE.sub("", (name or "").strip()).lower()
+
+
+def dedupe_competitions(comps):
+    """Collapse provider variants like 'German Bundesliga' vs 'Bundesliga'."""
+    seen = {}
+    for c in comps:
+        key = _norm_name(c.name)
+        existing = seen.get(key)
+        if existing is None:
+            seen[key] = c
+        else:
+            # keep the one with a logo or the shorter (canonical) name
+            if (not existing.logo_url and c.logo_url) or len(c.name) < len(existing.name):
+                seen[key] = c
+    return list(seen.values())
+
+
+# ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
 @api_bp.route("/")
@@ -148,7 +180,7 @@ def meta():
             "provider": "thesportsdb",
             "sport": "football",
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "competitions": [competition_payload(c) for c in competitions],
+            "competitions": [competition_payload(c) for c in dedupe_competitions(competitions)],
             "live_count": live_count,
         }
     )
@@ -157,7 +189,7 @@ def meta():
 @api_bp.route("/competitions")
 def competitions():
     comps = get_enabled_competitions("football")
-    return jsonify({"competitions": [competition_payload(c) for c in comps]})
+    return jsonify({"competitions": [competition_payload(c) for c in dedupe_competitions(comps)]})
 
 
 @api_bp.route("/live")
@@ -206,8 +238,10 @@ def matches():
 @api_bp.route("/matches/<int:match_id>")
 def match_detail(match_id):
     match = SportsMatch.query.get_or_404(match_id)
-    sync_match_events(match)
-    events = get_match_events(match_id)
+    try:
+        events = get_match_events(match_id)
+    except Exception:
+        events = []
     streams = SportsStreamSource.query.filter_by(match_id=match.id, enabled=True).order_by(
         SportsStreamSource.priority.asc()
     ).all()
