@@ -240,7 +240,10 @@ def sync_match_events(match, provider=None):
     )
     for raw_event in result.payload or []:
         _upsert_event(match, raw_event, provider.name)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     return result
 
 
@@ -498,6 +501,21 @@ def _find_or_create_match_team(raw, side, sport, provider_name):
 
 def _upsert_event(match, raw, provider_name):
     provider_event_id = str(raw.get("provider_event_id") or raw.get("id") or "")
+
+    team = None
+    team_slug = raw.get("team_slug")
+    if team_slug:
+        team = SportsTeam.query.filter_by(sport_id=match.sport_id, slug=_slug(team_slug, "team")).first()
+
+    event_type = raw.get("event_type") or "update"
+    minute = raw.get("minute")
+    clock = raw.get("clock")
+    player_name = raw.get("player_name")
+    related_player_name = raw.get("related_player_name")
+    summary = raw.get("summary")
+    sort_order = int(raw.get("sort_order") or minute or 0)
+    occurred_at = _parse_datetime(raw.get("occurred_at"))
+
     event = None
     if provider_event_id:
         event = SportsMatchEvent.query.filter_by(
@@ -506,24 +524,34 @@ def _upsert_event(match, raw, provider_name):
             provider_event_id=provider_event_id,
         ).first()
     if not event:
-        event = SportsMatchEvent(match=match, provider_name=provider_name, provider_event_id=provider_event_id)
+        event = SportsMatchEvent(
+            match=match,
+            provider_name=provider_name,
+            provider_event_id=provider_event_id,
+            event_type=event_type,
+            minute=minute,
+            clock=clock,
+            team=team,
+            player_name=player_name,
+            related_player_name=related_player_name,
+            summary=summary,
+            sort_order=sort_order,
+            provider_payload=raw,
+            occurred_at=occurred_at,
+        )
         db.session.add(event)
+        return event
 
-    team = None
-    team_slug = raw.get("team_slug")
-    if team_slug:
-        team = SportsTeam.query.filter_by(sport_id=match.sport_id, slug=_slug(team_slug, "team")).first()
-
-    event.event_type = raw.get("event_type") or "update"
-    event.minute = raw.get("minute")
-    event.clock = raw.get("clock")
+    event.event_type = event_type
+    event.minute = minute
+    event.clock = clock
     event.team = team
-    event.player_name = raw.get("player_name")
-    event.related_player_name = raw.get("related_player_name")
-    event.summary = raw.get("summary")
-    event.sort_order = int(raw.get("sort_order") or raw.get("minute") or 0)
+    event.player_name = player_name
+    event.related_player_name = related_player_name
+    event.summary = summary
+    event.sort_order = sort_order
     event.provider_payload = raw
-    event.occurred_at = _parse_datetime(raw.get("occurred_at"))
+    event.occurred_at = occurred_at
     return event
 
 
