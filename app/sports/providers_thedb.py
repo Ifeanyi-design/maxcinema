@@ -171,6 +171,11 @@ class TheSportsDBProvider(SportsProvider):
             return []
         out = []
         for lg in self.leagues:
+            logo_url = None
+            data = self._get("lookupleague.php", params={"id": lg["id"]})
+            league = (data.get("leagues") or [{}])[0]
+            if league:
+                logo_url = league.get("strBadge") or league.get("strLogo")
             out.append(
                 {
                     "provider_competition_id": lg["id"],
@@ -178,6 +183,7 @@ class TheSportsDBProvider(SportsProvider):
                     "name": lg["name"],
                     "slug": _slug(lg["name"]),
                     "country": lg.get("country"),
+                    "logo_url": logo_url,
                     "current_season": self._season(),
                     "enabled": True,
                     "featured": lg.get("featured", False),
