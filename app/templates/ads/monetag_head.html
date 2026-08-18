@@ -1,5 +1,6 @@
 {# app/templates/ads/monetag_head.html #}
 
+{% if ad_configuration != 'optimized' %}
 {# 1) Monetag In-Page Push (recommended) #}
 {% if ads.monetag_inpage_zone %}
 <script>
@@ -24,4 +25,5 @@
 {% if ads.monetag_push_zone %}
 <script src="https://5gvci.com/act/files/tag.min.js?z={{ ads.monetag_push_zone }}"
         data-cfasync="false" async></script>
+{% endif %}
 {% endif %}

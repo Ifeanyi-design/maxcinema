@@ -369,10 +369,12 @@
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
     {# ── AD: top banner ───────────────────────────────────────── #}
+    {% if ad_slot_enabled('dl_top_banner', 'banner', true) %}
     <div class="flex justify-center">
       {% set banner_ad_slot = 'dl_top_banner' %}
       {% include 'ads/banner.html' %}
     </div>
+    {% endif %}
 
     {# ── DESCRIPTION ──────────────────────────────────────────── #}
     {% set synopsis = (current_season.description if current_season and current_season.description else video.description) %}
@@ -602,11 +604,13 @@
 
           {# ── Inline ad between server groups ─────────────────────── #}
           {# Renders regardless of smartlink — sits at natural section break #}
+          {% if ad_slot_enabled('dl_inter_server', 'banner') %}
           <div class="text-center py-1">
             <p class="text-[7px] font-black uppercase tracking-[.2em] text-white/15 mb-2">Sponsored</p>
             {% set banner_ad_slot = 'dl_inter_server' %}
             {% include 'ads/banner.html' %}
           </div>
+          {% endif %}
 
           {# ─── SERVER 2 & 3: Smartlink mirrors (muted / backup) ─── #}
           {% if ads and ads.smartlink_url %}
@@ -663,11 +667,13 @@
     </div>
 
     {# ── AD: inline native / banner ───────────────────────────── #}
+    {% if ad_slot_enabled('dl_mid_banner', 'banner', true) %}
     <div class="text-center">
       <p class="text-[8px] font-black uppercase tracking-[.25em] text-white/20 mb-2">Sponsored</p>
       {% set banner_ad_slot = 'dl_mid_banner' %}
       {% include 'ads/banner.html' %}
     </div>
+    {% endif %}
 
     {# ── RELATED CONTENT ──────────────────────────────────────── #}
     {% if suggested %}
@@ -703,10 +709,12 @@
     {% endif %}
 
     {# ── SIDEBAR AD (mobile only) ─────────────────────────────── #}
+    {% if ad_slot_enabled('dl_bottom_sidebar', 'sidebar') %}
     <div class="block md:hidden text-center">
       {% set sidebar_ad_slot = 'dl_bottom_sidebar' %}
       {% include 'ads/sidebar.html' %}
     </div>
+    {% endif %}
 
     {# Spacer for sticky footer ad #}
     <div class="h-4"></div>

@@ -48,6 +48,50 @@ def create_app(config_class=Config):
 
     @app.context_processor
     def inject_ads():
+        # Keep ad-layout experiments reversible.  Environment values are strings,
+        # so validate the mode here rather than relying on Jinja truthiness.
+        ad_configuration = (os.getenv("AD_CONFIGURATION", "legacy") or "legacy").strip().lower()
+        if ad_configuration not in {"legacy", "deduped", "optimized"}:
+            ad_configuration = "legacy"
+
+        def ad_slot_enabled(slot_name, placement_type, is_duplicate=False):
+            """Return whether a placement should render in the active layout mode.
+
+            ``legacy`` deliberately returns True for every placement so rollback
+            restores the existing layout without changing any Adsterra keys.
+            ``deduped`` only suppresses locations explicitly marked as repeated
+            uses of the same banner/sidebar code.  ``optimized`` is the later
+            manager-requested test: one desktop 728x90 banner, Popunder, and
+            Smartlink; Popunder/Smartlink are intentionally not gated here.
+            """
+            if ad_configuration == "legacy":
+                return True
+            if ad_configuration == "deduped":
+                # Keep one normal banner at the place a visitor is most likely
+                # to reach on each type of page.  List/discovery pages retain
+                # the global top banner; detail, watch, and download flows keep
+                # the existing banner nearest their primary action.
+                if placement_type == "banner":
+                    endpoint = request.endpoint if has_request_context() else ""
+                    primary_banner_by_endpoint = {
+                        "main.movie_details": "movie_inline_banner",
+                        "main.series_details": "movie_inline_banner",
+                        "main.movie_download": "stream_inline_banner",
+                        "main.movie_download_page": "dl_inter_server",
+                    }
+                    return slot_name == primary_banner_by_endpoint.get(endpoint, "top_banner")
+                return not is_duplicate
+            if placement_type == "banner":
+                # The final download hub deliberately keeps its existing banner
+                # between the main and backup server choices.  Other public
+                # pages use the single global desktop 728x90 placement.
+                endpoint = request.endpoint if has_request_context() else ""
+                optimized_banner_by_endpoint = {
+                    "main.movie_download_page": "dl_inter_server",
+                }
+                return slot_name == optimized_banner_by_endpoint.get(endpoint, "top_banner")
+            return False
+
         iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "illuminationacceptedkeynote.com")
     
         def iframe_ad(key_env, width, height, fmt="iframe"):
@@ -99,7 +143,9 @@ def create_app(config_class=Config):
                 "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
                 "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
                 "monetag_push_zone": os.getenv("MONETAG_PUSH_ZONE"),
-            }
+            },
+            ad_configuration=ad_configuration,
+            ad_slot_enabled=ad_slot_enabled,
         )
 
     def get_country_code() -> str:

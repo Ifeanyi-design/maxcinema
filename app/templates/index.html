@@ -213,11 +213,13 @@
 
 
 {# ── Mid-content ad — between Featured Hits and Recently Added ── #}
+{% if ad_slot_enabled('homepage_mid_banner', 'banner', true) %}
 <div class="mx-auto px-2 lg:px-4 max-w-[1600px] my-2 min-h-[60px] md:min-h-[98px]">
     <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em] mb-1">Sponsored</p>
     {% set banner_ad_slot = 'homepage_mid_banner' %}
     {% include 'ads/banner.html' %}
 </div>
+{% endif %}
 
 <section id="Merger" class="flex flex-col lg:flex-row gap-8 mx-auto px-2 lg:px-4 max-w-[1600px] my-4 md:my-8">
     
@@ -353,12 +355,14 @@
         
         <div class="sticky top-24 space-y-6">
             
+            {% if ad_slot_enabled('homepage_sidebar', 'sidebar') %}
             <div class="w-full flex flex-col gap-4">
                 <div class="rounded-xl overflow-hidden shadow-sm border border-gray-100">
                     {% set sidebar_ad_slot = 'homepage_sidebar' %}
                     {% include 'ads/sidebar.html' %}
                 </div>
             </div>
+            {% endif %}
 
             {% set categories = [
                 {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},

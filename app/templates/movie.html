@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
-{% set show_top_banner = true %}
+{# In deduped mode, keep the existing inline banner nearest the download action. #}
+{% set show_top_banner = ad_configuration != 'deduped' %}
 {# --- FIX 1: Dynamic Title & Meta Description for SEO --- #}
 {% block title %}
     {% if video.type == 'series' %}
@@ -184,6 +185,7 @@
                 </div>
             </div>
             {% endif %}
+            {% if ad_slot_enabled('movie_inline_banner', 'banner') %}
             <div class="w-full my-6">
                 <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100">
@@ -191,7 +193,9 @@
                     {% include 'ads/banner.html' %}
                 </div>
             </div>
+            {% endif %}
 
+            {% if ad_slot_enabled('movie_inline_sidebar', 'sidebar') %}
             <div class="w-full my-4 md:hidden">
                 <p class="text-[8px] text-gray-400 font-black uppercase text-center tracking-[0.3em]">SPONSORED</p>
                 <div class="bg-gray-50 rounded-xl overflow-hidden shadow-sm p-1 border border-gray-100 flex justify-center">
@@ -200,6 +204,7 @@
                     {% include 'ads/sidebar.html' %}
                 </div>
             </div>
+            {% endif %}
 
             {# --- DOWNLOAD SECTION START --- #}
             {# Build the download page URL #}
@@ -367,12 +372,14 @@
         </div>
         {% endif %}
 
+        {% if ad_slot_enabled('movie_native', 'native') %}
         <div class="w-full max-w-6xl mx-auto my-2 text-red-800">
             <div class="text-xs text-gray-400 font-bold mb-1 uppercase">Sponsored</div>
 
             <script async="async" data-cfasync="false" src="https://pl28375496.effectivegatecpm.com/34c7e3aba26fa9b6d684f5b76eeda71d/invoke.js"></script>
             <div id="container-34c7e3aba26fa9b6d684f5b76eeda71d"></div>
         </div>
+        {% endif %}
 
             <div id="ratingContainer" class="bg-[#111111] p-6 md:p-10 rounded-3xl text-center shadow-2xl mb-12">
                 <p class="text-gray-400 font-black uppercase text-[10px] tracking-[0.4em] mb-4">Rate This Video</p>
@@ -427,10 +434,12 @@
                 </div>
             </div>
 
+            {% if ad_slot_enabled('movie_secondary_banner', 'banner', true) %}
             <div class="w-full my-8">
                 {% set banner_ad_slot = 'movie_secondary_banner' %}
                 {% include 'ads/banner.html' %}
             </div>
+            {% endif %}
 
             <div class="mt-16">
                 <div class="w-full bg-[#830506] text-white font-black p-4 text-center rounded-t-2xl uppercase tracking-tighter text-lg shadow-md">
@@ -479,10 +488,12 @@
 
     {# --- FIX 3: Fixed Sidebar with Alt Tags & Lazy Loading --- #}
     <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-8">
+            {% if ad_slot_enabled('movie_sidebar', 'sidebar') %}
             <div class="w-full flex flex-col gap-4">
                 {% set sidebar_ad_slot = 'movie_sidebar' %}
                 {% include 'ads/sidebar.html' %}
             </div>
+            {% endif %}
 
             {% set categories = [
                 {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},

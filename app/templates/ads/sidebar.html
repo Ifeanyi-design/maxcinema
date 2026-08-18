@@ -1,5 +1,7 @@
-{% if ads.sidebar and ads.sidebar.key %}
-    <div class="w-full flex justify-center items-center {% if sidebar_ad_compact %}my-1{% else %}my-4{% endif %}" data-ad-slot="{{ sidebar_ad_slot|default('sidebar') }}">
+{% set slot_name = sidebar_ad_slot|default('sidebar') %}
+{% set is_duplicate = sidebar_ad_duplicate|default(false) %}
+{% if ad_slot_enabled(slot_name, 'sidebar', is_duplicate) and ads.sidebar and ads.sidebar.key %}
+    <div class="w-full flex justify-center items-center {% if sidebar_ad_compact %}my-1{% else %}my-4{% endif %}" data-ad-slot="{{ slot_name }}">
         <script>
           atOptions = {
             'key' : '{{ ads.sidebar.key }}',

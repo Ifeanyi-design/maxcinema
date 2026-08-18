@@ -43,7 +43,7 @@
         </div>
 
         {# ── Mid-content banner — between Telegram CTA and results grid ── #}
-        {% if videos.items %}
+        {% if videos.items and ad_slot_enabled('genre_mid_banner', 'banner', true) %}
         <div class="bg-white border-x border-gray-100 px-4 py-2 min-h-[58px] md:min-h-[98px]">
           <p class="text-[7px] font-black uppercase tracking-[.25em] text-gray-400 text-center mb-1">Sponsored</p>
           {% set banner_ad_slot = 'genre_mid_banner' %}
@@ -111,10 +111,13 @@
 
     <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/4 gap-8">
         <div class="sticky top-24">
+            {% if ad_slot_enabled('genre_sidebar', 'sidebar') %}
             <div class="mb-4">
                 {% set sidebar_ad_slot = 'genre_sidebar' %}
                 {% include 'ads/sidebar.html' %}
             </div>
+            {% endif %}
+            {% set sidebar_trending_ad_duplicate = true %}
             {% include 'sidebar_trending.html' %}
         </div>
     </aside>

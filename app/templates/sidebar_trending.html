@@ -1,10 +1,16 @@
+{% set sidebar_trending_slot = 'sidebar_trending' %}
+{% set sidebar_trending_is_duplicate = sidebar_trending_ad_duplicate|default(false) %}
 <div class="sticky top-24 space-y-6">
             
+            {% if ad_slot_enabled(sidebar_trending_slot, 'sidebar', sidebar_trending_is_duplicate) %}
             <div class="w-full flex flex-col gap-4">
                 <div class="rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                    {% include 'ads/sidebar.html' %}
+                    {% with sidebar_ad_slot=sidebar_trending_slot, sidebar_ad_duplicate=sidebar_trending_is_duplicate %}
+                        {% include 'ads/sidebar.html' %}
+                    {% endwith %}
                 </div>
             </div>
+            {% endif %}
 
             {% set categories = [
                 {'id': 'TrendingMovies', 'title': 'Trending Movies', 'icon': 'fa-fire', 'data': trending_movie, 'type': 'movie'},

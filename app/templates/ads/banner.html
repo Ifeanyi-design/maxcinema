@@ -1,6 +1,6 @@
 {% if ads %}
   {% set slot_name = banner_ad_slot|default('top_banner') %}
-  {% if ads.banner and ads.banner.key %}
+  {% if ad_slot_enabled(slot_name, 'banner') and ads.banner and ads.banner.key %}
     <div class="hidden md:flex w-full justify-center items-center my-4" data-ad-slot="{{ slot_name }}">
       <script>
         atOptions = {
@@ -15,7 +15,7 @@
     </div>
   {% endif %}
 
-  {% if ads.banner_mobile and ads.banner_mobile.key %}
+  {% if ad_slot_enabled(slot_name, 'banner') and ad_configuration != 'optimized' and ads.banner_mobile and ads.banner_mobile.key %}
     <div class="md:hidden w-full flex justify-center items-center my-3" data-ad-slot="{{ slot_name }}">
       <script>
         atOptions = {
@@ -28,7 +28,7 @@
       </script>
       <script src="https://www.{{ ads.banner_mobile.domain }}/{{ ads.banner_mobile.key }}/invoke.js"></script>
     </div>
-  {% elif ads.banner and ads.banner.key %}
+  {% elif ad_slot_enabled(slot_name, 'banner') and ad_configuration != 'optimized' and ads.banner and ads.banner.key %}
     <div class="md:hidden w-full flex justify-center items-center my-3 overflow-hidden max-w-full" data-ad-slot="{{ slot_name }}">
       <div style="max-width:100%;overflow:hidden;">
       <script>
