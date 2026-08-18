@@ -24,10 +24,10 @@ AD_CONFIGURATION=legacy
 - `legacy`: the existing layout, including every current ad placement.
 - `deduped`: removes repeated banner/sidebar calls on the same page while keeping
   the existing Popunder, Smartlink, sticky, native, and Monetag placements.
-- `optimized`: the later manager test—one desktop 728x90 placement per public
-  page (with the download-page placement kept beside the server choices), plus
-  the existing Popunder and Smartlink. It hides mobile, sidebar, sticky, native,
-  and Monetag units.
+- `optimized`: the manager test—one clean banner placement per public page
+  (728x90 on desktop, 320x50 on mobile, placed nearest the primary user action),
+  plus the existing Popunder and Smartlink. It hides sidebar, sticky, and Monetag
+  units.
 
 Switching back to `legacy` restores the old rendered placement layout; no ad
 placement code or key is deleted.

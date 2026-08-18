@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{# In deduped mode, keep the existing inline banner nearest the download action. #}
-{% set show_top_banner = ad_configuration != 'deduped' %}
+{# In deduped and optimized modes, keep the inline banner nearest the download action. #}
+{% set show_top_banner = ad_configuration == 'legacy' %}
 {# --- FIX 1: Dynamic Title & Meta Description for SEO --- #}
 {% block title %}
     {% if video.type == 'series' %}

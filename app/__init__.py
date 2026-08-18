@@ -82,11 +82,14 @@ def create_app(config_class=Config):
                     return slot_name == primary_banner_by_endpoint.get(endpoint, "top_banner")
                 return not is_duplicate
             if placement_type == "banner":
-                # The final download hub deliberately keeps its existing banner
-                # between the main and backup server choices.  Other public
-                # pages use the single global desktop 728x90 placement.
+                # Optimized mode: exactly one clean banner placement per page
+                # (728x90 on desktop / 320x50 on mobile), placed nearest the
+                # user's primary action, plus Popunder and Smartlink.
                 endpoint = request.endpoint if has_request_context() else ""
                 optimized_banner_by_endpoint = {
+                    "main.movie_details": "movie_inline_banner",
+                    "main.series_details": "movie_inline_banner",
+                    "main.movie_download": "stream_inline_banner",
                     "main.movie_download_page": "dl_inter_server",
                 }
                 return slot_name == optimized_banner_by_endpoint.get(endpoint, "top_banner")

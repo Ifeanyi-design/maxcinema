@@ -170,8 +170,8 @@
 
 {% extends "base.html" %}
 
-{# In deduped mode, this page keeps its existing banner beside the watch/download action. #}
-{% set show_top_banner = ad_configuration != 'deduped' %}
+{# In deduped and optimized modes, this page keeps its existing banner beside the watch/download action. #}
+{% set show_top_banner = ad_configuration == 'legacy' %}
 
 {% block social_tags %}
     <meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
