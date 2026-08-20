@@ -6,6 +6,7 @@ from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy import or_
 
 from .services import (
+    _slug,
     get_enabled_competitions,
     get_match_events,
     sync_live_matches,
