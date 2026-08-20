@@ -177,6 +177,30 @@ def dedupe_competitions(comps):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@api_bp.route("/_diag")
+def diag():
+    """Temporary diagnostic: surface the real exception behind /teams."""
+    import traceback
+    from sqlalchemy import inspect as sa_inspect
+    out = {"alembic": None, "tables": None, "teams_columns": None, "error": None, "traceback": None}
+    try:
+        out["alembic"] = db.session.execute(db.text("SELECT version_num FROM alembic_version")).scalar()
+    except Exception as exc:
+        out["error"] = f"alembic: {exc}"
+    try:
+        out["tables"] = sa_inspect(db.engine).get_table_names()
+        out["teams_columns"] = [c["name"] for c in sa_inspect(db.engine).get_columns("sports_team")]
+    except Exception as exc:
+        out["error"] = f"inspect: {exc}"
+    try:
+        rows = SportsTeam.query.join(SportsSport).filter(SportsSport.slug == "football").limit(3).all()
+        out["count"] = len(rows)
+    except Exception as exc:
+        out["error"] = f"teams_query: {exc}"
+        out["traceback"] = traceback.format_exc()
+    return jsonify(out)
+
+
 @api_bp.route("/")
 def meta():
     competitions = (
