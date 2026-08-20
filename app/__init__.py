@@ -199,4 +199,14 @@ def create_app(config_class=Config):
     from .sports.cli import sports_cli
     app.cli.add_command(sports_cli)
 
+    # Idempotent repair: add columns the current models have but the live DB
+    # is missing (e.g. Heroku Postgres created before a model change). Runs on
+    # every boot and must never prevent the app from starting.
+    try:
+        with app.app_context():
+            from .sports.schema_repair import ensure_sports_schema
+            ensure_sports_schema()
+    except Exception:
+        app.logger.exception("Sports schema repair skipped")
+
     return app
