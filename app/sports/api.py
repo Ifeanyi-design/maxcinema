@@ -198,6 +198,20 @@ def diag():
     except Exception as exc:
         out["error"] = f"teams_query: {exc}"
         out["traceback"] = traceback.format_exc()
+    try:
+        rows = (
+            SportsTeam.query.join(SportsSport)
+            .filter(SportsSport.slug == "football")
+            .order_by(SportsTeam.name.asc())
+            .distinct()
+            .limit(5)
+            .all()
+        )
+        out["ordered_count"] = len(rows)
+        out["payloads"] = [team_payload(t) for t in rows]
+    except Exception as exc:
+        out["error2"] = f"ordered_query: {exc}"
+        out["traceback2"] = traceback.format_exc()
     return jsonify(out)
 
 
