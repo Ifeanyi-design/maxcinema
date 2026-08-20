@@ -177,44 +177,6 @@ def dedupe_competitions(comps):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
-@api_bp.route("/_diag")
-def diag():
-    """Temporary diagnostic: surface the real exception behind /teams."""
-    import traceback
-    from sqlalchemy import inspect as sa_inspect
-    out = {"alembic": None, "tables": None, "teams_columns": None, "error": None, "traceback": None}
-    try:
-        out["alembic"] = db.session.execute(db.text("SELECT version_num FROM alembic_version")).scalar()
-    except Exception as exc:
-        out["error"] = f"alembic: {exc}"
-    try:
-        out["tables"] = sa_inspect(db.engine).get_table_names()
-        out["teams_columns"] = [c["name"] for c in sa_inspect(db.engine).get_columns("sports_team")]
-    except Exception as exc:
-        out["error"] = f"inspect: {exc}"
-    try:
-        rows = SportsTeam.query.join(SportsSport).filter(SportsSport.slug == "football").limit(3).all()
-        out["count"] = len(rows)
-    except Exception as exc:
-        out["error"] = f"teams_query: {exc}"
-        out["traceback"] = traceback.format_exc()
-    try:
-        rows = (
-            SportsTeam.query.join(SportsSport)
-            .filter(SportsSport.slug == "football")
-            .order_by(SportsTeam.name.asc())
-            .distinct()
-            .limit(5)
-            .all()
-        )
-        out["ordered_count"] = len(rows)
-        out["payloads"] = [team_payload(t) for t in rows]
-    except Exception as exc:
-        out["error2"] = f"ordered_query: {exc}"
-        out["traceback2"] = traceback.format_exc()
-    return jsonify(out)
-
-
 @api_bp.route("/")
 def meta():
     competitions = (
@@ -311,7 +273,18 @@ def teams():
             .join(SportsCompetition, SportsMatch.competition_id == SportsCompetition.id)
             .filter(SportsCompetition.slug == competition, SportsMatch.archived.is_(False))
         )
-    teams = query.order_by(SportsTeam.name.asc()).distinct().limit(limit).all()
+    # Distinct over the full entity breaks on Postgres because sports_team has
+    # a JSON column (no equality operator for type json). Distinct on the id
+    # only, then fetch full rows — portable across SQLite and Postgres.
+    team_ids = (
+        query.with_entities(SportsTeam.id).distinct().subquery()
+    )
+    teams = (
+        SportsTeam.query.filter(SportsTeam.id.in_(team_ids.select()))
+        .order_by(SportsTeam.name.asc())
+        .limit(limit)
+        .all()
+    )
     return jsonify({"teams": [team_payload(team) for team in teams], "count": len(teams)})
 
 
