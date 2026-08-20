@@ -90,32 +90,43 @@ def stats_dashboard():
 
     req_stats = [pending_requests, filled_requests, rejected_requests]
 
+    # Single grouped query instead of one COUNT per day (30/90 round trips on
+    # an unindexed column was timing out on the production Postgres).
+    trend_rows = (
+        db.session.query(func.date(MovieRequest.date_added), func.count())
+        .filter(MovieRequest.date_added >= since)
+        .group_by(func.date(MovieRequest.date_added))
+        .all()
+    )
+    trend_by_day = {str(day_key): count for day_key, count in trend_rows}
+
     req_trend_labels = []
     req_trend_counts = []
     for i in range(days, -1, -1):
         day = datetime.utcnow() - timedelta(days=i)
         day_str = day.strftime('%m/%d')
-        count = MovieRequest.query.filter(
-            func.date(MovieRequest.date_added) == day.date()
-        ).count()
         req_trend_labels.append(day_str)
-        req_trend_counts.append(count)
+        req_trend_counts.append(trend_by_day.get(str(day.date()), 0))
 
     top_searches = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(10).all()
     recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(10).all()
     likely_no_result_terms = SearchTerm.query.filter(SearchTerm.count <= 2).order_by(SearchTerm.count.desc()).limit(10).all()
 
-    ad_events = AnalyticsEvent.query.filter(AnalyticsEvent.date_added >= since).all()
+    # Aggregate in Postgres instead of loading every ad event into Python.
+    ad_rows = (
+        db.session.query(AnalyticsEvent.event, AnalyticsEvent.target, func.count())
+        .filter(AnalyticsEvent.date_added >= since)
+        .group_by(AnalyticsEvent.event, AnalyticsEvent.target)
+        .all()
+    )
     ad_stats = defaultdict(lambda: {"views": 0, "clicks": 0, "mobile_views": 0, "desktop_views": 0})
-    for event in ad_events:
-        if event.event == "ad_slot_view":
-            ad_stats[event.target]["views"] += 1
-            if getattr(event, 'device', '') == 'mobile':
-                ad_stats[event.target]["mobile_views"] += 1
-            else:
-                ad_stats[event.target]["desktop_views"] += 1
-        elif event.event == "ad_slot_click":
-            ad_stats[event.target]["clicks"] += 1
+    for event, target, count in ad_rows:
+        if event == "ad_slot_view":
+            ad_stats[target]["views"] += count
+            # AnalyticsEvent has no device column; all views counted as desktop.
+            ad_stats[target]["desktop_views"] += count
+        elif event == "ad_slot_click":
+            ad_stats[target]["clicks"] += count
 
     ad_labels = []
     ad_views_series = []
