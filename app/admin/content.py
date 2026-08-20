@@ -16,14 +16,29 @@ def _extract_watch_code(text: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
+def _extract_telegram_payload(text: str) -> str | None:
+    """Extract the ?start= payload from a Telegram bot deep link.
+
+    e.g. https://t.me/MaxStreamV2_Bot?start=Z2V0LTE5... -> Z2V0LTE5...
+    """
+    m = re.search(r"t\.me/[^/?#\s]+\?start=([^/?#&\s]+)", text)
+    return m.group(1).strip() if m else None
+
+
 def _normalize_bulk_link(raw_link: str) -> str:
     link = (raw_link or "").strip()
     if not link:
         return ""
     # If it's a full URL, try to extract the episode code from /watch/<code>
     code = _extract_watch_code(link)
+    if code:
+        return code
+    # Telegram bot deep link: keep only the ?start= payload (the file hash).
+    payload = _extract_telegram_payload(link)
+    if payload:
+        return payload
     # Fallback: if the user pasted just the code (no /watch/ segment), keep it.
-    return code if code else link
+    return link
 
 
 def normalize_bulk_links(links_text: str) -> list:
@@ -31,7 +46,7 @@ def normalize_bulk_links(links_text: str) -> list:
 
     Handles normal newline-separated input, \\r\\n / lone \\r line endings,
     and the edge case where the paste collapses into a single line but still
-    contains multiple /watch/<code> URLs jammed together.
+    contains multiple /watch/<code> URLs or Telegram deep links jammed together.
     """
     text = (links_text or "").strip()
     if not text:
@@ -40,7 +55,7 @@ def normalize_bulk_links(links_text: str) -> list:
     lines = [l.strip() for l in re.split(r"[\r\n]+", text) if l.strip()]
 
     if len(lines) <= 1:
-        codes = re.findall(r"/watch/([^/?#\s]+)", text)
+        codes = re.findall(r"(?:t\.me/[^/?#\s]+\?start=|/watch/)([^/?#&\s]+)", text)
         if len(codes) > 1:
             return [c.strip() for c in codes]
 
