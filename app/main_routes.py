@@ -609,7 +609,22 @@ def search_result(page=1):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie").order_by(AllVideo.date_added.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     searches = True
-    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend)
+
+    # Contextual social CTA — match by query keywords in title/tags/description
+    social_cta = None
+    if query:
+        social_cta = SocialVideo.query.filter(
+            SocialVideo.active == True,
+            or_(
+                SocialVideo.title.ilike(f"%{query}%"),
+                SocialVideo.tags.ilike(f"%{query}%"),
+                SocialVideo.description.ilike(f"%{query}%")
+            )
+        ).first()
+    if not social_cta:
+        social_cta = SocialVideo.query.filter(SocialVideo.active == True).order_by(SocialVideo.created_at.desc()).first()
+
+    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend, social_cta=social_cta)
 
 @main_bp.route("/contact_us")
 def contact_us():

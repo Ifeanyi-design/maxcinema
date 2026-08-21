@@ -124,6 +124,36 @@
                 </div>
             </div>
         {% endif %}
+
+        {% if social_cta %}
+        <div class="bg-gradient-to-r from-pink-50 to-red-50 rounded-2xl p-5 border border-pink-100 mt-6">
+            <p class="text-[10px] font-black text-pink-500 uppercase tracking-widest mb-2">
+                <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                </svg>
+                Watch Our Edit
+            </p>
+            <a href="{{ social_cta.video_url }}" target="_blank" rel="noopener noreferrer"
+               class="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-md transition group">
+                {% if social_cta.thumbnail_url %}
+                <img src="{{ social_cta.thumbnail_url }}" class="w-20 h-12 object-cover rounded-lg" alt="{{ social_cta.title }}">
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        {% if social_cta.platform == 'youtube' %}
+                        <span class="bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">YouTube</span>
+                        {% else %}
+                        <span class="bg-gray-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">TikTok</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-800 text-sm font-bold truncate group-hover:text-pink-600 transition">{{ social_cta.title }}</p>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 group-hover:text-pink-500 transition flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+            </a>
+        </div>
+        {% endif %}
     </section>
 
     <aside id="TrendingCol" class="hidden lg:flex flex-col lg:w-1/3 gap-8">
