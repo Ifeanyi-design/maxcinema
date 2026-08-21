@@ -1,0 +1,141 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+
+    {% include 'admin/sidebar.html' %}
+
+    <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
+
+        <div class="hidden justify-between lg:flex w-full items-center z-40 fixed top-0 bg-gray-900 py-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-4xl lg:text-3xl font-bold">Social Videos</h1>
+                <span class="text-gray-400 text-sm mt-1">{{ total }} total</span>
+            </div>
+            <a href="{{ url_for('admin.add_social_video') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Social Video</a>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-2 mb-6 mt-2">
+            <a href="{{ url_for('admin.view_social_videos') }}" class="px-3 py-1 rounded text-sm {{ 'bg-yellow-500 text-black' if not current_platform and not current_status else 'bg-gray-700 hover:bg-gray-600' }}">All ({{ total }})</a>
+            <a href="{{ url_for('admin.view_social_videos', platform='youtube') }}" class="px-3 py-1 rounded text-sm {{ 'bg-red-600 text-white' if current_platform == 'youtube' else 'bg-gray-700 hover:bg-gray-600' }}">YouTube ({{ total_youtube }})</a>
+            <a href="{{ url_for('admin.view_social_videos', platform='tiktok') }}" class="px-3 py-1 rounded text-sm {{ 'bg-gray-900 text-white border border-gray-500' if current_platform == 'tiktok' else 'bg-gray-700 hover:bg-gray-600' }}">TikTok ({{ total_tiktok }})</a>
+            <span class="border-l border-gray-600 mx-1"></span>
+            <a href="{{ url_for('admin.view_social_videos', status='active') }}" class="px-3 py-1 rounded text-sm {{ 'bg-green-600 text-white' if current_status == 'active' else 'bg-gray-700 hover:bg-gray-600' }}">Active ({{ total_active }})</a>
+            <a href="{{ url_for('admin.view_social_videos', status='featured') }}" class="px-3 py-1 rounded text-sm {{ 'bg-purple-600 text-white' if current_status == 'featured' else 'bg-gray-700 hover:bg-gray-600' }}">Featured ({{ total_featured }})</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="mb-4 px-4 py-2 rounded text-sm {{ 'bg-green-800 text-green-200' if cat == 'success' else 'bg-red-800 text-red-200' }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if videos %}
+        <!-- Bulk Actions Bar -->
+        <form method="POST" id="bulk-form">
+        <div class="flex flex-wrap items-center gap-3 mb-4 p-3 bg-gray-800 rounded-lg">
+            <label class="flex items-center gap-2 text-sm text-gray-300">
+                <input type="checkbox" id="select-all" class="rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500">
+                Select All
+            </label>
+            <button type="submit" formaction="{{ url_for('admin.delete_social_videos') }}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm" onclick="return confirm('Delete selected videos?')">Delete Selected</button>
+            <button type="submit" formaction="{{ url_for('admin.bulk_featured_social_videos') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm">Feature Selected</button>
+            <button type="submit" formaction="{{ url_for('admin.bulk_active_social_videos') }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Activate Selected</button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs text-gray-400 uppercase bg-gray-800">
+                    <tr>
+                        <th class="px-3 py-3 w-10"></th>
+                        <th class="px-3 py-3 w-10">#</th>
+                        <th class="px-3 py-3">Platform</th>
+                        <th class="px-3 py-3">Title</th>
+                        <th class="px-3 py-3">Thumbnail</th>
+                        <th class="px-3 py-3">Linked Content</th>
+                        <th class="px-3 py-3 w-20">Order</th>
+                        <th class="px-3 py-3 w-16">Featured</th>
+                        <th class="px-3 py-3 w-16">Active</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for video in videos %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-800">
+                        <td class="px-3 py-3">
+                            <input type="checkbox" name="video_ids[]" value="{{ video.id }}" class="video-checkbox rounded border-gray-600 bg-gray-700 text-yellow-500 focus:ring-yellow-500">
+                        </td>
+                        <td class="px-3 py-3 text-gray-500">{{ video.id }}</td>
+                        <td class="px-3 py-3">
+                            {% if video.platform == 'youtube' %}
+                            <span class="bg-red-600 text-white text-xs px-2 py-1 rounded">YouTube</span>
+                            {% else %}
+                            <span class="bg-gray-900 text-white text-xs px-2 py-1 rounded border border-gray-500">TikTok</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-3">
+                            <input type="text" name="title_{{ video.id }}" value="{{ video.title }}" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
+                        </td>
+                        <td class="px-3 py-3">
+                            {% if video.thumbnail_url %}
+                            <img src="{{ video.thumbnail_url }}" alt="" class="w-16 h-10 object-cover rounded">
+                            {% else %}
+                            <span class="text-gray-500 text-xs">No thumb</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-3">
+                            <select name="all_video_id_{{ video.id }}" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
+                                <option value="">-- None --</option>
+                                {% for av in all_videos %}
+                                <option value="{{ av.id }}" {{ 'selected' if video.all_video_id == av.id }}>{{ av.name }} ({{ av.type }})</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="px-3 py-3">
+                            <input type="number" name="sort_order_{{ video.id }}" value="{{ video.sort_order }}" class="w-16 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
+                        </td>
+                        <td class="px-3 py-3 text-center">
+                            <input type="checkbox" name="featured_{{ video.id }}" {{ 'checked' if video.featured }} class="rounded border-gray-600 bg-gray-700 text-purple-500 focus:ring-purple-500">
+                        </td>
+                        <td class="px-3 py-3 text-center">
+                            <input type="checkbox" name="active_{{ video.id }}" {{ 'checked' if video.active }} class="rounded border-gray-600 bg-gray-700 text-green-500 focus:ring-green-500">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Save Button -->
+        <div class="mt-6 flex justify-end">
+            <button type="submit" formaction="{{ url_for('admin.save_social_videos') }}" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-6 py-2 rounded text-lg">Save All Changes</button>
+        </div>
+        </form>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="flex gap-2 mt-6 flex-wrap">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.view_social_videos', page=pagination.prev_num, platform=current_platform, status=current_status) }}" class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Previous</a>
+            {% endif %}
+            <span class="px-4 py-2 bg-yellow-500 text-black rounded">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+            <a href="{{ url_for('admin.view_social_videos', page=pagination.next_num, platform=current_platform, status=current_status) }}" class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <p class="text-gray-400 mt-8">No social videos yet. Add your first one!</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('select-all')?.addEventListener('change', function() {
+    document.querySelectorAll('.video-checkbox').forEach(cb => cb.checked = this.checked);
+});
+</script>
+{% endblock %}

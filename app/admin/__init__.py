@@ -20,3 +20,4 @@ from . import leads
 from . import content
 from . import email
 from . import backup
+from . import social_videos
