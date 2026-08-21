@@ -999,6 +999,12 @@ def movie_download_page(slug):
         ).order_by(func.random()).limit(8 - len(suggested)).all()
         suggested.extend(extra)
 
+    # Social videos linked to this movie/series
+    social_videos = SocialVideo.query.filter(
+        SocialVideo.active == True,
+        SocialVideo.all_videos.any(AllVideo.id == video.id)
+    ).order_by(SocialVideo.sort_order.asc()).all()
+
     return render_template(
         "movie_download.html",
         video=video,
@@ -1011,6 +1017,7 @@ def movie_download_page(slug):
         trending_series=series_trend,
         trending_movie=movie_trend,
         trending_trailers=trending_trailers,
+        social_videos=social_videos,
         dark=True,
     )
 
