@@ -653,3 +653,44 @@ class CourseLead(db.Model):
     phone = db.Column(db.String(50), nullable=True)
     course_interest = db.Column(db.String(150), nullable=False)
     date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+class SocialVideo(db.Model):
+    __tablename__ = "social_video"
+
+    id = db.Column(db.Integer, primary_key=True)
+    platform = db.Column(db.String(20), nullable=False)          # "youtube" or "tiktok"
+    video_url = db.Column(db.String(500), nullable=False)
+    platform_id = db.Column(db.String(100), nullable=False)      # YouTube video ID or TikTok post ID
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    thumbnail_url = db.Column(db.String(500), nullable=True)
+    tags = db.Column(db.String(500), nullable=True)              # comma-separated
+    all_video_id = db.Column(db.Integer, db.ForeignKey("all_video.id"), nullable=True, index=True)
+    featured = db.Column(db.Boolean, default=False, nullable=False)
+    active = db.Column(db.Boolean, default=True, nullable=False)
+    sort_order = db.Column(db.Integer, default=0, nullable=False)
+    published_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    all_video = db.relationship("AllVideo", backref=db.backref("social_videos", lazy="dynamic"))
+
+    __table_args__ = (
+        db.UniqueConstraint("platform", "platform_id", name="uq_social_video_platform_id"),
+    )
+
+    @property
+    def embed_url(self):
+        if self.platform == "youtube":
+            return f"https://www.youtube.com/embed/{self.platform_id}"
+        elif self.platform == "tiktok":
+            return f"https://www.tiktok.com/embed/v2/{self.platform_id}"
+        return None
+
+    @property
+    def platform_icon(self):
+        return "youtube" if self.platform == "youtube" else "tiktok"
+
+    def __repr__(self):
+        return f"<SocialVideo {self.platform}:{self.platform_id} - {self.title}>"
