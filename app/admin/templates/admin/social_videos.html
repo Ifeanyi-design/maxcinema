@@ -12,6 +12,9 @@
                 <span class="text-gray-400 text-sm mt-1">{{ total }} total</span>
             </div>
             <a href="{{ url_for('admin.add_social_video') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Social Video</a>
+            <form method="POST" action="{{ url_for('admin.sync_youtube') }}" class="inline">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-xl" onclick="return confirm('Sync latest uploads from YouTube?')">Sync YouTube</button>
+            </form>
         </div>
 
         <!-- Filters -->

@@ -1,3 +1,4 @@
+import os
 import re
 import requests as http_requests
 from flask import render_template, request, redirect, url_for, flash
@@ -304,3 +305,109 @@ def add_social_video():
         return redirect(url_for('admin.view_social_videos'))
 
     return render_template('admin/add_social_video.html', all_videos=all_videos, prefilled={})
+
+
+@admin_bp.route('/social-videos/sync-youtube', methods=['POST'])
+@login_required
+@admin_required
+def sync_youtube():
+    api_key = os.environ.get('YOUTUBE_API_KEY', '')
+    channel_id = os.environ.get('YOUTUBE_CHANNEL_ID', '')
+
+    if not api_key or not channel_id:
+        flash('YouTube API key or Channel ID not configured. Set YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID in environment.', 'danger')
+        return redirect(url_for('admin.view_social_videos'))
+
+    # Step 1: Get the channel's uploads playlist ID
+    try:
+        channel_resp = http_requests.get(
+            'https://www.googleapis.com/youtube/v3/channels',
+            params={
+                'part': 'contentDetails',
+                'id': channel_id,
+                'key': api_key,
+            },
+            timeout=15
+        )
+        channel_data = channel_resp.json()
+        if 'items' not in channel_data or not channel_data['items']:
+            flash(f'Channel not found. Check YOUTUBE_CHANNEL_ID. Response: {channel_data.get("error", {}).get("message", "unknown")}', 'danger')
+            return redirect(url_for('admin.view_social_videos'))
+
+        uploads_playlist_id = channel_data['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    except Exception as e:
+        flash(f'Error fetching channel: {str(e)}', 'danger')
+        return redirect(url_for('admin.view_social_videos'))
+
+    # Step 2: Fetch recent videos from uploads playlist (max 50)
+    try:
+        playlist_resp = http_requests.get(
+            'https://www.googleapis.com/youtube/v3/playlistItems',
+            params={
+                'part': 'snippet,contentDetails',
+                'playlistId': uploads_playlist_id,
+                'maxResults': 50,
+                'key': api_key,
+            },
+            timeout=15
+        )
+        playlist_data = playlist_resp.json()
+        if 'items' not in playlist_data:
+            flash(f'Error fetching playlist: {playlist_data.get("error", {}).get("message", "unknown")}', 'danger')
+            return redirect(url_for('admin.view_social_videos'))
+
+        items = playlist_data['items']
+    except Exception as e:
+        flash(f'Error fetching videos: {str(e)}', 'danger')
+        return redirect(url_for('admin.view_social_videos'))
+
+    # Step 3: Insert new videos, skip existing
+    synced = 0
+    skipped = 0
+    for item in items:
+        video_id = item['contentDetails']['videoId']
+        snippet = item['snippet']
+
+        # Skip if already exists
+        existing = SocialVideo.query.filter_by(platform='youtube', platform_id=video_id).first()
+        if existing:
+            skipped += 1
+            continue
+
+        title = snippet.get('title', '')
+        description = snippet.get('description', '')
+        published_at = snippet.get('publishedAt', '')
+        thumbnail_url = f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg'
+
+        # Parse published_at
+        pub_date = None
+        if published_at:
+            try:
+                from datetime import datetime
+                pub_date = datetime.fromisoformat(published_at.replace('Z', '+00:00')).replace(tzinfo=None)
+            except Exception:
+                pass
+
+        sv = SocialVideo(
+            platform='youtube',
+            video_url=f'https://youtube.com/shorts/{video_id}' if len(video_id) == 11 else f'https://youtube.com/watch?v={video_id}',
+            platform_id=video_id,
+            title=title,
+            description=description,
+            thumbnail_url=thumbnail_url,
+            published_at=pub_date,
+            active=True,
+        )
+
+        # Auto-match associated content
+        matched = _auto_match_all_video(title)
+        if matched:
+            sv.all_videos = [matched]
+
+        db.session.add(sv)
+        synced += 1
+
+    db.session.commit()
+
+    flash(f'YouTube sync complete: {synced} new video(s) imported, {skipped} already existed.', 'success')
+    return redirect(url_for('admin.view_social_videos'))
