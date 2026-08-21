@@ -6,15 +6,17 @@
 
     <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
 
-        <div class="hidden justify-between lg:flex w-full items-center z-40 fixed top-0 bg-gray-900 py-4">
+        <div class="flex justify-between items-center z-40 py-4">
             <div class="flex items-center gap-4">
                 <h1 class="text-4xl lg:text-3xl font-bold">Social Videos</h1>
                 <span class="text-gray-400 text-sm mt-1">{{ total }} total</span>
             </div>
-            <a href="{{ url_for('admin.add_social_video') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Social Video</a>
-            <form method="POST" action="{{ url_for('admin.sync_youtube') }}" class="inline">
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-xl" onclick="return confirm('Sync latest uploads from YouTube?')">Sync YouTube</button>
-            </form>
+            <div class="flex gap-2">
+                <a href="{{ url_for('admin.add_social_video') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-xl">Add Social Video</a>
+                <form method="POST" action="{{ url_for('admin.sync_youtube') }}" class="inline">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-xl" onclick="return confirm('Sync latest uploads from YouTube?')">Sync YouTube</button>
+                </form>
+            </div>
         </div>
 
         <!-- Filters -->

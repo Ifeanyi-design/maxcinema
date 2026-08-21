@@ -71,6 +71,35 @@ def _fetch_tiktok_oembed(video_id):
     return None
 
 
+def _fetch_youtube_video_details(video_ids, api_key):
+    """Fetch YouTube video details (title, description, tags, thumbnail) via Data API v3."""
+    try:
+        resp = http_requests.get(
+            'https://www.googleapis.com/youtube/v3/videos',
+            params={
+                'part': 'snippet',
+                'id': ','.join(video_ids),
+                'key': api_key,
+            },
+            timeout=15
+        )
+        data = resp.json()
+        results = {}
+        for item in data.get('items', []):
+            vid_id = item['id']
+            snippet = item.get('snippet', {})
+            tags = snippet.get('tags', [])
+            results[vid_id] = {
+                'title': snippet.get('title', ''),
+                'description': snippet.get('description', ''),
+                'tags': ', '.join(tags) if tags else '',
+                'thumbnail_url': f'https://img.youtube.com/vi/{vid_id}/hqdefault.jpg',
+            }
+        return results
+    except Exception:
+        return {}
+
+
 def _auto_match_all_video(title):
     """Try to find an AllVideo matching the social video title."""
     if not title:
@@ -263,6 +292,15 @@ def add_social_video():
                     description = oembed['description']
                 if not thumbnail_url:
                     thumbnail_url = oembed['thumbnail_url']
+            # Fetch tags via Data API if available
+            api_key = os.environ.get('YOUTUBE_API_KEY', '')
+            if api_key:
+                details = _fetch_youtube_video_details([platform_id], api_key)
+                if platform_id in details:
+                    if not tags:
+                        tags = details[platform_id].get('tags', '')
+                    if not description:
+                        description = details[platform_id].get('description', '')
         elif platform == 'tiktok':
             oembed = _fetch_tiktok_oembed(platform_id)
             if oembed:
@@ -361,7 +399,11 @@ def sync_youtube():
         flash(f'Error fetching videos: {str(e)}', 'danger')
         return redirect(url_for('admin.view_social_videos'))
 
-    # Step 3: Insert new videos, skip existing
+    # Step 3: Fetch full details (title, tags) via videos.list API
+    video_ids = [item['contentDetails']['videoId'] for item in items]
+    video_details = _fetch_youtube_video_details(video_ids, api_key)
+
+    # Step 4: Insert new videos, skip existing
     synced = 0
     skipped = 0
     for item in items:
@@ -374,10 +416,13 @@ def sync_youtube():
             skipped += 1
             continue
 
-        title = snippet.get('title', '')
-        description = snippet.get('description', '')
+        # Use full details if available, fall back to playlist snippet
+        details = video_details.get(video_id, {})
+        title = details.get('title') or snippet.get('title', '')
+        description = details.get('description') or snippet.get('description', '')
+        tags = details.get('tags', '')
+        thumbnail_url = details.get('thumbnail_url') or f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg'
         published_at = snippet.get('publishedAt', '')
-        thumbnail_url = f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg'
 
         # Parse published_at
         pub_date = None
@@ -395,6 +440,7 @@ def sync_youtube():
             title=title,
             description=description,
             thumbnail_url=thumbnail_url,
+            tags=tags,
             published_at=pub_date,
             active=True,
         )
