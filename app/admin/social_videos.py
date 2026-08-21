@@ -158,8 +158,9 @@ def save_social_videos():
         sv.title = request.form.get(f'title_{vid_id}', sv.title).strip()
         sv.sort_order = request.form.get(f'sort_order_{vid_id}', sv.sort_order, type=int)
 
-        all_video_id = request.form.get(f'all_video_id_{vid_id}', '')
-        sv.all_video_id = int(all_video_id) if all_video_id else None
+        # Many-to-many: get all selected video IDs
+        all_video_ids = request.form.getlist(f'all_video_ids_{vid_id}[]')
+        sv.all_videos = AllVideo.query.filter(AllVideo.id.in_([int(x) for x in all_video_ids if x])).all() if all_video_ids else []
 
         sv.featured = f'featured_{vid_id}' in request.form
         sv.active = f'active_{vid_id}' in request.form
@@ -273,12 +274,12 @@ def add_social_video():
             title = f'{platform.title()} Video {platform_id}'
 
         # Auto-match associated content if not manually selected
-        all_video_id_val = request.form.get('all_video_id', '')
+        all_video_ids = request.form.getlist('all_video_ids[]')
         matched_video = None
-        if not all_video_id_val:
+        if not all_video_ids:
             matched_video = _auto_match_all_video(title)
             if matched_video:
-                all_video_id_val = str(matched_video.id)
+                all_video_ids = [str(matched_video.id)]
 
         sv = SocialVideo(
             platform=platform,
@@ -288,15 +289,17 @@ def add_social_video():
             description=description,
             thumbnail_url=thumbnail_url,
             tags=tags,
-            all_video_id=int(all_video_id_val) if all_video_id_val else None,
             featured=featured,
             active=active,
             sort_order=sort_order,
         )
+        if all_video_ids:
+            sv.all_videos = AllVideo.query.filter(AllVideo.id.in_([int(x) for x in all_video_ids if x])).all()
         db.session.add(sv)
         db.session.commit()
 
-        match_msg = f' (auto-matched to "{matched_video.name}")' if matched_video else ''
+        match_names = ', '.join([av.name for av in sv.all_videos])
+        match_msg = f' (linked to: {match_names})' if match_names else ''
         flash(f'Added "{sv.title}" ({platform}){match_msg}.', 'success')
         return redirect(url_for('admin.view_social_videos'))
 

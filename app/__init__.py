@@ -2,7 +2,7 @@
 from .models import (
     User, Genre, AllVideo, Movie, Series, Season, Episode, Comment, Rating,
     Trailer, StorageServer, RecentItem, WatchlistNotify, WeeklyPoll,
-    WeeklyPollOption, WeeklyPollVote, SocialVideo
+    WeeklyPollOption, WeeklyPollVote, SocialVideo, social_video_all_video
 )
 import json
 import os

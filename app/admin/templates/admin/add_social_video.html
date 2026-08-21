@@ -63,13 +63,12 @@
                 <!-- Linked Content -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Associated Content</label>
-                    <select name="all_video_id" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
-                        <option value="">-- None --</option>
+                    <select name="all_video_ids[]" multiple size="6" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
                         {% for av in all_videos %}
-                        <option value="{{ av.id }}" {{ 'selected' if prefilled.get('all_video_id') == av.id|string }}>{{ av.name }} ({{ av.type }})</option>
+                        <option value="{{ av.id }}">{{ av.name }} ({{ av.type }})</option>
                         {% endfor %}
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">Link this edit to a specific movie/series in your catalogue.</p>
+                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple. Link this edit to one or more movies/series. Auto-matches by title if left empty.</p>
                 </div>
 
                 <!-- Sort Order -->

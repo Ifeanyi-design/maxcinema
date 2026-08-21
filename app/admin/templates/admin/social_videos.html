@@ -86,10 +86,9 @@
                             {% endif %}
                         </td>
                         <td class="px-3 py-3">
-                            <select name="all_video_id_{{ video.id }}" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
-                                <option value="">-- None --</option>
+                            <select name="all_video_ids_{{ video.id }}[]" multiple size="3" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
                                 {% for av in all_videos %}
-                                <option value="{{ av.id }}" {{ 'selected' if video.all_video_id == av.id }}>{{ av.name }} ({{ av.type }})</option>
+                                <option value="{{ av.id }}" {{ 'selected' if av in video.all_videos }}>{{ av.name }} ({{ av.type }})</option>
                                 {% endfor %}
                             </select>
                         </td>

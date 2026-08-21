@@ -655,6 +655,13 @@ class CourseLead(db.Model):
     date_added = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
 
+# Association table for SocialVideo <-> AllVideo (many-to-many)
+social_video_all_video = db.Table('social_video_all_video',
+    db.Column('social_video_id', db.Integer, db.ForeignKey('social_video.id'), primary_key=True),
+    db.Column('all_video_id', db.Integer, db.ForeignKey('all_video.id'), primary_key=True)
+)
+
+
 class SocialVideo(db.Model):
     __tablename__ = "social_video"
 
@@ -666,7 +673,6 @@ class SocialVideo(db.Model):
     description = db.Column(db.Text, nullable=True)
     thumbnail_url = db.Column(db.String(500), nullable=True)
     tags = db.Column(db.String(500), nullable=True)              # comma-separated
-    all_video_id = db.Column(db.Integer, db.ForeignKey("all_video.id"), nullable=True, index=True)
     featured = db.Column(db.Boolean, default=False, nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
     sort_order = db.Column(db.Integer, default=0, nullable=False)
@@ -674,7 +680,7 @@ class SocialVideo(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
-    all_video = db.relationship("AllVideo", backref=db.backref("social_videos", lazy="dynamic"))
+    all_videos = db.relationship("AllVideo", secondary=social_video_all_video, backref=db.backref("social_video_links", lazy="dynamic"))
 
     __table_args__ = (
         db.UniqueConstraint("platform", "platform_id", name="uq_social_video_platform_id"),
