@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Social Edits - MaxCinema{% endblock %}
+{% block meta_description %}Watch our latest movie edits on TikTok and YouTube. MaxCinema social hub.{% endblock %}
+
+{% block content %}
+<section class="mx-auto px-2 lg:px-4 max-w-[1600px] my-8 mt-24">
+    <div class="mb-8">
+        <p class="text-[10px] font-black text-pink-500 uppercase tracking-widest mb-2">
+            <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            MaxCinema Social
+        </p>
+        <h1 class="text-gray-900 font-black text-2xl md:text-3xl">Our Edits</h1>
+        <p class="text-gray-500 text-sm mt-2">Follow us for the latest movie edits and content</p>
+    </div>
+
+    {% if not social_videos %}
+    <div class="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
+        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+        </svg>
+        <p class="text-gray-400 font-bold">No social edits yet</p>
+        <p class="text-gray-300 text-sm mt-1">Check back soon for new content</p>
+    </div>
+    {% else %}
+
+    <div class="mb-6 flex flex-wrap gap-3">
+        <button onclick="filterSocial('all')" class="social-filter active px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider border border-gray-200 bg-[#830506] text-white transition">All</button>
+        <button onclick="filterSocial('youtube')" class="social-filter px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider border border-gray-200 bg-white text-gray-600 hover:bg-red-600 hover:text-white hover:border-red-600 transition">YouTube</button>
+        <button onclick="filterSocial('tiktok')" class="social-filter px-4 py-2 rounded-full text-[11px] font-black uppercase tracking-wider border border-gray-200 bg-white text-gray-600 hover:bg-gray-900 hover:text-white hover:border-gray-900 transition">TikTok</button>
+    </div>
+
+    <div id="socialGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for sv in social_videos %}
+        <div class="social-card group" data-platform="{{ sv.platform }}">
+            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition">
+                <div class="aspect-video relative">
+                    {% if sv.thumbnail_url %}
+                    <img src="{{ sv.thumbnail_url }}" alt="{{ sv.title }}"
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                         loading="lazy">
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-pink-100 to-red-100 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-pink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute top-3 left-3">
+                        {% if sv.platform == 'youtube' %}
+                        <span class="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg">YouTube</span>
+                        {% else %}
+                        <span class="bg-gray-900 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg">TikTok</span>
+                        {% endif %}
+                    </div>
+                    {% if sv.featured %}
+                    <div class="absolute top-3 right-3">
+                        <span class="bg-yellow-400 text-yellow-900 text-[8px] font-bold px-2 py-1 rounded shadow-lg uppercase">Featured</span>
+                    </div>
+                    {% endif %}
+                    <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+                       class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
+                        <div class="bg-white rounded-full p-4 shadow-2xl">
+                            {% if sv.platform == 'youtube' %}
+                            <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                            {% else %}
+                            <svg class="w-8 h-8 text-gray-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+                            {% endif %}
+                        </div>
+                    </a>
+                </div>
+                <div class="p-4">
+                    <h3 class="text-gray-900 font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition">{{ sv.title }}</h3>
+                    {% if sv.description %}
+                    <p class="text-gray-400 text-xs mt-2 line-clamp-2">{{ sv.description }}</p>
+                    {% endif %}
+                    <div class="flex items-center justify-between mt-3">
+                        <p class="text-gray-400 text-[10px] font-bold uppercase">{{ sv.published_at.strftime('%b %d, %Y') if sv.published_at else sv.created_at.strftime('%b %d, %Y') }}</p>
+                        <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+                           class="text-pink-500 text-[10px] font-black uppercase hover:text-pink-700 transition">Watch <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                    </div>
+                    {% if sv.tags %}
+                    <div class="flex flex-wrap gap-1 mt-3">
+                        {% for tag in sv.tags.split(',')[:3] %}
+                        <span class="bg-gray-100 text-gray-500 text-[8px] font-bold px-2 py-0.5 rounded-full">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
+<script>
+function filterSocial(platform) {
+    document.querySelectorAll('.social-filter').forEach(b => {
+        b.classList.remove('bg-[#830506]', 'text-white', 'active');
+        b.classList.add('bg-white', 'text-gray-600');
+    });
+    event.target.classList.remove('bg-white', 'text-gray-600');
+    event.target.classList.add('bg-[#830506]', 'text-white', 'active');
+
+    document.querySelectorAll('.social-card').forEach(card => {
+        if (platform === 'all' || card.dataset.platform === platform) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

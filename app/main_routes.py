@@ -393,6 +393,12 @@ def index(page=1):
     poll_total_votes = 0
     if active_poll:
         poll_total_votes = sum((opt.votes or 0) for opt in active_poll.options)
+
+    # Latest social edits for homepage section
+    social_videos = SocialVideo.query.filter(
+        SocialVideo.active == True
+    ).order_by(SocialVideo.created_at.desc()).limit(3).all()
+
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
                                        .paginate(page=page, per_page=per_page, error_out=False)
@@ -447,7 +453,8 @@ def index(page=1):
                                   videos=recent_paginated, index=index, trending_trailers=trending_trailers,
                                   upcoming_titles=upcoming_titles,
                                   active_poll=active_poll,
-                                  poll_total_votes=poll_total_votes)
+                                  poll_total_votes=poll_total_votes,
+                                  social_videos=social_videos)
 
 
 @main_bp.route("/release-calendar")
@@ -2111,6 +2118,14 @@ def track_event():
         #         print("Error deleting video:", e)
         # else:
         #     print("Video not found.")
+        
+
+@main_bp.route("/social")
+def social_page():
+    social_videos = SocialVideo.query.filter(
+        SocialVideo.active == True
+    ).order_by(SocialVideo.created_at.desc()).all()
+    return render_template("social.html", social_videos=social_videos)
         
 
     # app.run(debug=True, host="0.0.0.0", port=5000)
