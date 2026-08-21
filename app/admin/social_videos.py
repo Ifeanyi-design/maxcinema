@@ -12,9 +12,9 @@ def _parse_social_url(url):
     """Extract platform and video ID from a YouTube or TikTok URL."""
     url = url.strip()
 
-    # YouTube patterns
+    # YouTube patterns (covers shorts, watch, embed, youtu.be, m., music., query params)
     yt_match = re.search(
-        r'(?:youtube\.com/(?:shorts/|watch\?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})',
+        r'(?:www\.|m\.|music\.)?(?:youtube\.com/(?:shorts/|watch\?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})',
         url
     )
     if yt_match:
@@ -67,6 +67,33 @@ def _fetch_tiktok_oembed(video_id):
             }
     except Exception:
         pass
+    return None
+
+
+def _auto_match_all_video(title):
+    """Try to find an AllVideo matching the social video title."""
+    if not title:
+        return None
+    # Exact match first
+    match = AllVideo.query.filter(db.func.lower(AllVideo.name) == title.lower().strip()).first()
+    if match:
+        return match
+    # Partial match — title contains the movie name or vice versa
+    all_videos = AllVideo.query.filter(AllVideo.active == True).all()
+    title_lower = title.lower().strip()
+    # Remove common filler words for matching
+    stop_words = {'the', 'a', 'an', 'edit', 'fan', 'official', 'trailer', 'clip', 'scene', 'compilation', 'best', 'funny', 'movie', 'video', 'tiktok', 'youtube', 'shorts'}
+    title_words = set(title_lower.split()) - stop_words
+    best_match = None
+    best_score = 0
+    for av in all_videos:
+        av_words = set(av.name.lower().split()) - stop_words
+        overlap = len(title_words & av_words)
+        if overlap > best_score:
+            best_score = overlap
+            best_match = av
+    if best_score >= 1:
+        return best_match
     return None
 
 
@@ -245,6 +272,14 @@ def add_social_video():
         if not title:
             title = f'{platform.title()} Video {platform_id}'
 
+        # Auto-match associated content if not manually selected
+        all_video_id_val = request.form.get('all_video_id', '')
+        matched_video = None
+        if not all_video_id_val:
+            matched_video = _auto_match_all_video(title)
+            if matched_video:
+                all_video_id_val = str(matched_video.id)
+
         sv = SocialVideo(
             platform=platform,
             video_url=video_url,
@@ -253,7 +288,7 @@ def add_social_video():
             description=description,
             thumbnail_url=thumbnail_url,
             tags=tags,
-            all_video_id=int(all_video_id) if all_video_id else None,
+            all_video_id=int(all_video_id_val) if all_video_id_val else None,
             featured=featured,
             active=active,
             sort_order=sort_order,
@@ -261,7 +296,8 @@ def add_social_video():
         db.session.add(sv)
         db.session.commit()
 
-        flash(f'Added "{sv.title}" ({platform}).', 'success')
+        match_msg = f' (auto-matched to "{matched_video.name}")' if matched_video else ''
+        flash(f'Added "{sv.title}" ({platform}){match_msg}.', 'success')
         return redirect(url_for('admin.view_social_videos'))
 
     return render_template('admin/add_social_video.html', all_videos=all_videos, prefilled={})
