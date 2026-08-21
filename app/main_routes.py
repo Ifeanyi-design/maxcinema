@@ -20,7 +20,7 @@ from .indexnow import get_indexnow_key_record, get_site_base_url
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
     Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
-    WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote, CourseLead
+    WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote, CourseLead, SocialVideo
 )
 
 main_bp = Blueprint("main", __name__)
@@ -818,7 +818,13 @@ def movie_details(det, name, id):
 
     extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
-    
+
+    # Social videos linked to this movie
+    social_videos = SocialVideo.query.filter(
+        SocialVideo.active == True,
+        SocialVideo.all_videos.any(AllVideo.id == id)
+    ).order_by(SocialVideo.sort_order.asc()).all()
+
     try:
         # 1. Safety Valve: Clear any pending/accidental changes so we don't save garbage
         db.session.rollback()
@@ -836,7 +842,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges)
+    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, social_videos=social_videos)
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
