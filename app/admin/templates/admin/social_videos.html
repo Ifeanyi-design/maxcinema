@@ -52,18 +52,19 @@
 
         <!-- Table -->
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left">
+            <table class="w-full text-sm text-left min-w-[1100px]">
                 <thead class="text-xs text-gray-400 uppercase bg-gray-800">
                     <tr>
                         <th class="px-3 py-3 w-10"></th>
                         <th class="px-3 py-3 w-10">#</th>
                         <th class="px-3 py-3">Platform</th>
-                        <th class="px-3 py-3">Title</th>
+                        <th class="px-3 py-3 min-w-[250px]">Title</th>
                         <th class="px-3 py-3">Thumbnail</th>
                         <th class="px-3 py-3">Linked Content</th>
                         <th class="px-3 py-3 w-20">Order</th>
                         <th class="px-3 py-3 w-16">Featured</th>
                         <th class="px-3 py-3 w-16">Active</th>
+                        <th class="px-3 py-3 w-16"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,7 +82,7 @@
                             {% endif %}
                         </td>
                         <td class="px-3 py-3">
-                            <input type="text" name="title_{{ video.id }}" value="{{ video.title }}" class="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
+                            <input type="text" name="title_{{ video.id }}" value="{{ video.title }}" class="w-full min-w-[200px] bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white text-sm focus:ring-1 focus:ring-yellow-500">
                         </td>
                         <td class="px-3 py-3">
                             {% if video.thumbnail_url %}
@@ -105,6 +106,9 @@
                         </td>
                         <td class="px-3 py-3 text-center">
                             <input type="checkbox" name="active_{{ video.id }}" {{ 'checked' if video.active }} class="rounded border-gray-600 bg-gray-700 text-green-500 focus:ring-green-500">
+                        </td>
+                        <td class="px-3 py-3">
+                            <a href="{{ url_for('admin.edit_social_video', sv_id=video.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">Edit</a>
                         </td>
                     </tr>
                     {% endfor %}

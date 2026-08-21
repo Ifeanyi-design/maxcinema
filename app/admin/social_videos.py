@@ -377,24 +377,36 @@ def sync_youtube():
         flash(f'Error fetching channel: {str(e)}', 'danger')
         return redirect(url_for('admin.view_social_videos'))
 
-    # Step 2: Fetch recent videos from uploads playlist (max 50)
+    # Step 2: Fetch ALL videos from uploads playlist (paginated)
     try:
-        playlist_resp = http_requests.get(
-            'https://www.googleapis.com/youtube/v3/playlistItems',
-            params={
+        all_items = []
+        next_page_token = None
+        while True:
+            params = {
                 'part': 'snippet,contentDetails',
                 'playlistId': uploads_playlist_id,
                 'maxResults': 50,
                 'key': api_key,
-            },
-            timeout=15
-        )
-        playlist_data = playlist_resp.json()
-        if 'items' not in playlist_data:
-            flash(f'Error fetching playlist: {playlist_data.get("error", {}).get("message", "unknown")}', 'danger')
-            return redirect(url_for('admin.view_social_videos'))
+            }
+            if next_page_token:
+                params['pageToken'] = next_page_token
 
-        items = playlist_data['items']
+            playlist_resp = http_requests.get(
+                'https://www.googleapis.com/youtube/v3/playlistItems',
+                params=params,
+                timeout=15
+            )
+            playlist_data = playlist_resp.json()
+            if 'items' not in playlist_data:
+                flash(f'Error fetching playlist: {playlist_data.get("error", {}).get("message", "unknown")}', 'danger')
+                return redirect(url_for('admin.view_social_videos'))
+
+            all_items.extend(playlist_data['items'])
+            next_page_token = playlist_data.get('nextPageToken')
+            if not next_page_token:
+                break
+
+        items = all_items
     except Exception as e:
         flash(f'Error fetching videos: {str(e)}', 'danger')
         return redirect(url_for('admin.view_social_videos'))
@@ -457,3 +469,37 @@ def sync_youtube():
 
     flash(f'YouTube sync complete: {synced} new video(s) imported, {skipped} already existed.', 'success')
     return redirect(url_for('admin.view_social_videos'))
+
+
+@admin_bp.route('/social-videos/edit/<int:sv_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_social_video(sv_id):
+    sv = SocialVideo.query.get_or_404(sv_id)
+    all_videos = AllVideo.query.order_by(AllVideo.name.asc()).all()
+
+    if request.method == 'POST':
+        sv.video_url = request.form.get('video_url', sv.video_url).strip()
+        sv.title = request.form.get('title', sv.title).strip()
+        sv.description = request.form.get('description', '').strip()
+        sv.thumbnail_url = request.form.get('thumbnail_url', '').strip()
+        sv.tags = request.form.get('tags', '').strip()
+        sv.featured = 'featured' in request.form
+        sv.active = 'active' in request.form
+        sv.sort_order = request.form.get('sort_order', sv.sort_order, type=int)
+
+        # Re-parse platform if URL changed
+        platform, platform_id = _parse_social_url(sv.video_url)
+        if platform and platform_id:
+            sv.platform = platform
+            sv.platform_id = platform_id
+
+        # Update many-to-many
+        all_video_ids = request.form.getlist('all_video_ids[]')
+        sv.all_videos = AllVideo.query.filter(AllVideo.id.in_([int(x) for x in all_video_ids if x])).all() if all_video_ids else []
+
+        db.session.commit()
+        flash(f'Updated "{sv.title}".', 'success')
+        return redirect(url_for('admin.view_social_videos'))
+
+    return render_template('admin/edit_social_video.html', sv=sv, all_videos=all_videos)
