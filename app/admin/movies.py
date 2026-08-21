@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
 from slugify import slugify
@@ -55,6 +57,27 @@ def edit_video(video_id, prev):
 
         video.storage_server_id = form.storage_server_id.data
         db.session.commit()
+
+        # Bump recency so edited content surfaces at the top of "Recently Added".
+        # The homepage list is built from RecentItem (rebuilt at startup from
+        # Movie.date_added), so both must be updated to take effect immediately
+        # and survive a restart.
+        now = datetime.utcnow()
+        video.date_added = now
+        if video.movie:
+            video.movie.date_added = now
+        recent = RecentItem.query.filter_by(video_id=video.id).first()
+        if recent:
+            recent.date_added = now
+        else:
+            db.session.add(RecentItem(
+                video_id=video.id,
+                episode_id=None,
+                date_added=now,
+                type="movie" if video.type == "movie" else "series",
+            ))
+        db.session.commit()
+
         if was_coming_soon and (not video.coming_soon) and _has_download_payload(video):
             summary = _send_release_notifications(video)
             if summary["queued"] > 0:
