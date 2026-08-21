@@ -45,11 +45,6 @@
                 <p class="text-2xl font-black mt-1">{{ fill_rate }}%</p>
                 <p class="text-[11px] text-gray-400 mt-1">{{ req_filled }} / {{ req_total }}</p>
             </article>
-            <article class="rounded-2xl border border-pink-500/20 bg-gradient-to-b from-pink-500/15 to-gray-800 p-4">
-                <p class="text-[10px] font-black uppercase text-pink-300 tracking-wider">Ad Views ({{ selected_range_label }})</p>
-                <p class="text-2xl font-black mt-1">{{ ad_total_views }}</p>
-                <p class="text-[11px] text-gray-400 mt-1">CTR {{ ad_overall_ctr }}%</p>
-            </article>
             <article class="rounded-2xl border border-indigo-500/20 bg-gradient-to-b from-indigo-500/15 to-gray-800 p-4">
                 <p class="text-[10px] font-black uppercase text-indigo-300 tracking-wider">New Requests ({{ selected_range_label }})</p>
                 <p class="text-2xl font-black mt-1">{{ req_selected }}</p>
@@ -119,67 +114,6 @@
                     </div>
                 </div>
             </article>
-        </section>
-
-        <section class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-8">
-            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-2">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Ad Performance by Placement ({{ selected_range_label }})</h2>
-                    <span class="text-[10px] font-bold text-gray-500 uppercase">Mobile share: {{ ad_mobile_share }}%</span>
-                </div>
-                <div class="h-[280px]"><canvas id="adPlacementChart"></canvas></div>
-            </article>
-            <article class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 xl:col-span-1">
-                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200 mb-3">Ad KPIs</h2>
-                <div class="space-y-3">
-                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
-                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Tracked Views</p>
-                        <p class="text-lg font-black text-white">{{ ad_total_views }}</p>
-                    </div>
-                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
-                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Tracked Clicks</p>
-                        <p class="text-lg font-black text-white">{{ ad_total_clicks }}</p>
-                    </div>
-                    <div class="rounded-xl bg-gray-900/40 border border-gray-700 p-3">
-                        <p class="text-[10px] uppercase tracking-wider text-gray-400 font-black">Overall CTR</p>
-                        <p class="text-lg font-black text-white">{{ ad_overall_ctr }}%</p>
-                    </div>
-                </div>
-            </article>
-        </section>
-
-        <section class="rounded-2xl border border-gray-700 bg-gray-800/70 p-4 md:p-5 mb-8">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm md:text-base font-black uppercase tracking-wider text-gray-200">Ad Placement Breakdown</h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs md:text-sm">
-                    <thead class="text-gray-400 uppercase tracking-wider border-b border-gray-700">
-                        <tr>
-                            <th class="py-2 pr-3">Placement</th>
-                            <th class="py-2 pr-3">Views</th>
-                            <th class="py-2 pr-3">Clicks</th>
-                            <th class="py-2 pr-3">CTR</th>
-                            <th class="py-2 pr-3">Mobile Views</th>
-                            <th class="py-2">Desktop Views</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-200 divide-y divide-gray-700/80">
-                        {% for row in ad_placement_rows %}
-                        <tr class="hover:bg-gray-700/30 transition-colors">
-                            <td class="py-2 pr-3 font-bold">{{ row.placement.replace('_', ' ') }}</td>
-                            <td class="py-2 pr-3">{{ row.views }}</td>
-                            <td class="py-2 pr-3">{{ row.clicks }}</td>
-                            <td class="py-2 pr-3">{{ row.ctr }}%</td>
-                            <td class="py-2 pr-3">{{ row.mobile_views }}</td>
-                            <td class="py-2">{{ row.desktop_views }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="6" class="py-4 text-center text-gray-500">No ad slot analytics yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
         </section>
 
         <section class="grid grid-cols-1 xl:grid-cols-3 gap-5 mb-8">
@@ -399,42 +333,6 @@
                 tension: 0.35,
                 fill: true
             }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#9CA3AF' } }
-            },
-            scales: {
-                x: { ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } },
-                y: { beginAtZero: true, ticks: { color: '#9CA3AF' }, grid: { color: '#374151' } }
-            }
-        }
-    });
-
-    new Chart(document.getElementById('adPlacementChart'), {
-        type: 'bar',
-        data: {
-            labels: {{ ad_labels | tojson }},
-            datasets: [
-                {
-                    label: 'Views',
-                    data: {{ ad_views_series | tojson }},
-                    backgroundColor: 'rgba(59, 130, 246, 0.75)',
-                    borderColor: '#3b82f6',
-                    borderWidth: 1,
-                    borderRadius: 6
-                },
-                {
-                    label: 'Clicks',
-                    data: {{ ad_clicks_series | tojson }},
-                    backgroundColor: 'rgba(236, 72, 153, 0.75)',
-                    borderColor: '#ec4899',
-                    borderWidth: 1,
-                    borderRadius: 6
-                }
-            ]
         },
         options: {
             responsive: true,

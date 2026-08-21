@@ -1,16 +1,14 @@
 from datetime import datetime, timedelta
-from collections import defaultdict
 import time
 
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import login_required
-from sqlalchemy import or_, func
-from sqlalchemy.orm import aliased
+from sqlalchemy import func
 
 from . import admin_bp
 from ..models import (
     AllVideo, Series, Trailer, StorageServer, User, db, RecentItem, Genre, Movie,
-    Season, Episode, Rating, Comment, MovieRequest, SearchTerm, AnalyticsEvent,
+    Season, Episode, Rating, Comment, MovieRequest, SearchTerm,
     WatchlistNotify
 )
 from .helpers import admin_required
@@ -112,48 +110,6 @@ def stats_dashboard():
     recent_searches = SearchTerm.query.order_by(SearchTerm.last_searched.desc()).limit(10).all()
     likely_no_result_terms = SearchTerm.query.filter(SearchTerm.count <= 2).order_by(SearchTerm.count.desc()).limit(10).all()
 
-    # Aggregate in Postgres instead of loading every ad event into Python.
-    ad_rows = (
-        db.session.query(AnalyticsEvent.event, AnalyticsEvent.target, func.count())
-        .filter(AnalyticsEvent.date_added >= since)
-        .group_by(AnalyticsEvent.event, AnalyticsEvent.target)
-        .all()
-    )
-    ad_stats = defaultdict(lambda: {"views": 0, "clicks": 0, "mobile_views": 0, "desktop_views": 0})
-    for event, target, count in ad_rows:
-        if event == "ad_slot_view":
-            ad_stats[target]["views"] += count
-            # AnalyticsEvent has no device column; all views counted as desktop.
-            ad_stats[target]["desktop_views"] += count
-        elif event == "ad_slot_click":
-            ad_stats[target]["clicks"] += count
-
-    ad_labels = []
-    ad_views_series = []
-    ad_clicks_series = []
-    ad_placement_rows = []
-    ad_total_views = 0
-    ad_total_clicks = 0
-    ad_mobile_total = 0
-    for placement, stats in sorted(ad_stats.items(), key=lambda x: x[1]["views"], reverse=True):
-        ctr = (stats["clicks"] / stats["views"] * 100) if stats["views"] > 0 else 0
-        ad_labels.append(placement)
-        ad_views_series.append(stats["views"])
-        ad_clicks_series.append(stats["clicks"])
-        ad_total_views += stats["views"]
-        ad_total_clicks += stats["clicks"]
-        ad_mobile_total += stats["mobile_views"]
-        ad_placement_rows.append({
-            "placement": placement,
-            "views": stats["views"],
-            "clicks": stats["clicks"],
-            "ctr": round(ctr, 2),
-            "mobile_views": stats["mobile_views"],
-            "desktop_views": stats["desktop_views"],
-        })
-    ad_overall_ctr = round((ad_total_clicks / ad_total_views * 100), 2) if ad_total_views > 0 else 0
-    ad_mobile_share = round((ad_mobile_total / ad_total_views * 100), 1) if ad_total_views > 0 else 0
-
     storage_servers = StorageServer.query.all()
     server_stats = []
     for server in storage_servers:
@@ -212,14 +168,6 @@ def stats_dashboard():
         top_searches=top_searches,
         recent_searches=recent_searches,
         likely_no_result_terms=likely_no_result_terms,
-        ad_labels=ad_labels,
-        ad_views_series=ad_views_series,
-        ad_clicks_series=ad_clicks_series,
-        ad_placement_rows=ad_placement_rows,
-        ad_total_views=ad_total_views,
-        ad_total_clicks=ad_total_clicks,
-        ad_overall_ctr=ad_overall_ctr,
-        ad_mobile_share=ad_mobile_share,
         server_stats=server_stats,
         top_content_rows=content_performance,
     )
