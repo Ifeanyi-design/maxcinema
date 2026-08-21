@@ -30,6 +30,28 @@ _sidebar_cache = {"data": None, "timestamp": 0}
 _SIDEBAR_CACHE_TTL = 300  # 5 minutes
 
 
+def rank_social_videos(social_videos):
+    """Rank social videos by matching popular search terms."""
+    if not social_videos:
+        return social_videos
+    popular_terms = SearchTerm.query.order_by(SearchTerm.count.desc()).limit(20).all()
+    if not popular_terms:
+        return social_videos
+    term_list = [t.term.lower() for t in popular_terms]
+
+    def score(sv):
+        s = 0
+        text = f"{sv.title or ''} {sv.tags or ''} {sv.description or ''}".lower()
+        for i, term in enumerate(term_list):
+            if term in text:
+                s += (20 - i)
+        if sv.featured:
+            s += 5
+        return s
+
+    return sorted(social_videos, key=score, reverse=True)
+
+
 # # ---------------- Admin Required ----------------
 def admin_required(f):
     @wraps(f)
@@ -397,7 +419,8 @@ def index(page=1):
     # Latest social edits for homepage section
     social_videos = SocialVideo.query.filter(
         SocialVideo.active == True
-    ).order_by(SocialVideo.created_at.desc()).limit(3).all()
+    ).order_by(SocialVideo.created_at.desc()).limit(6).all()
+    social_videos = rank_social_videos(social_videos)[:3]
 
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
@@ -1972,6 +1995,7 @@ def track_event():
         'search_submit',
         'request_submit',
         'share_click',
+        'social_cta_click',
     }
     if event not in allowed:
         return jsonify({'success': False, 'error': 'Invalid event'}), 400
@@ -2140,6 +2164,7 @@ def social_page():
     social_videos = SocialVideo.query.filter(
         SocialVideo.active == True
     ).order_by(SocialVideo.created_at.desc()).all()
+    social_videos = rank_social_videos(social_videos)
     return render_template("social.html", social_videos=social_videos)
         
 

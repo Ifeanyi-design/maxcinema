@@ -30,6 +30,12 @@
         const shareButton = e.target.closest("#shareVideoBtn, #shareBtn");
         if (shareButton) {
             sendEvent("share_click", shareButton.id || "share_button");
+            return;
+        }
+
+        const socialCta = e.target.closest('a[href][target="_blank"]');
+        if (socialCta && socialCta.closest('.social-card, [class*="social"], .bg-gradient-to-r.from-pink')) {
+            sendEvent("social_cta_click", socialCta.getAttribute("href") || "");
         }
     });
 
