@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen bg-gray-900 text-white overflow-hidden">
+
+    {% include 'admin/sidebar.html' %}
+
+    <div class="flex-1 p-8 overflow-y-auto relative pt-[70px]">
+
+        <div class="hidden justify-between lg:flex w-full items-center z-40 fixed top-0 bg-gray-900 py-4">
+            <h1 class="text-4xl lg:text-3xl font-bold">Add Social Video</h1>
+            <a href="{{ url_for('admin.view_social_videos') }}" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded text-xl">Back to List</a>
+        </div>
+
+        <div class="max-w-2xl mt-2">
+            <form method="POST" class="space-y-6">
+
+                <!-- URL Input -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Video URL *</label>
+                    <input type="url" name="video_url" required
+                           value="{{ prefilled.get('video_url', '') }}"
+                           placeholder="https://youtube.com/shorts/ABC123 or https://tiktok.com/@user/video/123456"
+                           class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Paste a YouTube or TikTok URL. Platform and video ID will be auto-detected.</p>
+                </div>
+
+                <!-- Title -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Title *</label>
+                    <input type="text" name="title" required
+                           value="{{ prefilled.get('title', '') }}"
+                           placeholder="e.g. Spider-Man Edit"
+                           class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">For YouTube videos, this is auto-filled from the video title.</p>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
+                    <textarea name="description" rows="3"
+                              placeholder="Optional description"
+                              class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">{{ prefilled.get('description', '') }}</textarea>
+                </div>
+
+                <!-- Thumbnail URL -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Thumbnail URL</label>
+                    <input type="url" name="thumbnail_url"
+                           value="{{ prefilled.get('thumbnail_url', '') }}"
+                           placeholder="Auto-filled for YouTube videos"
+                           class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+
+                <!-- Tags -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Tags</label>
+                    <input type="text" name="tags"
+                           value="{{ prefilled.get('tags', '') }}"
+                           placeholder="spider-man, marvel, edit (comma-separated)"
+                           class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+
+                <!-- Linked Content -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Associated Content</label>
+                    <select name="all_video_id" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                        <option value="">-- None --</option>
+                        {% for av in all_videos %}
+                        <option value="{{ av.id }}" {{ 'selected' if prefilled.get('all_video_id') == av.id|string }}>{{ av.name }} ({{ av.type }})</option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Link this edit to a specific movie/series in your catalogue.</p>
+                </div>
+
+                <!-- Sort Order -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Sort Order</label>
+                    <input type="number" name="sort_order" value="{{ prefilled.get('sort_order', 0) }}"
+                           class="w-32 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="flex gap-6">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="featured" {{ 'checked' if prefilled.get('featured') }} class="rounded border-gray-600 bg-gray-700 text-purple-500 focus:ring-purple-500">
+                        <span class="text-sm text-gray-300">Featured (show on homepage)</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="active" checked class="rounded border-gray-600 bg-gray-700 text-green-500 focus:ring-green-500">
+                        <span class="text-sm text-gray-300">Active</span>
+                    </label>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex gap-4 pt-4">
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-6 py-2 rounded text-lg">Add Social Video</button>
+                    <a href="{{ url_for('admin.view_social_videos') }}" class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded text-lg">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

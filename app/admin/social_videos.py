@@ -1,9 +1,73 @@
+import re
+import requests as http_requests
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from . import admin_bp
 from .helpers import admin_required
 from ..extensions import db
 from ..models import SocialVideo, AllVideo
+
+
+def _parse_social_url(url):
+    """Extract platform and video ID from a YouTube or TikTok URL."""
+    url = url.strip()
+
+    # YouTube patterns
+    yt_match = re.search(
+        r'(?:youtube\.com/(?:shorts/|watch\?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})',
+        url
+    )
+    if yt_match:
+        return 'youtube', yt_match.group(1)
+
+    # TikTok patterns
+    tt_match = re.search(
+        r'tiktok\.com/@[^/]+/video/(\d+)',
+        url
+    )
+    if tt_match:
+        return 'tiktok', tt_match.group(1)
+
+    return None, None
+
+
+def _fetch_youtube_oembed(video_id):
+    """Fetch YouTube metadata via oEmbed (no API key needed)."""
+    try:
+        resp = http_requests.get(
+            f'https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json',
+            timeout=10
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            thumbnail = f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg'
+            return {
+                'title': data.get('title', ''),
+                'description': data.get('author_name', ''),
+                'thumbnail_url': thumbnail,
+            }
+    except Exception:
+        pass
+    return None
+
+
+def _fetch_tiktok_oembed(video_id):
+    """Fetch TikTok thumbnail via oEmbed."""
+    try:
+        resp = http_requests.get(
+            f'https://www.tiktok.com/oembed?url=https://www.tiktok.com/video/{video_id}',
+            timeout=10
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                'title': data.get('title', ''),
+                'description': data.get('author_name', ''),
+                'thumbnail_url': data.get('thumbnail_url', ''),
+            }
+    except Exception:
+        pass
+    return None
 
 
 @admin_bp.route('/social-videos')
@@ -134,7 +198,70 @@ def bulk_active_social_videos():
 @login_required
 @admin_required
 def add_social_video():
+    all_videos = AllVideo.query.order_by(AllVideo.name.asc()).all()
+    prefilled = {}
+
     if request.method == 'POST':
-        flash('Add form not yet implemented.', 'warning')
+        video_url = request.form.get('video_url', '').strip()
+        platform, platform_id = _parse_social_url(video_url)
+
+        if not platform:
+            flash('Could not detect platform from URL. Use a YouTube or TikTok video URL.', 'danger')
+            return render_template('admin/add_social_video.html', all_videos=all_videos, prefilled={'video_url': video_url})
+
+        # Check for duplicate
+        existing = SocialVideo.query.filter_by(platform=platform, platform_id=platform_id).first()
+        if existing:
+            flash(f'This video already exists (ID: {existing.id}).', 'warning')
+            return redirect(url_for('admin.view_social_videos'))
+
+        # Fetch metadata
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        thumbnail_url = request.form.get('thumbnail_url', '').strip()
+        tags = request.form.get('tags', '').strip()
+        all_video_id = request.form.get('all_video_id', '')
+        featured = 'featured' in request.form
+        active = 'active' in request.form
+        sort_order = request.form.get('sort_order', 0, type=int)
+
+        if platform == 'youtube':
+            oembed = _fetch_youtube_oembed(platform_id)
+            if oembed:
+                if not title:
+                    title = oembed['title']
+                if not description:
+                    description = oembed['description']
+                if not thumbnail_url:
+                    thumbnail_url = oembed['thumbnail_url']
+        elif platform == 'tiktok':
+            oembed = _fetch_tiktok_oembed(platform_id)
+            if oembed:
+                if not thumbnail_url:
+                    thumbnail_url = oembed.get('thumbnail_url', '')
+                if not title and oembed.get('title'):
+                    title = oembed['title']
+
+        if not title:
+            title = f'{platform.title()} Video {platform_id}'
+
+        sv = SocialVideo(
+            platform=platform,
+            video_url=video_url,
+            platform_id=platform_id,
+            title=title,
+            description=description,
+            thumbnail_url=thumbnail_url,
+            tags=tags,
+            all_video_id=int(all_video_id) if all_video_id else None,
+            featured=featured,
+            active=active,
+            sort_order=sort_order,
+        )
+        db.session.add(sv)
+        db.session.commit()
+
+        flash(f'Added "{sv.title}" ({platform}).', 'success')
         return redirect(url_for('admin.view_social_videos'))
-    return redirect(url_for('admin.view_social_videos'))
+
+    return render_template('admin/add_social_video.html', all_videos=all_videos, prefilled={})
