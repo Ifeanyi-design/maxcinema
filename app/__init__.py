@@ -174,14 +174,20 @@ def create_app(config_class=Config):
         return {"country": get_country_code()}
 
     @app.context_processor
-    def inject_telegram_links():
-        main_group_url = os.getenv("TELEGRAM_MAIN_GROUP_URL", "https://t.me/MaxCinemaOfficial").strip()
-        notify_group_url = os.getenv("TELEGRAM_NOTIFY_GROUP_URL", main_group_url).strip()
-        return {
-            "telegram_main_group_url": main_group_url,
-            "telegram_notify_group_url": notify_group_url,
-        }
-    
+    def inject_social_follow_links():
+        yt = os.getenv("YOUTUBE_CHANNEL_URL")
+        if not yt:
+            ch = os.getenv("YOUTUBE_CHANNEL_ID")
+            if ch:
+                yt = f"https://www.youtube.com/channel/{ch}"
+        tt = os.getenv("TIKTOK_URL")
+        links = {}
+        if yt:
+            links["youtube"] = yt
+        if tt:
+            links["tiktok"] = tt
+        return {"follow_links": links}
+
 
     # Register blueprints
     from .main_routes import main_bp

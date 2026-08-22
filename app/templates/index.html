@@ -241,55 +241,44 @@
         </div>
 
         <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-3 md:px-6 border-x border-b border-gray-100 rounded-b-2xl shadow-sm">
-            <!-- SPONSORED MASTERCLASS CARD — Premium v3 -->
-            <a class="group relative flex flex-col rounded-xl overflow-hidden border border-blue-500/40 cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/40 hover:border-blue-400 hover:-translate-y-1"
-                 href="{{ url_for('main.learn_tech') }}"
-                 style="background: linear-gradient(145deg, #0b1530, #0a0f1e); animation: sponsoredGlow 4s ease-in-out infinite alternate;">
-                <style>@keyframes sponsoredGlow { 0%{box-shadow:0 0 0 0 rgba(59,130,246,0)} 100%{box-shadow:0 0 18px 2px rgba(59,130,246,0.25)} }</style>
-
-                <!-- Badges row -->
-                <div class="absolute top-2 left-2 z-40 flex items-center gap-1">
-                    <div class="flex items-center gap-1 bg-blue-600/90 backdrop-blur-sm px-2 py-0.5 rounded-md shadow-sm border border-blue-400/40">
-                        <span class="text-[9px] font-black text-white tracking-widest uppercase">Sponsored</span>
+            {% if featured_social %}
+            <a class="group relative flex flex-col rounded-xl overflow-hidden border border-[#830506]/30 bg-white shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+               href="{{ featured_social.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
+               aria-label="{{ featured_social.title }} on {{ featured_social.platform }}">
+                <div class="relative aspect-video w-full bg-black/5">
+                    {% if featured_social.thumbnail_url %}
+                    <img src="{{ featured_social.thumbnail_url }}" alt="{{ featured_social.title }}" loading="lazy" class="h-full w-full object-cover">
+                    {% else %}
+                    <div class="flex h-full w-full items-center justify-center bg-gray-100">
+                        <svg viewBox="0 0 24 24" class="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                    </div>
+                    {% endif %}
+                    <div class="absolute top-2 left-2 z-40">
+                        <span class="text-[9px] font-black text-white bg-[#830506] px-2 py-0.5 rounded-md uppercase tracking-wide">Featured Edit</span>
+                    </div>
+                    <div class="absolute top-2 right-2 z-40">
+                        {% if featured_social.platform == 'youtube' %}
+                        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white">
+                            <svg viewBox="0 0 24 24" class="h-3 w-3" fill="currentColor"><path d="M9.5 7.5v9l8-4.5z"/></svg>
+                        </span>
+                        {% else %}
+                        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-black text-white">
+                            <svg viewBox="0 0 24 24" class="h-3 w-3" fill="currentColor"><path d="M16 3c.3 2.1 1.6 3.8 3.7 4.1v2.6c-1.3.1-2.5-.3-3.7-1v6c0 2.8-2.2 5-5 5s-5-2.2-5-5 2.2-5 5-5c.3 0 .7 0 1 .1v2.7c-.3-.1-.7-.2-1-.2-1.3 0-2.3 1-2.3 2.3s1 2.3 2.3 2.3 2.3-1 2.3-2.3V3H16z"/></svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition group-hover:bg-black/30 group-hover:opacity-100">
+                        <span class="rounded-full bg-white/90 p-2">
+                            <svg viewBox="0 0 24 24" class="h-4 w-4 text-[#830506]" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </span>
                     </div>
                 </div>
-                <div class="absolute top-2 right-2 z-40 flex items-center gap-1.5">
-                    <span class="inline-block w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                    <span class="text-[9px] font-black text-white bg-red-600/80 px-1.5 py-0.5 rounded-md uppercase tracking-wide">New Cohort</span>
-                </div>
-
-                <!-- Main visual area -->
-                <div class="relative w-full aspect-[2/3] flex flex-col items-center justify-center p-3 text-center overflow-hidden">
-                    <!-- Background glow -->
-                    <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(59,130,246,0.22), transparent); animation: subtleGlow 4s ease-in-out infinite alternate;"></div>
-                    <style>@keyframes subtleGlow { 0%{opacity:0.4} 100%{opacity:1} }</style>
-
-                    <!-- Icon -->
-                    <div class="text-3xl mb-2">🎓</div>
-                    <h3 class="text-[11px] font-black text-white mb-1 uppercase tracking-wide leading-tight">Learn Tech<br>Masterclass</h3>
-                    <div class="w-6 h-0.5 bg-blue-500 my-1.5 mx-auto rounded"></div>
-
-                    <!-- Course tags -->
-                    <div class="flex flex-wrap justify-center gap-1 mb-2">
-                        <span class="text-[8px] font-bold bg-white/10 text-blue-200 px-1.5 py-0.5 rounded">🛡️ Hacking</span>
-                        <span class="text-[8px] font-bold bg-white/10 text-blue-200 px-1.5 py-0.5 rounded">🎨 UI/UX</span>
-                        <span class="text-[8px] font-bold bg-white/10 text-blue-200 px-1.5 py-0.5 rounded">🐍 Python</span>
-                        <span class="text-[8px] font-bold bg-white/10 text-blue-200 px-1.5 py-0.5 rounded">🤖 AI</span>
-                    </div>
-
-                    <!-- Savings callout -->
-                    <p class="text-[9px] text-yellow-300 font-black uppercase tracking-wide mb-1">Save up to ₦25,000</p>
-
-                    <!-- Mini countdown -->
-                    <p class="text-[8px] text-slate-400 font-bold mb-2">Cohort starts:</p>
-                    <div id="sponsoredCountdown" class="font-mono font-black text-[11px] text-white tabular-nums mb-3">--d --h --m</div>
-
-                    <!-- CTA -->
-                    <div class="bg-blue-600 group-hover:bg-blue-500 text-white font-black px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wide transition">
-                        Claim 50% Off →
-                    </div>
+                <div class="p-3">
+                    <p class="text-[10px] font-black text-[#830506] uppercase tracking-widest mb-1">Watch Our Edit</p>
+                    <h3 class="text-gray-900 text-xs font-black leading-tight line-clamp-2 group-hover:text-[#830506] transition">{{ featured_social.title }}</h3>
                 </div>
             </a>
+            {% endif %}
 
             {% for item in items %}
                 {% set is_movie = item.__class__.__name__ == 'Movie' %}

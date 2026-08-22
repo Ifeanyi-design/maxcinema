@@ -439,6 +439,11 @@ def index(page=1):
         SocialVideo.active == True
     ).order_by(SocialVideo.featured.desc(), SocialVideo.created_at.desc()).limit(3).all()
 
+    # Featured social edit for the first homepage card (manual Featured flag, auto-fallback to newest)
+    featured_social = SocialVideo.query.filter_by(active=True, featured=True).order_by(SocialVideo.created_at.desc()).first()
+    if not featured_social:
+        featured_social = SocialVideo.query.filter_by(active=True).order_by(SocialVideo.created_at.desc()).first()
+
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
                                        .paginate(page=page, per_page=per_page, error_out=False)
@@ -494,7 +499,8 @@ def index(page=1):
                                   upcoming_titles=upcoming_titles,
                                   active_poll=active_poll,
                                   poll_total_votes=poll_total_votes,
-                                  social_videos=social_videos)
+                                  social_videos=social_videos,
+                                  featured_social=featured_social)
 
 
 @main_bp.route("/release-calendar")
