@@ -17,27 +17,27 @@
                 <!-- URL Input -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Video URL *</label>
-                    <input type="url" name="video_url" required
+                    <input type="url" name="video_url" id="video_url" required
                            value="{{ prefilled.get('video_url', '') }}"
                            placeholder="https://youtube.com/shorts/ABC123 or https://tiktok.com/@user/video/123456"
                            class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">Paste a YouTube or TikTok URL. Platform and video ID will be auto-detected.</p>
+                    <p class="text-xs text-gray-500 mt-1">Paste a YouTube or TikTok URL and the fields below auto-fill. <span id="meta_status" class="text-yellow-500"></span></p>
                 </div>
 
                 <!-- Title -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Title *</label>
-                    <input type="text" name="title" required
+                    <input type="text" name="title" id="title" required
                            value="{{ prefilled.get('title', '') }}"
                            placeholder="e.g. Spider-Man Edit"
                            class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">For YouTube videos, this is auto-filled from the video title.</p>
+                    <p class="text-xs text-gray-500 mt-1">Auto-filled from the video. Edit if you like.</p>
                 </div>
 
                 <!-- Description -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                    <textarea name="description" rows="3"
+                    <textarea name="description" id="description" rows="3"
                               placeholder="Optional description"
                               class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">{{ prefilled.get('description', '') }}</textarea>
                 </div>
@@ -45,16 +45,18 @@
                 <!-- Thumbnail URL -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Thumbnail URL</label>
-                    <input type="url" name="thumbnail_url"
+                    <input type="url" name="thumbnail_url" id="thumbnail_url"
                            value="{{ prefilled.get('thumbnail_url', '') }}"
-                           placeholder="Auto-filled for YouTube videos"
+                           placeholder="Auto-filled"
                            class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    <img id="thumb_preview" src="{{ prefilled.get('thumbnail_url', '') }}" alt=""
+                         class="mt-2 hidden h-24 w-40 rounded object-cover border border-gray-600">
                 </div>
 
                 <!-- Tags -->
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Tags</label>
-                    <input type="text" name="tags"
+                    <input type="text" name="tags" id="tags"
                            value="{{ prefilled.get('tags', '') }}"
                            placeholder="spider-man, marvel, edit (comma-separated)"
                            class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
@@ -99,4 +101,49 @@
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    const urlInput = document.getElementById('video_url');
+    const titleInput = document.getElementById('title');
+    const descInput = document.getElementById('description');
+    const thumbInput = document.getElementById('thumbnail_url');
+    const tagsInput = document.getElementById('tags');
+    const thumbPreview = document.getElementById('thumb_preview');
+    const status = document.getElementById('meta_status');
+    if (!urlInput) return;
+
+    let timer = null;
+    function fillFromMeta() {
+        const url = urlInput.value.trim();
+        if (!url) { status.textContent = ''; return; }
+        status.textContent = 'Fetching…';
+        fetch("{{ url_for('admin.social_fetch_meta') }}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({video_url: url})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) { status.textContent = data.error || 'Not recognized.'; return; }
+            status.textContent = (data.platform === 'youtube' ? 'YouTube' : 'TikTok') + ' detected ✓';
+            if (data.title && !titleInput.value) titleInput.value = data.title;
+            if (data.description && !descInput.value) descInput.value = data.description;
+            if (data.thumbnail_url) {
+                if (!thumbInput.value) thumbInput.value = data.thumbnail_url;
+                thumbPreview.src = data.thumbnail_url;
+                thumbPreview.classList.remove('hidden');
+            }
+            if (data.tags && tagsInput && !tagsInput.value) tagsInput.value = data.tags;
+        })
+        .catch(() => { status.textContent = 'Could not fetch metadata.'; });
+    }
+
+    urlInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(fillFromMeta, 600);
+    });
+    urlInput.addEventListener('blur', fillFromMeta);
+})();
+</script>
 {% endblock %}

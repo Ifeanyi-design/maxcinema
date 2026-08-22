@@ -52,18 +52,20 @@ def _fetch_youtube_oembed(video_id):
     return None
 
 
-def _fetch_tiktok_oembed(video_id):
-    """Fetch TikTok thumbnail via oEmbed."""
+def _fetch_tiktok_oembed(video_url):
+    """Fetch TikTok title + thumbnail via oEmbed (no API key needed)."""
     try:
         resp = http_requests.get(
-            f'https://www.tiktok.com/oembed?url=https://www.tiktok.com/video/{video_id}',
+            'https://www.tiktok.com/oembed',
+            params={'url': video_url},
+            headers={'User-Agent': 'Mozilla/5.0'},
             timeout=10
         )
         if resp.status_code == 200:
             data = resp.json()
             return {
                 'title': data.get('title', ''),
-                'description': data.get('author_name', ''),
+                'description': data.get('title', ''),
                 'thumbnail_url': data.get('thumbnail_url', ''),
             }
     except Exception:
@@ -255,6 +257,47 @@ def bulk_active_social_videos():
 @admin_bp.route('/social-videos/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
+@admin_bp.route('/social-videos/fetch-meta', methods=['POST'])
+@login_required
+@admin_required
+def social_fetch_meta():
+    payload = request.get_json(silent=True) or {}
+    video_url = (payload.get('video_url') or '').strip()
+    platform, platform_id = _parse_social_url(video_url)
+    if not platform:
+        return jsonify({'ok': False, 'error': 'Could not detect platform from URL.'}), 400
+
+    title = description = thumbnail_url = tags = ''
+    if platform == 'youtube':
+        oe = _fetch_youtube_oembed(platform_id)
+        if oe:
+            title = oe.get('title', '')
+            description = oe.get('description', '')
+            thumbnail_url = oe.get('thumbnail_url', '')
+        api_key = os.environ.get('YOUTUBE_API_KEY', '')
+        if api_key:
+            details = _fetch_youtube_video_details([platform_id], api_key)
+            if platform_id in details:
+                tags = details[platform_id].get('tags', '')
+                if not description:
+                    description = details.get('description', '')
+    else:
+        oe = _fetch_tiktok_oembed(video_url)
+        if oe:
+            title = oe.get('title', '')
+            description = oe.get('description', '')
+            thumbnail_url = oe.get('thumbnail_url', '')
+
+    return jsonify({
+        'ok': True,
+        'platform': platform,
+        'title': title,
+        'description': description,
+        'thumbnail_url': thumbnail_url,
+        'tags': tags,
+    })
+
+
 def add_social_video():
     all_videos = AllVideo.query.order_by(AllVideo.name.asc()).all()
     prefilled = {}
@@ -302,7 +345,7 @@ def add_social_video():
                     if not description:
                         description = details[platform_id].get('description', '')
         elif platform == 'tiktok':
-            oembed = _fetch_tiktok_oembed(platform_id)
+            oembed = _fetch_tiktok_oembed(video_url)
             if oembed:
                 if not thumbnail_url:
                     thumbnail_url = oembed.get('thumbnail_url', '')
