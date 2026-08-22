@@ -212,12 +212,15 @@ def dashboard():
     recent_analytics = []
     analytics_available = True
     try:
-    recent_analytics = (
-        AnalyticsEvent.query
-        .order_by(AnalyticsEvent.date_added.desc())
-        .limit(20)
-        .all()
-    )
+        recent_analytics = (
+            AnalyticsEvent.query
+            .order_by(AnalyticsEvent.date_added.desc())
+            .limit(20)
+            .all()
+        )
+    except Exception:
+        analytics_available = False
+        recent_analytics = []
 
     social_cta_top = []
     social_cta_total = 0
@@ -240,9 +243,6 @@ def dashboard():
         )
     except Exception:
         pass
-    except Exception:
-        analytics_available = False
-        recent_analytics = []
 
     needs_poster = (
         AllVideo.query
