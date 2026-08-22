@@ -434,11 +434,10 @@ def index(page=1):
     if active_poll:
         poll_total_votes = sum((opt.votes or 0) for opt in active_poll.options)
 
-    # Latest social edits for homepage section
+    # Latest social edits for homepage section (true recency: featured pinned, then newest)
     social_videos = SocialVideo.query.filter(
         SocialVideo.active == True
-    ).order_by(SocialVideo.created_at.desc()).limit(6).all()
-    social_videos = rank_social_videos(social_videos)[:3]
+    ).order_by(SocialVideo.featured.desc(), SocialVideo.created_at.desc()).limit(3).all()
 
     # Paginate RecentItem directly
     recent_paginated = RecentItem.query.order_by(RecentItem.date_added.desc()) \
