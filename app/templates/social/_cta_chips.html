@@ -1,0 +1,22 @@
+{# Shared social CTA chips — used on movie detail & download pages.
+   Expects `social_videos` in context and an optional `dark` flag. #}
+{% set pill_cls = 'bg-white border-gray-200 text-gray-700 hover:border-[#830506] hover:bg-[#830506]/5' if not dark else 'bg-white/5 border-white/10 text-white hover:bg-white/10' %}
+{% set title_cls = 'group-hover:text-[#830506]' if not dark else 'group-hover:text-white' %}
+<div class="flex flex-wrap gap-2">
+  {% for sv in social_videos %}
+  <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+     aria-label="{{ sv.title }} on {{ sv.platform }}"
+     class="group inline-flex max-w-[260px] items-center gap-2 overflow-hidden rounded-full border py-1.5 pl-1.5 pr-3 transition {{ pill_cls }}">
+    {% if sv.platform == 'youtube' %}
+    <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
+      <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M9.5 7.5v9l8-4.5z"/></svg>
+    </span>
+    {% else %}
+    <span class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-black text-white">
+      <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M16 3c.3 2.1 1.6 3.8 3.7 4.1v2.6c-1.3.1-2.5-.3-3.7-1v6c0 2.8-2.2 5-5 5s-5-2.2-5-5 2.2-5 5-5c.3 0 .7 0 1 .1v2.7c-.3-.1-.7-.2-1-.2-1.3 0-2.3 1-2.3 2.3s1 2.3 2.3 2.3 2.3-1 2.3-2.3V3H16z"/></svg>
+    </span>
+    {% endif %}
+    <span class="min-w-0 flex-1 truncate text-sm font-semibold transition {{ title_cls }}">{{ sv.title }}</span>
+  </a>
+  {% endfor %}
+</div>

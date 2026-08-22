@@ -5,7 +5,7 @@
 {% block content %}
 <section class="mx-auto px-2 lg:px-4 max-w-[1600px] my-8 mt-24">
     <div class="mb-8">
-        <p class="text-[10px] font-black text-pink-500 uppercase tracking-widest mb-2">
+        <p class="text-[10px] font-black text-[#830506] uppercase tracking-widest mb-2">
             <svg class="w-4 h-4 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -42,8 +42,8 @@
                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                          loading="lazy">
                     {% else %}
-                    <div class="w-full h-full bg-gradient-to-br from-pink-100 to-red-100 flex items-center justify-center">
-                        <svg class="w-16 h-16 text-pink-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                         </svg>
                     </div>
@@ -72,14 +72,14 @@
                     </a>
                 </div>
                 <div class="p-4">
-                    <h3 class="text-gray-900 font-bold text-sm line-clamp-2 group-hover:text-pink-600 transition">{{ sv.title }}</h3>
+                    <h3 class="text-gray-900 font-bold text-sm line-clamp-2 group-hover:text-[#830506] transition">{{ sv.title }}</h3>
                     {% if sv.description %}
                     <p class="text-gray-400 text-xs mt-2 line-clamp-2">{{ sv.description }}</p>
                     {% endif %}
                     <div class="flex items-center justify-between mt-3">
                         <p class="text-gray-400 text-[10px] font-bold uppercase">{{ sv.published_at.strftime('%b %d, %Y') if sv.published_at else sv.created_at.strftime('%b %d, %Y') }}</p>
                         <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-pink-500 text-[10px] font-black uppercase hover:text-pink-700 transition">Watch <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                           class="text-[#830506] text-[10px] font-black uppercase hover:text-black transition">Watch <i class="fa-solid fa-arrow-right ml-1"></i></a>
                     </div>
                     {% if sv.tags %}
                     <div class="flex flex-wrap gap-1 mt-3">
