@@ -1,7 +1,7 @@
 import os
 import re
 import requests as http_requests
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from . import admin_bp
 from .helpers import admin_required
