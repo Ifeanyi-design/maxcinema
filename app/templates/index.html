@@ -242,12 +242,12 @@
 
         <div id="RecentlyAddedbox" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 py-6 bg-white px-3 md:px-6 border-x border-b border-gray-100 rounded-b-2xl shadow-sm">
             {% if featured_social %}
-            <a class="group relative flex flex-col rounded-xl overflow-hidden border border-[#830506]/30 bg-white shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+            <a class="group relative flex h-full flex-col rounded-xl overflow-hidden border border-[#830506]/30 bg-white shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
                href="{{ featured_social.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
                aria-label="{{ featured_social.title }} on {{ featured_social.platform }}">
-                <div class="relative aspect-video w-full bg-black/5">
+                <div class="relative flex-1 w-full min-h-[180px] bg-black/5">
                     {% if featured_social.thumbnail_url %}
-                    <img src="{{ featured_social.thumbnail_url }}" alt="{{ featured_social.title }}" loading="lazy" class="h-full w-full object-cover">
+                    <img src="{{ featured_social.thumbnail_url }}" alt="{{ featured_social.title }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover">
                     {% else %}
                     <div class="flex h-full w-full items-center justify-center bg-gray-100">
                         <svg viewBox="0 0 24 24" class="h-10 w-10 text-gray-300" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
