@@ -254,9 +254,6 @@ def bulk_active_social_videos():
     return redirect(url_for('admin.view_social_videos'))
 
 
-@admin_bp.route('/social-videos/add', methods=['GET', 'POST'])
-@login_required
-@admin_required
 @admin_bp.route('/social-videos/fetch-meta', methods=['POST'])
 @login_required
 @admin_required
@@ -298,6 +295,9 @@ def social_fetch_meta():
     })
 
 
+@admin_bp.route('/social-videos/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def add_social_video():
     all_videos = AllVideo.query.order_by(AllVideo.name.asc()).all()
     prefilled = {}
