@@ -81,6 +81,25 @@
             <p class="text-[11px] text-gray-400 mt-3">If top banner is blank, verify <span class="font-bold text-white">AD_BANNER_KEY</span> and matching <span class="font-bold text-white">AD_IFRAME_DOMAIN</span>.</p>
         </section>
 
+        <section class="mb-8 bg-gray-800 border border-gray-700 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-black uppercase tracking-wider text-gray-300">Social CTA Clicks</h2>
+                <span class="text-[10px] uppercase font-bold text-gray-500">{{ social_cta_total }} total</span>
+            </div>
+            {% if social_cta_top %}
+            <ol class="space-y-1.5 text-xs">
+                {% for target, cnt in social_cta_top %}
+                <li class="flex items-center justify-between gap-3 rounded-lg border border-gray-700 px-3 py-2">
+                    <a href="{{ target }}" target="_blank" rel="noopener noreferrer" class="min-w-0 flex-1 truncate text-gray-200 hover:text-[#830506] transition">{{ target }}</a>
+                    <span class="flex-shrink-0 font-bold text-green-400">{{ cnt }}</span>
+                </li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <p class="text-xs text-gray-500">No social CTA clicks recorded yet.</p>
+            {% endif %}
+        </section>
+
         <section class="mb-10 bg-gray-800 border border-gray-700 rounded-xl p-4">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-black uppercase tracking-wider text-gray-300">Recent Analytics Events</h2>

@@ -212,12 +212,34 @@ def dashboard():
     recent_analytics = []
     analytics_available = True
     try:
-        recent_analytics = (
-            AnalyticsEvent.query
-            .order_by(AnalyticsEvent.date_added.desc())
-            .limit(20)
+    recent_analytics = (
+        AnalyticsEvent.query
+        .order_by(AnalyticsEvent.date_added.desc())
+        .limit(20)
+        .all()
+    )
+
+    social_cta_top = []
+    social_cta_total = 0
+    try:
+        social_cta_total = AnalyticsEvent.query.filter_by(event='social_cta_click').count()
+        social_cta_top = (
+            db.session.query(
+                AnalyticsEvent.target,
+                func.count(AnalyticsEvent.id).label('cnt')
+            )
+            .filter(
+                AnalyticsEvent.event == 'social_cta_click',
+                AnalyticsEvent.target.isnot(None),
+                AnalyticsEvent.target != ''
+            )
+            .group_by(AnalyticsEvent.target)
+            .order_by(func.count(AnalyticsEvent.id).desc())
+            .limit(8)
             .all()
         )
+    except Exception:
+        pass
     except Exception:
         analytics_available = False
         recent_analytics = []
@@ -252,6 +274,8 @@ def dashboard():
         total_requests=total_requests,
         recent_analytics=recent_analytics,
         analytics_available=analytics_available,
+        social_cta_top=social_cta_top,
+        social_cta_total=social_cta_total,
         kind_filter=kind_filter,
         state_filter=state_filter,
         needs_poster=needs_poster,
