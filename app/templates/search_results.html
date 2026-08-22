@@ -135,7 +135,7 @@
             </p>
             <div class="flex flex-col gap-2">
             {% for sv in social_ctas %}
-            <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
                aria-label="{{ sv.title }} on {{ sv.platform }}"
                class="flex items-center gap-3 rounded-xl bg-black/[0.02] p-2 border border-black/5 hover:border-[#830506] hover:bg-[#830506]/5 transition group">
                 {% if sv.thumbnail_url %}

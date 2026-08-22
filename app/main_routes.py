@@ -52,6 +52,24 @@ def rank_social_videos(social_videos):
     return sorted(social_videos, key=score, reverse=True)
 
 
+def social_follow_links():
+    """Build Follow/Subscribe profile links from env config.
+    YouTube derived from YOUTUBE_CHANNEL_ID if YOUTUBE_CHANNEL_URL unset."""
+    import os
+    yt = os.environ.get("YOUTUBE_CHANNEL_URL")
+    if not yt:
+        ch = os.environ.get("YOUTUBE_CHANNEL_ID")
+        if ch:
+            yt = f"https://www.youtube.com/channel/{ch}"
+    tt = os.environ.get("TIKTOK_URL")
+    links = {}
+    if yt:
+        links["youtube"] = yt
+    if tt:
+        links["tiktok"] = tt
+    return links
+
+
 # # ---------------- Admin Required ----------------
 def admin_required(f):
     @wraps(f)
@@ -888,7 +906,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, social_videos=social_videos)
+    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, social_videos=social_videos, follow_links=social_follow_links())
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
@@ -1064,6 +1082,7 @@ def movie_download_page(slug):
         trending_movie=movie_trend,
         trending_trailers=trending_trailers,
         social_videos=social_videos,
+        follow_links=social_follow_links(),
         dark=True,
     )
 

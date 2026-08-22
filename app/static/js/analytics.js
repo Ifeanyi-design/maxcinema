@@ -33,8 +33,8 @@
             return;
         }
 
-        const socialCta = e.target.closest('a[href][target="_blank"]');
-        if (socialCta && socialCta.closest('.social-card, [class*="social"], .bg-gradient-to-r.from-pink')) {
+        const socialCta = e.target.closest('a[data-social-cta]');
+        if (socialCta) {
             sendEvent("social_cta_click", socialCta.getAttribute("href") || "");
         }
     });

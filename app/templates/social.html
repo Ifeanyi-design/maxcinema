@@ -60,7 +60,7 @@
                         <span class="bg-yellow-400 text-yellow-900 text-[8px] font-bold px-2 py-1 rounded shadow-lg uppercase">Featured</span>
                     </div>
                     {% endif %}
-                    <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+                    <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
                        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30">
                         <div class="bg-white rounded-full p-4 shadow-2xl">
                             {% if sv.platform == 'youtube' %}
@@ -78,8 +78,8 @@
                     {% endif %}
                     <div class="flex items-center justify-between mt-3">
                         <p class="text-gray-400 text-[10px] font-bold uppercase">{{ sv.published_at.strftime('%b %d, %Y') if sv.published_at else sv.created_at.strftime('%b %d, %Y') }}</p>
-                        <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-[#830506] text-[10px] font-black uppercase hover:text-black transition">Watch <i class="fa-solid fa-arrow-right ml-1"></i></a>
+                    <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
+                       class="text-[#830506] text-[10px] font-black uppercase hover:text-black transition">Watch <i class="fa-solid fa-arrow-right ml-1"></i></a>
                     </div>
                     {% if sv.tags %}
                     <div class="flex flex-wrap gap-1 mt-3">

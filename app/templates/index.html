@@ -432,7 +432,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {% for sv in social_videos %}
-            <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ sv.video_url }}" target="_blank" rel="noopener noreferrer" data-social-cta
                class="group relative rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition">
                 <div class="aspect-video relative">
                     {% if sv.thumbnail_url %}
