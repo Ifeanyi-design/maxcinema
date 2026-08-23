@@ -22,6 +22,12 @@ from .models import (
     Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
     WatchlistNotify, WeeklyPoll, WeeklyPollOption, WeeklyPollVote, CourseLead, SocialVideo
 )
+from .search import (
+    live_search_filter,
+    social_search_filter,
+    title_hit_first,
+    video_search_filter,
+)
 
 main_bp = Blueprint("main", __name__)
 
@@ -638,17 +644,14 @@ def search_result(page=1):
         db.session.rollback()
         print(f"Error logging search term: {e}")
 
-    search_filter = or_(
-        AllVideo.name.ilike(f"%{query}%"),
-        AllVideo.country.ilike(f"%{query}%"),
-        AllVideo.description.ilike(f"%{query}%"),
-        AllVideo.genres.any(Genre.name.ilike(f"%{query}%")),
-        AllVideo.star_cast.ilike(f"%{query}%")
-
-    )
+    search_filter = video_search_filter(query)
+    if search_filter is None:
+        search_filter = AllVideo.id.is_(False)
+    order_clauses = [clause for clause in (title_hit_first(query),) if clause is not None]
+    order_clauses.append(AllVideo.date_added.desc())
     videos = (
         AllVideo.query.options(joinedload(AllVideo.genres)).filter(search_filter, AllVideo.active.is_(True)).order_by(
-            AllVideo.date_added.desc()
+            *order_clauses
         ).paginate(page=page, per_page=per_page, error_out=False)
     )
     series_trend = AllVideo.query.filter_by(trending=True, type="series").order_by(AllVideo.date_added.desc()).limit(6).all()
@@ -658,14 +661,11 @@ def search_result(page=1):
 
     # Contextual social CTA — match by query keywords in title/tags/description
     social_ctas = []
-    if query:
+    social_filter = social_search_filter(query) if query else None
+    if social_filter is not None:
         social_ctas = SocialVideo.query.filter(
             SocialVideo.active == True,
-            or_(
-                SocialVideo.title.ilike(f"%{query}%"),
-                SocialVideo.tags.ilike(f"%{query}%"),
-                SocialVideo.description.ilike(f"%{query}%")
-            )
+            social_filter,
         ).order_by(SocialVideo.created_at.desc()).limit(3).all()
     if not social_ctas:
         fallback = SocialVideo.query.filter(SocialVideo.active == True).order_by(SocialVideo.created_at.desc()).first()
@@ -1939,15 +1939,14 @@ def live_search():
     if not query or len(query) < 2:
         return jsonify([])
 
-    # Search Logic (Same as your main search, but simpler/faster)
-    search_filter = or_(
-        AllVideo.name.ilike(f"%{query}%"),
-        AllVideo.star_cast.ilike(f"%{query}%")
-    )
-    
-    # Only get Top 5, and only fetch columns we need (optimization)
+    search_filter = live_search_filter(query)
+    if search_filter is None:
+        return jsonify([])
+
+    order_clauses = [clause for clause in (title_hit_first(query),) if clause is not None]
+    order_clauses.append(AllVideo.views.desc())
     results = AllVideo.query.filter(search_filter, AllVideo.active.is_(True))\
-              .order_by(AllVideo.views.desc())\
+              .order_by(*order_clauses)\
               .limit(5).all()
 
     # Convert database objects to a simple JSON list
