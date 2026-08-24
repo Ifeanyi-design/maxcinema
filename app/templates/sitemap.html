@@ -157,6 +157,10 @@
         <div class="header-section">
             <h1><i class="fa-solid fa-sitemap"></i> Library Index</h1>
             <input type="text" id="searchParams" placeholder="Type to filter movies, series, or trailers..." onkeyup="filterLinks()">
+            <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                <a href="{{ url_for('main.social_page') }}" style="background:#830506;color:#fff;padding:8px 16px;border-radius:9999px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> Social Edits</a>
+                <a href="{{ url_for('main.release_calendar') }}" style="background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:9999px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border:1px solid #333;"><i class="fa-regular fa-calendar"></i> Release Calendar</a>
+            </div>
         </div>
 
         <div class="section-wrapper" id="movies-section">

@@ -14,7 +14,21 @@
 
 
 
-        <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50">
+        <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50 items-center">
+            {% if follow_links and (follow_links.youtube or follow_links.tiktok) %}
+            <div class="hidden xl:flex items-center gap-1.5 mr-2 pl-3 border-l border-gray-200">
+                {% if follow_links.youtube %}
+                <a href="{{ follow_links.youtube }}" target="_blank" rel="noopener noreferrer" data-social-cta title="YouTube" class="w-7 h-7 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-sm hover:shadow-md transition hover:-translate-y-0.5">
+                    <i class="fa-brands fa-youtube text-[11px]"></i>
+                </a>
+                {% endif %}
+                {% if follow_links.tiktok %}
+                <a href="{{ follow_links.tiktok }}" target="_blank" rel="noopener noreferrer" data-social-cta title="TikTok" class="w-7 h-7 rounded-full bg-black hover:bg-gray-900 text-white flex items-center justify-center shadow-sm hover:shadow-md transition hover:-translate-y-0.5">
+                    <i class="fa-brands fa-tiktok text-[11px]"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
             <ul id="mainNav" class="flex sm:text-xl sm:gap-0 p-2 md:gap-0 lg:gap-4 justify-end font-medium md:text-[17px] flex-shrink-0 uppercase">
                 <li class="pt-2"><a href="{{ url_for('main.index') }}" class="lg:px-[20%] md:py-[15%] md:px-[5%] sm:text-[80%] lg:text-[100%] rounded-md mb-0 hover:text-[#830506]">Homes</a></li>
                 <li class="pt-2"><a href="{{ url_for('main.navbar', nav='all_movie', page='1') }}" class="lg:px-[20%] md:px-[5%] md:py-[15%] sm:text-[80%] lg:text-[100%] rounded-md hover:text-[#830506]">Movies</a></li>
@@ -90,6 +104,17 @@
                 <li><a href="{{ url_for('main.navbar', nav='request') }}">REQUEST</a></li>
                 <li><a href="{{ url_for('main.navbar', nav='trending') }}">TRENDING</a></li>
             </ul>
+            {% if follow_links and (follow_links.youtube or follow_links.tiktok) %}
+            <div class="mt-2 pt-3 border-t border-gray-100 flex items-center justify-center gap-2">
+                <span class="text-[9px] font-black uppercase tracking-widest text-gray-400">Follow</span>
+                {% if follow_links.youtube %}
+                <a href="{{ follow_links.youtube }}" target="_blank" rel="noopener noreferrer" data-social-cta class="w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center shadow-sm"><i class="fa-brands fa-youtube text-xs"></i></a>
+                {% endif %}
+                {% if follow_links.tiktok %}
+                <a href="{{ follow_links.tiktok }}" target="_blank" rel="noopener noreferrer" data-social-cta class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center shadow-sm"><i class="fa-brands fa-tiktok text-xs"></i></a>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
 
         <div id="MobilegenreMenu" class="py-3 md:hidden bg-white flex flex-col absolute top-full w-screen right-0 mr-0 max-h-[60vh] p-2 shadow-xl border-2">

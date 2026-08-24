@@ -1856,15 +1856,15 @@ def sitemap():
     # 1. Define Static Pages (Manually add the host)
     static_urls = [
         {'loc': f"{host}/", 'priority': '1.0'},
+        {'loc': f"{host}/social", 'priority': '0.7'},
         {'loc': f"{host}/trending/movie", 'priority': '0.9'},
         {'loc': f"{host}/trending/series", 'priority': '0.9'},
         {'loc': f"{host}/request/movie", 'priority': '0.5'},
     ]
 
-    # 2. Fetch Data (Limit to recent 2000 to keep it fast)
-    # If you have < 2000 movies, .limit() does nothing, which is fine.
-    movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
-    series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(1000).all()
+    # 2. Fetch Data (Cap at 5000/2000 to ensure full index while staying fast - bump if DB grows)
+    movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(5000).all()
+    series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
     trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
 
     # 3. Render Template
@@ -2185,9 +2185,10 @@ def track_event():
 
 @main_bp.route("/social")
 def social_page():
+    # Cap before Python ranking to avoid full table scan when SocialVideo grows
     social_videos = SocialVideo.query.filter(
         SocialVideo.active == True
-    ).order_by(SocialVideo.created_at.desc()).all()
+    ).order_by(SocialVideo.featured.desc(), SocialVideo.created_at.desc()).limit(200).all()
     social_videos = rank_social_videos(social_videos)
     return render_template("social.html", social_videos=social_videos)
         
