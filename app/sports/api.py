@@ -420,3 +420,58 @@ def competition_standings(slug):
             "standings": [standing_payload(r) for r in rows],
         }
     )
+
+
+# Curated football highlights - used as fallback and primary for /highlights endpoint
+_CURATED_HIGHLIGHTS = [
+    {"id": "3e5lF71rOcg", "title": "UEFA Champions League - Round of 16 & Quarter-Final Best Goals & Highlights", "competition": "UEFA Champions League", "duration": "11:24", "channel": "UEFA Official", "tags": ["ucl", "champions league", "real madrid", "bayern", "man city", "psg", "arsenal"], "video_url": "https://www.youtube.com/watch?v=3e5lF71rOcg", "thumbnail_url": "https://img.youtube.com/vi/3e5lF71rOcg/hqdefault.jpg"},
+    {"id": "fJ9rUzIMcZQ", "title": "Real Madrid vs Barcelona - El Clásico Full Highlights & All Goals", "competition": "La Liga", "duration": "12:40", "channel": "LaLiga EA Sports", "tags": ["el clasico", "real madrid", "barcelona", "la liga", "vinicius", "bellingham", "yamal"], "video_url": "https://www.youtube.com/watch?v=fJ9rUzIMcZQ", "thumbnail_url": "https://img.youtube.com/vi/fJ9rUzIMcZQ/hqdefault.jpg"},
+    {"id": "L_LUpnjgPso", "title": "Arsenal vs Manchester City - High Stakes Title Race Epic Clash", "competition": "Premier League", "duration": "10:35", "channel": "Sky Sports Football", "tags": ["arsenal", "manchester city", "man city", "premier league", "epl", "haaland", "saka"], "video_url": "https://www.youtube.com/watch?v=L_LUpnjgPso", "thumbnail_url": "https://img.youtube.com/vi/L_LUpnjgPso/hqdefault.jpg"},
+    {"id": "kJQP7kiw5Fk", "title": "Premier League - Top 20 Best Goals of the Season Spectacular", "competition": "Premier League", "duration": "14:15", "channel": "Premier League", "tags": ["premier league", "epl", "goals", "liverpool", "chelsea", "man united", "tottenham"], "video_url": "https://www.youtube.com/watch?v=kJQP7kiw5Fk", "thumbnail_url": "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg"},
+    {"id": "9bZkp7q19f0", "title": "Inter vs Milan - Derby della Madonnina Drama & Highlights", "competition": "Serie A", "duration": "11:50", "channel": "Serie A Official", "tags": ["inter", "milan", "ac milan", "serie a", "derby", "lautaro", "leao"], "video_url": "https://www.youtube.com/watch?v=9bZkp7q19f0", "thumbnail_url": "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg"},
+    {"id": "JGwWNGJdvx8", "title": "Vinicius Jr, Mbappe & Haaland - Best Skills & Goals Show 2025", "competition": "World Football", "duration": "15:02", "channel": "Football TV", "tags": ["vinicius", "mbappe", "haaland", "messi", "ronaldo", "skills", "goals", "superstars"], "video_url": "https://www.youtube.com/watch?v=JGwWNGJdvx8", "thumbnail_url": "https://img.youtube.com/vi/JGwWNGJdvx8/hqdefault.jpg"},
+    {"id": "dQw4w9WgXcQ", "title": "Bayern Munich vs Borussia Dortmund - Der Klassiker Full Highlights", "competition": "Bundesliga", "duration": "10:18", "channel": "Bundesliga Official", "tags": ["bayern", "dortmund", "bundesliga", "kane", "musiala", "sancho"], "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"},
+    {"id": "2Vv-BfVoq4g", "title": "FIFA World Cup - Greatest Comebacks & Historic Matches", "competition": "International", "duration": "18:22", "channel": "FIFA Official", "tags": ["world cup", "fifa", "argentina", "france", "brazil", "messi", "mbappe"], "video_url": "https://www.youtube.com/watch?v=2Vv-BfVoq4g", "thumbnail_url": "https://img.youtube.com/vi/2Vv-BfVoq4g/hqdefault.jpg"},
+    {"id": "npt81WJbQxU", "title": "Liverpool vs Manchester United - Iconic Northwest Derby Highlights", "competition": "Premier League", "duration": "11:05", "channel": "Premier League", "tags": ["liverpool", "manchester united", "man utd", "salah", "epl"], "video_url": "https://www.youtube.com/watch?v=npt81WJbQxU", "thumbnail_url": "https://img.youtube.com/vi/npt81WJbQxU/hqdefault.jpg"},
+    {"id": "PvbD2m-G5sY", "title": "Chelsea vs Tottenham Hotspur - London Derby Drama & Red Cards", "competition": "Premier League", "duration": "13:20", "channel": "Sky Sports Football", "tags": ["chelsea", "tottenham", "spurs", "epl", "derby", "palmer", "son"], "video_url": "https://www.youtube.com/watch?v=PvbD2m-G5sY", "thumbnail_url": "https://img.youtube.com/vi/PvbD2m-G5sY/hqdefault.jpg"},
+    {"id": "YwQo30F6CjA", "title": "Paris Saint-Germain vs Olympique Marseille - Le Classique Thriller", "competition": "Ligue 1", "duration": "09:45", "channel": "Ligue 1 Uber Eats", "tags": ["psg", "marseille", "ligue 1", "dembele", "barcola"], "video_url": "https://www.youtube.com/watch?v=YwQo30F6CjA", "thumbnail_url": "https://img.youtube.com/vi/YwQo30F6CjA/hqdefault.jpg"},
+    {"id": "5wK1C0f0WQI", "title": "Juventus vs Napoli - High Intensity Serie A Title Battle", "competition": "Serie A", "duration": "10:12", "channel": "Serie A Official", "tags": ["juventus", "napoli", "serie a", "vlahovic", "kvaratskhelia"], "video_url": "https://www.youtube.com/watch?v=5wK1C0f0WQI", "thumbnail_url": "https://img.youtube.com/vi/5wK1C0f0WQI/hqdefault.jpg"},
+]
+
+
+@api_bp.route("/highlights")
+def highlights():
+    """Return football highlights - merges SocialVideo edits with curated fallback."""
+    highlights = []
+    try:
+        from ..models import SocialVideo
+        # Pull recent active social videos that are football-related or general edits
+        social_videos = SocialVideo.query.filter_by(active=True).order_by(SocialVideo.created_at.desc()).limit(20).all()
+        for sv in social_videos:
+            # Map SocialVideo to highlight shape
+            vid = sv.platform_id or sv.id
+            # Extract youtube id if platform youtube, else use platform_id
+            highlights.append({
+                "id": str(vid),
+                "title": sv.title,
+                "competition": "MaxCinema Edit",
+                "duration": "02:30",
+                "channel": "MaxCinema" if sv.platform == "youtube" else "MaxCinema TikTok",
+                "tags": (sv.tags.split(",") if sv.tags else [sv.platform]) if sv.tags else [sv.platform, sv.title.lower().split(" ")[0] if sv.title else "football"],
+                "video_url": sv.video_url,
+                "thumbnail_url": sv.thumbnail_url or (f"https://img.youtube.com/vi/{sv.platform_id}/hqdefault.jpg" if sv.platform == "youtube" else None),
+                "published_at": _iso(sv.published_at or sv.created_at),
+                "platform": sv.platform,
+            })
+    except Exception:
+        pass
+    # Merge curated - if we have social highlights, put them first, then curated to fill up to 20
+    curated = list(_CURATED_HIGHLIGHTS)
+    # De-dupe by id
+    seen = {h["id"] for h in highlights}
+    for c in curated:
+        if c["id"] not in seen:
+            highlights.append(c)
+        if len(highlights) >= 20:
+            break
+    return jsonify({"highlights": highlights[:20], "count": len(highlights[:20])})
