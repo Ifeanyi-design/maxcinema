@@ -1058,7 +1058,30 @@ def get_team_squad(team):
     fetch = getattr(provider, "fetch_team_squad", None)
     if fetch is None:
         return {"available": False}
+    # If the requested team row is still from the old provider (thesportsdb),
+    # try to resolve the matching api-football row by slug/name so squad can work
+    # after a provider switch without requiring a full DB wipe.
+    original_team = team
     team_id = team.provider_team_id
+    if team.provider_name != "api-football":
+        alt = SportsTeam.query.filter_by(slug=team.slug, provider_name="api-football").first()
+        if alt and alt.provider_team_id:
+            team = alt
+            team_id = alt.provider_team_id
+        else:
+            alt = SportsTeam.query.filter(
+                SportsTeam.name.ilike(team.name),  # type: ignore[attr-defined]
+                SportsTeam.provider_name == "api-football",
+            ).first()
+            if alt and alt.provider_team_id:
+                team = alt
+                team_id = alt.provider_team_id
+            else:
+                # No api-football row yet — the teams catalog hasn't been
+                # re-synced since the provider switch. Triggering
+                # `heroku run flask sports sync` (or waiting for the next
+                # catalog TTL) will create it. Return a hint for the UI.
+                return {"available": False, "reason": "team not yet synced for api-football", "team": original_team.name}
     if not team_id:
         return {"available": False}
 
