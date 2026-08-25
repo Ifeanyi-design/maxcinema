@@ -88,10 +88,17 @@
             const titleEl = document.getElementById('notifyModalTitle');
             const goBtn = document.getElementById('notifyModalGo');
             const cancelBtn = document.getElementById('notifyModalCancel');
+            // Real route lives under the /admin prefix — build from Jinja, never hardcode
+            const NOTIFY_URL_BASE = "{{ url_for('admin.release_notify', video_id=0) }}".replace(/\/0$/, '');
+
+            function scopeValue() {
+                const checked = document.querySelector('input[name="notify-scope"]:checked');
+                return checked ? checked.value : 'pending';
+            }
 
             function openModal(videoId, videoTitle) {
                 titleEl.textContent = videoTitle || ('#' + videoId);
-                goBtn.href = '/release-notify/' + videoId + '?scope=' + document.querySelector('input[name="notify-scope"]:checked').value;
+                goBtn.href = NOTIFY_URL_BASE + '/' + videoId + '?scope=' + scopeValue();
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             }
@@ -111,9 +118,8 @@
             // Rebuild the Send URL whenever the selected scope changes
             document.querySelectorAll('input[name="notify-scope"]').forEach((radio) => {
                 radio.addEventListener('change', () => {
-                    const current = goBtn.getAttribute('href') || '';
-                    const m = current.match(/\/release-notify\/(\d+)/);
-                    if (m) goBtn.href = '/release-notify/' + m[1] + '?scope=' + radio.value;
+                    const m = (goBtn.getAttribute('href') || '').match(/release-notify\/(\d+)/);
+                    if (m) goBtn.href = NOTIFY_URL_BASE + '/' + m[1] + '?scope=' + scopeValue();
                 });
             });
 
