@@ -53,9 +53,10 @@
 </head>
 
 <body id="BodyTop"
-      data-pop-url="{{ ads.pop_url or '' }}"
-      data-country="{{ country or 'XX' }}"
-      class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
+       data-pop-url="{{ ads.pop_url or '' }}"
+       data-smartlink-url="{{ ads.smartlink_url or '' }}"
+       data-country="{{ country or 'XX' }}"
+       class="relative overflow-x-hidden bg-gray-100 scroll-mt-20 {% if dark %} dark:bg-[#0a0a0a] {% endif %} xl:pb-7">
     <!-- ═══════════════════════════════════════════════════════════
          HIIT CAMPAIGN — GLOBAL CONFIG (change date here only)
          ═══════════════════════════════════════════════════════════ -->

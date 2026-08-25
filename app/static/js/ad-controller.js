@@ -28,6 +28,7 @@
   /* ── Read config from <body> data attributes ─────────────────── */
   var body      = document.body || document.documentElement;
   var COUNTRY   = (body.dataset.country || 'XX').toUpperCase();
+  var SMARTLINK_URL = (body.dataset.smartlinkUrl || body.getAttribute('data-smartlink-url') || '').trim();
 
   var TIER1 = new Set([
     'US','GB','CA','AU','DE','FR','NL','NO','SE','FI','BE','CH','AT','IE','NZ','DK'
@@ -86,11 +87,48 @@
     }
   }
 
+  /* ── Smartlink fallback — opens only when pop is in cooldown, probabilistically ─ */
+  var SMARTLINK_FALLBACK_RATE = 8; // 1 in 8 clicks when pop is in cooldown (~12.5%). Tune 6-10 conservative, 4-6 aggressive.
+
+  function shouldSmartlinkFallback(rate) {
+    var r = rate || SMARTLINK_FALLBACK_RATE;
+    if (isPopDue()) return false; // pop takes priority - don't double monetize same click
+    if (!SMARTLINK_URL) return false;
+    return Math.random() < (1 / r);
+  }
+
+  function openSmartlinkFallback(rate) {
+    if (!shouldSmartlinkFallback(rate)) return false;
+    var url = SMARTLINK_URL;
+    var ua = navigator.userAgent;
+    var isSafari = /Safari/i.test(ua) && !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS|Android/i.test(ua);
+    try {
+      if (isSafari) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        var w = window.open(url, '_blank', 'noopener,noreferrer');
+        if (w) { try { w.opener = null; } catch(e) {} }
+      }
+      return true;
+    } catch(e) { return false; }
+  }
+
   /* ── Public API ──────────────────────────────────────────────── */
   window.MaxCinemaAds = {
     isPopDue:       isPopDue,
     recordPopFired: recordPopFired,
     gateAction:     gateAction,
+    shouldSmartlinkFallback: shouldSmartlinkFallback,
+    openSmartlinkFallback: openSmartlinkFallback,
+    smartlinkUrl:   SMARTLINK_URL,
+    smartlinkRate:  SMARTLINK_FALLBACK_RATE,
     country:        COUNTRY,
     isTier1:        TIER1.has(COUNTRY),
     cooldownMs:     COOLDOWN_MS

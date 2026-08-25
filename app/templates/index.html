@@ -652,6 +652,24 @@
         } catch (e) {}
     })();
 </script>
+<script>
+// Homepage smartlink fallback - when popunder is in cooldown, probabilistically open smartlink
+// Rate 8 = 1 in 8 clicks (~12.5%) when pop is cooling down. Change to 6 for 1 in 6 (~16.7%), 10 for 1 in 10 (10%), 4 for 1 in 4 (25% aggressive).
+// Pop takes priority: if isPopDue() is true, SDK pop fires and this does nothing.
+(() => {
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('#featurecontain a:not(.smartlink-trigger), #RecentlyAddedbox a:not(.smartlink-trigger)');
+    if (!card) return;
+    if (!card.href) return;
+    // Don't interfere with dedicated smartlink card
+    if (card.classList.contains('smartlink-trigger')) return;
+    if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
+      // Use 8 as conservative default - matches ad-controller.js SMARTLINK_FALLBACK_RATE
+      window.MaxCinemaAds.openSmartlinkFallback(8);
+    }
+  }, false);
+})();
+</script>
 {% if active_poll and active_poll.options %}
 <script>
     (() => {
