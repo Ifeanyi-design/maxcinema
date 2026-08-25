@@ -412,18 +412,6 @@
                     </div>
                 </section>
             {% endfor %}
-            {% if ads and ads.smartlink_url %}
-            {# Dedicated 100% smartlink card in sidebar - same dashed style as RecentlyAdded pos9, subtle #}
-            <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow" class="smartlink-trigger flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-gray-300 bg-white hover:border-[#830506] hover:shadow-sm transition">
-                <div class="w-12 h-12 rounded-lg bg-[#830506]/10 flex items-center justify-center text-[#830506] flex-shrink-0"><i class="fa-solid fa-compass"></i></div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-[9px] font-black uppercase tracking-[0.18em] text-gray-400">Sponsored</p>
-                    <p class="text-xs font-black text-gray-900">Discover Trending</p>
-                    <p class="text-[11px] text-gray-500">Handpicked for you</p>
-                </div>
-                <span class="text-[#830506] text-xs"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
-            </a>
-            {% endif %}
         </div>
     </aside>
 </section>
