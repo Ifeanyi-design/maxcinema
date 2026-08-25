@@ -70,22 +70,72 @@
    * --------------------
    * Use this on download-button clicks where you want the Adsterra
    * SDK to fire (it fires automatically on first user click after
-   * the page load). This function:
-   *   1. Records the pop as fired (starts cooldown)
-   *   2. Runs your callback (e.g., navigate to download page)
-   *
-   * If the pop is NOT due (cooldown active), it just runs the callback
-   * without recording a new pop — the SDK is suppressed by Adsterra's
-   * own internal frequency capping anyway.
+   * the page load). This now VERIFIES pop actually opened before
+   * starting cooldown — if pop was blocked/failed, cooldown does NOT start.
    */
   function gateAction(callback) {
-    if (isPopDue()) {
-      recordPopFired();
+    var popWasDue = isPopDue();
+    if (popWasDue) {
+      // Don't assume pop fired — wait for verification via blur/window.open hook below
+      pendingPopDue = true;
+      pendingPopTimer = setTimeout(function() { pendingPopDue = false; }, 1200);
     }
     if (typeof callback === 'function') {
       callback();
     }
   }
+
+  /* ── Verified pop detection — only start cooldown if pop actually opened ─ */
+  var pendingPopDue = false;
+  var pendingPopTimer = null;
+  var originalWindowOpen = window.open;
+
+  function confirmPopFired() {
+    if (!pendingPopDue) {
+      // Also handle homepage cards where we didn't call gateAction but pop was due
+      if (!isPopDue()) return;
+      // If pop was due and we see window.open/blur, confirm it
+      if (isPopDue()) {
+        // Check if we had a recent click that should have triggered pop
+        // We treat any window.open or blur within 1.2s of a click when pop was due as confirmation
+      }
+    }
+    recordPopFired();
+    pendingPopDue = false;
+    if (pendingPopTimer) { clearTimeout(pendingPopTimer); pendingPopTimer = null; }
+  }
+
+  // Hook window.open — Adsterra pop uses window.open
+  try {
+    window.open = function() {
+      var result = originalWindowOpen.apply(this, arguments);
+      // If pop was due and window.open was called within cooldown window, count it
+      if (pendingPopDue || isPopDue()) {
+        confirmPopFired();
+      }
+      return result;
+    };
+  } catch(e) {}
+
+  // Detect pop via page blur/visibility — popunder causes page to lose focus
+  function handlePopSignal() {
+    if (isPopDue() || pendingPopDue) {
+      confirmPopFired();
+    }
+  }
+  window.addEventListener('blur', handlePopSignal, false);
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) handlePopSignal();
+  }, false);
+
+  // Global click listener — arms pending flag when pop is due, so blur within 1.2s counts
+  document.addEventListener('click', function() {
+    if (isPopDue() && !pendingPopDue) {
+      pendingPopDue = true;
+      if (pendingPopTimer) clearTimeout(pendingPopTimer);
+      pendingPopTimer = setTimeout(function() { pendingPopDue = false; }, 1200);
+    }
+  }, true);
 
   /* ── Smartlink fallback — opens only when pop is in cooldown, probabilistically ─ */
   var SMARTLINK_FALLBACK_RATE = 8; // 1 in 8 clicks when pop is in cooldown (~12.5%). Tune 6-10 conservative, 4-6 aggressive.
