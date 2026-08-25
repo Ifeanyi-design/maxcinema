@@ -396,7 +396,11 @@ def _upsert_competition(raw, provider_name):
         )
         db.session.add(competition)
     competition.name = raw.get("name") or competition.name
-    competition.country = raw.get("country", competition.country)
+    # API-Football returns country as a dict {name, code, flag} — normalize to string
+    _country = raw.get("country", competition.country)
+    if isinstance(_country, dict):
+        _country = _country.get("name")
+    competition.country = _country
     competition.logo_url = raw.get("logo_url", competition.logo_url)
     competition.current_season = raw.get("current_season", competition.current_season)
     competition.provider_name = provider_name
@@ -415,7 +419,10 @@ def _upsert_team(raw, provider_name):
         db.session.add(team)
     team.name = raw.get("name") or team.name
     team.short_name = raw.get("short_name", team.short_name)
-    team.country = raw.get("country", team.country)
+    _t_country = raw.get("country", team.country)
+    if isinstance(_t_country, dict):
+        _t_country = _t_country.get("name")
+    team.country = _t_country
     team.logo_url = raw.get("logo_url", team.logo_url)
     team.provider_name = provider_name
     team.provider_team_id = str(raw.get("provider_team_id") or raw.get("id") or slug)
