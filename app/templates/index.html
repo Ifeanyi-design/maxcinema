@@ -653,20 +653,9 @@
     })();
 </script>
 <script>
-// Homepage smartlink fallback - when popunder is in cooldown, probabilistically open smartlink
-// Rate 8 = 1 in 8 clicks (~12.5%) when pop is cooling down. Change to 6 for 1 in 6 (~16.7%), 10 for 1 in 10 (10%), 4 for 1 in 4 (25% aggressive).
-// Pop takes priority: if isPopDue() is true, SDK pop fires and this does nothing.
-(() => {
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('#featurecontain a:not(.smartlink-trigger), #RecentlyAddedbox a:not(.smartlink-trigger), #TrendingCol div[onclick]');
-    if (!card) return;
-    if (card.classList && card.classList.contains('smartlink-trigger')) return;
-    if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
-      // 5 = 1 in 5 (20%) during cooldown - 4=25% aggressive, 6=16.7% balanced
-      window.MaxCinemaAds.openSmartlinkFallback(5);
-    }
-  }, false);
-})();
+// Homepage fallback now handled site-wide in ad-controller.js (covers Featured, RecentlyAdded, TrendingCol, Search, Genre, Trending, All Movies/Series)
+// Kept for reference - no per-page listener needed
+
 </script>
 {% if active_poll and active_poll.options %}
 <script>

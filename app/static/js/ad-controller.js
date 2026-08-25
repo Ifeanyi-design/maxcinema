@@ -137,6 +137,28 @@
     }
   }, true);
 
+  // ── Site-wide content card smartlink fallback (1 in 5 during cooldown) ──
+  // Covers: Homepage Featured/RecentlyAdded/Sidebar, Search Results, Genre, Trending Charts,
+  // All Movies/All Series, Movie detail Recommended, Stream related
+  // Excludes: .smartlink-trigger dedicated cards (100% already), nav/search/pagination
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest(
+      '#featurecontain a:not(.smartlink-trigger), ' +
+      '#RecentlyAddedbox a:not(.smartlink-trigger), ' +
+      '#SeriesGridBox a:not(.smartlink-trigger), ' +
+      '#ResultsGrid a:not(.smartlink-trigger), ' +
+      '#TrendingCol div[onclick], ' +
+      'a.download-ad-trigger:not(.smartlink-trigger)'
+    );
+    if (!card) return;
+    // Trending page sliders use download-ad-trigger too — covered above
+    // But ensure not inside nav/header
+    if (card.closest('#header, #NavMenu, #MobilegenreMenu, #genreMenu')) return;
+    if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
+      window.MaxCinemaAds.openSmartlinkFallback(5); // 5 = 1 in 5 (20%) balanced for all content grids
+    }
+  }, false);
+
   /* ── Smartlink fallback — opens only when pop is in cooldown, probabilistically ─ */
   var SMARTLINK_FALLBACK_RATE = 5; // 1 in 5 clicks when pop is in cooldown (20%). 4=25% aggressive, 6=16.7% balanced, 8=12.5% conservative.
 
