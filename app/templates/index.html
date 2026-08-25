@@ -664,8 +664,9 @@
     // Don't interfere with dedicated smartlink card
     if (card.classList.contains('smartlink-trigger')) return;
     if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
-      // Use 8 as conservative default - matches ad-controller.js SMARTLINK_FALLBACK_RATE
-      window.MaxCinemaAds.openSmartlinkFallback(8);
+      // TEST MODE: 2 = 1 in 2 (50%) during cooldown for easy verification. Change back to 8 (12.5%) after test.
+      const ok = window.MaxCinemaAds.openSmartlinkFallback(2);
+      if (window.location.search.includes('mc_debug')) console.log('[fallback] card click, Pop due:', window.MaxCinemaAds.isPopDue(), 'smartlink opened:', ok);
     }
   }, false);
 })();
