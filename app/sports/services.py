@@ -383,6 +383,42 @@ def _upsert_sport(raw):
 def _upsert_competition(raw, provider_name):
     sport_slug = _slug(raw.get("sport_slug") or "football", "football")
     sport = SportsSport.query.filter_by(slug=sport_slug).first() or get_or_create_default_sport()
+
+    # 1) Prefer matching by provider_competition_id (stable across slug changes)
+    provider_id = str(raw.get("provider_competition_id") or raw.get("id") or "")
+    if provider_id:
+        existing = SportsCompetition.query.filter_by(provider_competition_id=provider_id).first()
+        if existing:
+            existing.name = raw.get("name") or existing.name
+            _c = raw.get("country", existing.country)
+            if isinstance(_c, dict):
+                _c = _c.get("name")
+            existing.country = _c
+            existing.logo_url = raw.get("logo_url", existing.logo_url)
+            existing.current_season = raw.get("current_season", existing.current_season)
+            existing.provider_name = provider_name
+            existing.provider_payload = raw
+            return existing
+        # 2) Cross-provider migration: same league under different provider IDs
+        # e.g. thesportsdb "German Bundesliga" (4331) vs api-football "Bundesliga" (78)
+        _prefix_re = re.compile(r"^(german|spanish|italian|french|english|portuguese|dutch|turkish)\s+", re.IGNORECASE)
+        norm = _prefix_re.sub("", (raw.get("name") or "").strip()).lower()
+        if norm:
+            for c in SportsCompetition.query.filter_by(sport_id=sport.id).all():
+                existing_norm = _prefix_re.sub("", (c.name or "").strip()).lower()
+                if existing_norm == norm:
+                    c.name = raw.get("name") or c.name
+                    _c2 = raw.get("country", c.country)
+                    if isinstance(_c2, dict):
+                        _c2 = _c2.get("name")
+                    c.country = _c2
+                    c.logo_url = raw.get("logo_url", c.logo_url)
+                    c.current_season = raw.get("current_season", c.current_season)
+                    c.provider_name = provider_name
+                    c.provider_competition_id = provider_id
+                    c.provider_payload = raw
+                    return c
+
     slug = _slug(raw.get("slug") or raw.get("name"), "competition")
     competition = SportsCompetition.query.filter_by(sport_id=sport.id, slug=slug).first()
     if not competition:
