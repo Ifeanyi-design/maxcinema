@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import re
 from collections import defaultdict
@@ -629,3 +629,636 @@ def _match_state_kwargs(item, stale):
         "stale": bool(item.get("stale") or stale),
         "events": item.get("events") or [],
     }
+
+
+# ---------------------------------------------------------------------------
+# Optional depth endpoints: match statistics & lineups.
+# These are provider-dependent (API-Football). When the active provider does
+# not support them the endpoints return {"available": false} and the UI shows
+# an honest empty state instead of fabricated numbers.
+# ---------------------------------------------------------------------------
+
+_STAT_LABELS = {
+    "shots on goal": ("Shots on target", "attack"),
+    "total shots": ("Total shots", "attack"),
+    "blocked shots": ("Blocked shots", "attack"),
+    "shots insidebox": ("Shots inside box", "attack"),
+    "shots outsidebox": ("Shots outside box", "attack"),
+    "fouls": ("Fouls", "discipline"),
+    "corner kicks": ("Corners", "attack"),
+    "offsides": ("Offsides", "discipline"),
+    "ball possession": ("Possession %", "possession"),
+    "yellow cards": ("Yellow cards", "discipline"),
+    "red cards": ("Red cards", "discipline"),
+    "goalkeeper saves": ("Goalkeeper saves", "defence"),
+    "total passes": ("Passes", "possession"),
+    "passes accurate": ("Passes accurate", "possession"),
+    "passes %": ("Pass accuracy %", "possession"),
+}
+
+
+def _parse_stat_value(value):
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (int, float)):
+        return value
+    text = str(value).strip().replace("%", "")
+    try:
+        num = float(text)
+    except ValueError:
+        return None
+    return int(num) if float(num).is_integer() else num
+
+
+def _normalize_api_football_statistics(raw, match=None):
+    """raw: API-Football fixtures/statistics response (list of team blocks).
+
+    Blocks are ordered home-first when the match model allows id matching.
+    xG is intentionally absent: this endpoint does not provide it and we
+    never fabricate advanced numbers.
+    """
+    if not isinstance(raw, list) or not raw:
+        return {"available": False}
+
+    # Order sides home-first when possible.
+    if match is not None:
+        home_pid = str(getattr(match.home_team, "provider_team_id", "") or "")
+        away_pid = str(getattr(match.away_team, "provider_team_id", "") or "")
+
+        def block_id(block):
+            return str((block.get("team") or {}).get("id") or "")
+
+        if home_pid or away_pid:
+            home_idx = next((i for i, b in enumerate(raw) if home_pid and block_id(b) == home_pid), None)
+            away_idx = next((i for i, b in enumerate(raw) if away_pid and block_id(b) == away_pid), None)
+            if home_idx is not None and away_idx is not None and away_idx < home_idx:
+                raw = [raw[away_idx], raw[home_idx]]
+            elif home_idx is None and away_idx == 0 and len(raw) > 1:
+                raw = [raw[1], raw[0]]
+
+    def side(team_block):
+        stats_out = []
+        for item in team_block.get("statistics", []) or []:
+            label_raw = str(item.get("type") or "").strip()
+            mapped = _STAT_LABELS.get(label_raw.lower())
+            if not mapped:
+                continue
+            value = _parse_stat_value(item.get("value"))
+            if value is None:
+                continue
+            stats_out.append({"label": mapped[0], "group": mapped[1], "value": value})
+        return stats_out
+
+    sides = [side(block) for block in raw]
+    if not any(sides):
+        return {"available": False}
+
+    # Pair values by label so the UI gets home/away columns.
+    by_label: dict[str, dict] = {}
+    for idx, rows in enumerate(sides):
+        for row in rows:
+            slot = by_label.setdefault(row["label"], {"label": row["label"], "group": row["group"], "home": None, "away": None})
+            slot["home" if idx == 0 else "away"] = row["value"]
+
+    return {
+        "available": True,
+        "period": "full",
+        "stats": [
+            {k: s[k] for k in ("label", "group", "home", "away")}
+            for s in by_label.values()
+        ],
+    }
+
+
+def get_match_statistics(match):
+    if not match or not match.provider_match_id:
+        return {"available": False}
+    provider_name = (match.provider_name or "").lower()
+    if provider_name != "api-football":
+        return {"available": False}
+    provider = get_provider(match.provider_name)
+    fetch_stats = getattr(provider, "fetch_match_statistics", None)
+    if fetch_stats is None:
+        return {"available": False}
+
+    result = get_or_refresh_cache(
+        "api-football",
+        f"stats:{match.provider_match_id}",
+        ttl_seconds=max(_status_ttl(match.status), 60),
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: _normalize_api_football_statistics(fetch_stats(match.provider_match_id), match),
+        fallback={"available": False},
+    )
+    payload = result.payload if isinstance(result.payload, dict) else {"available": False}
+    return payload
+
+
+def _lineup_side_payload(block):
+    if not isinstance(block, dict):
+        return None
+
+    def player_row(entry):
+        player = entry.get("player", {}) or {}
+        return {
+            "name": player.get("name") or "",
+            "number": player.get("number"),
+            "position": player.get("pos"),
+            "grid": player.get("grid"),
+        }
+
+    startXI = [player_row(e) for e in (block.get("startXI") or [])]
+    startXI = [p for p in startXI if p["name"]]
+    subs = [player_row(e) for e in (block.get("substitutes") or [])]
+    subs = [p for p in subs if p["name"]]
+    return {
+        "formation": block.get("formation"),
+        "startingXI": startXI,
+        "substitutes": subs,
+    }
+
+
+def _normalize_api_football_lineups(raw, match):
+    if not isinstance(raw, list) or not raw:
+        return {"available": False}
+
+    def pick(team_model):
+        # Prefer provider id matching, fall back to slug comparison.
+        pid = str(getattr(team_model, "provider_team_id", "") or "")
+        for block in raw:
+            block_id = str((block.get("team") or {}).get("id") or "")
+            if pid and block_id == pid:
+                return block
+        want = getattr(team_model, "slug", "") or ""
+        want_name = str(getattr(team_model, "name", "") or "")
+        for block in raw:
+            name = str((block.get("team") or {}).get("name") or "")
+            if want and name.lower().replace("-", " ") == want.replace("-", " "):
+                return block
+            if want_name and name.lower() == want_name.lower():
+                return block
+        return None
+
+    home_block = pick(match.home_team)
+    away_block = next(
+        (b for b in raw if b is not home_block), None
+    ) if home_block else (raw[1] if len(raw) > 1 else None)
+
+    home = _lineup_side_payload(home_block) if home_block else None
+    away = _lineup_side_payload(away_block) if away_block else None
+    if not (home and home["startingXI"]) and not (away and away["startingXI"]):
+        return {"available": False}
+    return {"available": True, "home": home, "away": away}
+
+
+def get_match_lineups(match):
+    if not match or not match.provider_match_id:
+        return {"available": False}
+    provider_name = (match.provider_name or "").lower()
+    if provider_name != "api-football":
+        return {"available": False}
+    provider = get_provider(match.provider_name)
+    fetch_lineups = getattr(provider, "fetch_lineups", None)
+    if fetch_lineups is None:
+        return {"available": False}
+
+    result = get_or_refresh_cache(
+        "api-football",
+        f"lineups:{match.provider_match_id}",
+        ttl_seconds=max(_status_ttl(match.status), 60),
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: _normalize_api_football_lineups(fetch_lineups(match.provider_match_id), match),
+        fallback={"available": False},
+    )
+    payload = result.payload if isinstance(result.payload, dict) else {"available": False}
+    return payload
+
+
+# ---------------------------------------------------------------------------
+# Competition & player depth: top scorers, player profiles, squads.
+# Provider-dependent (API-Football). Endpoints degrade to {"available": false}.
+# ---------------------------------------------------------------------------
+
+TOP_SCORERS_TTL = 12 * 3600
+PLAYER_TTL = 24 * 3600
+SQUAD_TTL = 24 * 3600
+TRANSFER_TTL = 6 * 3600
+NEWS_TTL = 600
+
+
+def _api_football_provider():
+    """Return the API-Football provider instance or None when not configured."""
+    try:
+        provider = get_provider("api-football")
+    except Exception:  # noqa: BLE001
+        return None
+    if provider is None or not getattr(provider, "api_key", None):
+        return None
+    return provider
+
+
+def get_competition_topscorers(competition):
+    if not competition:
+        return {"available": False, "scorers": []}
+    provider = _api_football_provider()
+    if provider is None:
+        return {"available": False, "scorers": []}
+    fetch = getattr(provider, "fetch_top_scorers", None)
+    if fetch is None:
+        return {"available": False, "scorers": []}
+    comp_id = competition.provider_competition_id or competition.slug
+
+    result = get_or_refresh_cache(
+        "api-football",
+        f"topscorers:{comp_id}",
+        ttl_seconds=TOP_SCORERS_TTL,
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: fetch(comp_id),
+        fallback=[],
+    )
+    rows = result.payload if isinstance(result.payload, list) else []
+    return {
+        "available": bool(rows),
+        "competition": competition.slug,
+        "updated_at": datetime.utcnow().isoformat() + "Z",
+        "stale": result.stale,
+        "scorers": rows[:25],
+    }
+
+
+def _normalize_api_football_player(raw):
+    """raw: API-Football `players` response for a single player+season."""
+    if not isinstance(raw, list) or not raw:
+        return {"available": False}
+    block = raw[0]
+    player = block.get("player") or {}
+    stats = block.get("statistics") or []
+
+    def stat_row(s):
+        games = s.get("games") or {}
+        goals = s.get("goals") or {}
+        cards = s.get("cards") or {}
+        shots = s.get("shots") or {}
+        passes = s.get("passes") or {}
+        tackles = s.get("tackles") or {}
+        dribbles = s.get("dribbles") or {}
+        duels = s.get("duels") or {}
+        penalty = s.get("penalty") or {}
+        league = s.get("league") or {}
+        team = s.get("team") or {}
+        return {
+            "season": str(s.get("season") or ""),
+            "league": league.get("name"),
+            "team": team.get("name"),
+            "position": (games.get("position") or ""),
+            "appearances": games.get("appeareances"),
+            "minutes": games.get("minutes"),
+            "rating": games.get("rating"),
+            "goals": goals.get("total"),
+            "assists": goals.get("assists"),
+            "shots": shots.get("total"),
+            "shots_on_target": shots.get("on"),
+            "pass_accuracy": passes.get("accuracy"),
+            "tackles": tackles.get("total"),
+            "blocks": tackles.get("blocks"),
+            "interceptions": tackles.get("interceptions"),
+            "duels_won_pct": duels.get("won"),
+            "dribbles_success": dribbles.get("success"),
+            "yellow": cards.get("yellow"),
+            "red": cards.get("red"),
+            "penalties_scored": penalty.get("scored"),
+            "captain": games.get("captain"),
+        }
+
+    birth = player.get("birth") or {}
+    height_m = None
+    if player.get("height"):
+        try:
+            height_m = float(str(player["height"]).replace("cm", "").strip())
+        except (TypeError, ValueError):
+            height_m = None
+    return {
+        "available": True,
+        "player": {
+            "id": player.get("id"),
+            "name": player.get("name"),
+            "first_name": player.get("firstname"),
+            "last_name": player.get("lastname"),
+            "photo": player.get("photo"),
+            "nationality": player.get("nationality"),
+            "age": player.get("age"),
+            "birth_date": birth.get("date"),
+            "birth_place": birth.get("place"),
+            "birth_country": birth.get("country"),
+            "height_cm": height_m,
+            "weight_kg": (str(player.get("weight")).replace("kg", "").strip() if player.get("weight") else None),
+            "injured": player.get("injured"),
+        },
+        # newest season first when multiple blocks exist
+        "statistics": [stat_row(s) for s in stats],
+    }
+
+
+def get_player_profile(player_id, season=None):
+    provider = _api_football_provider()
+    if provider is None:
+        return {"available": False}
+    fetch = getattr(provider, "fetch_player_profile", None)
+    if fetch is None:
+        return {"available": False}
+    cache_season = season or "current"
+    result = get_or_refresh_cache(
+        "api-football",
+        f"player:{player_id}:{cache_season}",
+        ttl_seconds=PLAYER_TTL,
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: _normalize_api_football_player(fetch(player_id, season)),
+        fallback={"available": False},
+    )
+    return result.payload if isinstance(result.payload, dict) else {"available": False}
+
+
+def _normalize_api_football_squad(raw):
+    if not isinstance(raw, list) or not raw:
+        return {"available": False}
+    block = raw[0] or {}
+    players_out = []
+    for p in block.get("players") or []:
+        name = p.get("name")
+        if not name:
+            continue
+        players_out.append(
+            {
+                "id": p.get("id"),
+                "name": name,
+                "number": p.get("number"),
+                "position": p.get("position"),
+                "age": p.get("age"),
+            }
+        )
+    if not players_out:
+        return {"available": False}
+    return {
+        "available": True,
+        "team": (block.get("team") or {}).get("name"),
+        "members": players_out,
+    }
+
+
+def get_team_squad(team):
+    if not team:
+        return {"available": False}
+    provider = _api_football_provider()
+    if provider is None:
+        return {"available": False}
+    fetch = getattr(provider, "fetch_team_squad", None)
+    if fetch is None:
+        return {"available": False}
+    team_id = team.provider_team_id
+    if not team_id:
+        return {"available": False}
+
+    result = get_or_refresh_cache(
+        "api-football",
+        f"squad:{team_id}",
+        ttl_seconds=SQUAD_TTL,
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: _normalize_api_football_squad(fetch(team_id)),
+        fallback={"available": False},
+    )
+    return result.payload if isinstance(result.payload, dict) else {"available": False}
+
+
+# ---------------------------------------------------------------------------
+# Transfers (API-Football transfers endpoint, per configured popular teams).
+# ---------------------------------------------------------------------------
+
+DEFAULT_TRANSFER_TEAM_IDS = "50,33,42,49,40,47,541,529,530,505,496,157,165,211,212"
+
+
+def _normalize_api_football_transfers(raw, team_name_hint=""):
+    """raw: API-Football transfers response for one team.
+
+    Returns a flat list of moves involving that team.
+    """
+    out = []
+    for entry in raw or []:
+        player = entry.get("player") or {}
+        for t in entry.get("transfers") or []:
+            teams = t.get("teams") or {}
+            tin = (teams.get("in") or {}).get("name")
+            tout = (teams.get("out") or {}).get("name")
+            if not tin or not tout or tin == tout:
+                continue
+            out.append(
+                {
+                    "player_id": player.get("id"),
+                    "player": player.get("name"),
+                    "date": t.get("date"),
+                    "type": t.get("type"),  # "Free", "Loan", "N/A" or fee string like "€ 50M"
+                    "from_team": tout,
+                    "to_team": tin,
+                    "team_hint": team_name_hint,
+                }
+            )
+    return out
+
+
+def get_recent_transfers(limit=40):
+    provider = _api_football_provider()
+    if provider is None:
+        return {"available": False, "transfers": []}
+    fetch = getattr(provider, "fetch_transfers", None)
+    if fetch is None:
+        return {"available": False, "transfers": []}
+
+    import json as _json
+
+    raw_ids = current_app.config.get("SPORTS_TRANSFER_TEAM_IDS") or DEFAULT_TRANSFER_TEAM_IDS
+    if isinstance(raw_ids, str):
+        try:
+            ids = [int(x) for x in _json.loads(raw_ids)] if raw_ids.strip().startswith("[") else [
+                int(x) for x in raw_ids.split(",") if x.strip().isdigit()
+            ]
+        except Exception:  # noqa: BLE001
+            ids = []
+    else:
+        ids = list(raw_ids)
+
+    merged = {}
+    for tid in ids[:20]:
+        result = get_or_refresh_cache(
+            "api-football",
+            f"transfers:{tid}",
+            ttl_seconds=TRANSFER_TTL,
+            stale_seconds=STALE_FALLBACK_SECONDS,
+            fetcher=lambda tid=tid: _normalize_api_football_transfers(fetch(tid)),
+            fallback=None,
+        )
+        payload = result.payload if isinstance(result.payload, list) else None
+        if not payload and result.stale and result.error:
+            continue
+        for row in payload or []:
+            key = f"{row.get('player')}-{row.get('date')}-{row.get('to_team')}"
+            merged[key] = row
+
+    rows = sorted(
+        merged.values(),
+        key=lambda r: r.get("date") or "",
+        reverse=True,
+    )[:limit]
+    return {"available": bool(rows), "transfers": rows}
+
+
+# ---------------------------------------------------------------------------
+# Football news — free sources, no API key required.
+# Primary: ESPN public site JSON per competition. Fallback/merge: BBC Sport RSS.
+# ---------------------------------------------------------------------------
+
+ESPN_LEAGUE_CODES = {
+    "english-premier-league": "eng.1",
+    "uefa-champions-league": "uefa.champions",
+    "la-liga": "esp.1",
+    "serie-a": "ita.1",
+    "bundesliga": "ger.1",
+    "ligue-1": "fra.1",
+    "uefa-europa-league": "uefa.europa",
+}
+
+
+def _parse_iso_loose(value):
+    if not value:
+        return None
+    try:
+        from email.utils import parsedate_to_datetime
+
+        return parsedate_to_datetime(value).isoformat()
+    except Exception:  # noqa: BLE001
+        pass
+    return str(value)
+
+
+def _fetch_espn_news(league_code, limit=10):
+    import requests as _requests
+
+    url = f"https://site.web.api.espn.com/apis/v2/sports/soccer/{league_code}/news"
+    resp = _requests.get(url, params={"lang": "en", "limit": limit}, timeout=8)
+    resp.raise_for_status()
+    data = resp.json() or {}
+    out = []
+    for article in data.get("articles", []) or []:
+        link = (article.get("links") or {}).get("web") or (article.get("links") or {}).get("mobile")
+        images = article.get("images") or []
+        image = images[0].get("url") if images else None
+        out.append(
+            {
+                "id": f"espn-{article.get('id') or article.get('published')}-{hash(article.get('headline', '')) % 99999}",
+                "title": article.get("headline") or "",
+                "description": article.get("description") or "",
+                "link": link,
+                "image": image,
+                "source": "ESPN",
+                "published_at": _iso_local(article.get("published")),
+                "category": league_code,
+            }
+        )
+    return [a for a in out if a["title"]]
+
+
+def _iso_local(value):
+    if not value:
+        return None
+    return str(value)
+
+
+def _fetch_bbc_rss(limit=12):
+    import xml.etree.ElementTree as ET
+
+    import requests as _requests
+
+    resp = _requests.get("https://feeds.bbci.co.uk/sport/football/rss.xml", timeout=8)
+    resp.raise_for_status()
+    root = ET.fromstring(resp.content)
+    out = []
+    for item in root.iter("item"):
+        title = item.findtext("title") or ""
+        if not title:
+            continue
+        link = item.findtext("link") or ""
+        description = item.findtext("description") or ""
+        pub = _parse_iso_loose(item.findtext("pubDate"))
+        image = None
+        for el in item.iter():
+            tag = el.tag.split("}")[-1]
+            if tag == "thumbnail":
+                image = el.attrib.get("url")
+                break
+        if not image:
+            for el in item.iter():
+                if el.tag.endswith("enclosure") and str(el.attrib.get("type", "")).startswith("image"):
+                    image = el.attrib.get("url")
+                    break
+        out.append(
+            {
+                "id": f"bbc-{abs(hash(link)) % 999999999}",
+                "title": title,
+                "description": description,
+                "link": link,
+                "image": image,
+                "source": "BBC Sport",
+                "published_at": pub,
+                "category": "football",
+            }
+        )
+        if len(out) >= limit:
+            break
+    return out
+
+
+def get_football_news(competition_slug=None, limit=18):
+    """Merge ESPN competition news (when mapped) with BBC football RSS."""
+    cache_key = f"news:{competition_slug or 'all'}"
+    result = get_or_refresh_cache(
+        "news",
+        cache_key,
+        ttl_seconds=NEWS_TTL,
+        stale_seconds=STALE_FALLBACK_SECONDS,
+        fetcher=lambda: _collect_news(competition_slug),
+        fallback=[],
+    )
+    items = result.payload if isinstance(result.payload, list) else []
+    return {
+        "available": bool(items),
+        "stale": result.stale,
+        "articles": items[:limit],
+    }
+
+
+def _collect_news(competition_slug=None):
+    articles = []
+    codes = []
+    if competition_slug and competition_slug in ESPN_LEAGUE_CODES:
+        codes.append(ESPN_LEAGUE_CODES[competition_slug])
+    else:
+        codes.extend(ESPN_LEAGUE_CODES[c] for c in ("english-premier-league", "uefa-champions-league"))
+    for code in codes:
+        try:
+            articles.extend(_fetch_espn_news(code))
+        except Exception:  # noqa: BLE001
+            continue
+    if len(articles) < 6:
+        try:
+            articles.extend(_fetch_bbc_rss())
+        except Exception:  # noqa: BLE001
+            pass
+    # dedupe by title, sort by published desc where parseable
+    seen = set()
+    unique = []
+    for a in articles:
+        k = (a.get("title") or "").lower()
+        if k and k not in seen:
+            seen.add(k)
+            unique.append(a)
+    unique.sort(key=lambda a: a.get("published_at") or "", reverse=True)
+    return unique

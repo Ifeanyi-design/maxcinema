@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import logging
 import re
@@ -335,9 +335,26 @@ class ApiFootballProvider(SportsProvider):
                         "player_id": player.get("id"),
                         "player_name": player.get("name"),
                         "photo": player.get("photo"),
+                        "team_name": ((stats.get("team") or {}).get("name")),
+                        "nationality": player.get("nationality"),
+                        "rating": (stats.get("games", {}) or {}).get("rating"),
                         "goals": (stats.get("goals", {}) or {}).get("total"),
                         "assists": (stats.get("goals", {}) or {}).get("assists"),
-                        "appearences": (stats.get("games", {}) or {}).get("appearances"),
+                        "penalties": (stats.get("penalty", {}) or {}).get("scored"),
+                        # API-Football spells this field "appeareances" in its payload.
+                        "appearances": (stats.get("games", {}) or {}).get("appeareances"),  # their payload misspells it
                     }
                 )
         return out
+
+    def fetch_player_profile(self, player_id, season=None):
+        season = season or self._season()
+        return self._response(
+            "players", params={"id": player_id, "season": season}
+        )
+
+    def fetch_team_squad(self, team_id):
+        return self._response("players/squads", params={"team": team_id})
+
+    def fetch_transfers(self, team_id):
+        return self._response("transfers", params={"team": team_id})

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime
 
@@ -7,8 +7,15 @@ from sqlalchemy import or_
 
 from .services import (
     _slug,
+    get_competition_topscorers,
     get_enabled_competitions,
+    get_football_news,
     get_match_events,
+    get_match_lineups,
+    get_match_statistics,
+    get_player_profile,
+    get_recent_transfers,
+    get_team_squad,
     sync_live_matches,
     sync_match_events,
 )
@@ -276,7 +283,7 @@ def teams():
         )
     # Distinct over the full entity breaks on Postgres because sports_team has
     # a JSON column (no equality operator for type json). Distinct on the id
-    # only, then fetch full rows — portable across SQLite and Postgres.
+    # only, then fetch full rows â€” portable across SQLite and Postgres.
     team_ids = (
         query.with_entities(SportsTeam.id).distinct().subquery()
     )
@@ -402,6 +409,96 @@ def match_detail(match_id):
         )
 
 
+@api_bp.route("/matches/<int:match_id>/statistics")
+def match_statistics(match_id):
+    """Optional per-match statistics. Returns {"available": false} when the
+    active data provider does not supply statistics for this fixture."""
+    match = SportsMatch.query.get_or_404(match_id)
+    try:
+        return jsonify(get_match_statistics(match))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("match_statistics failed for %s", match_id)
+        return jsonify({"available": False, "error": str(exc)})
+
+
+@api_bp.route("/matches/<int:match_id>/lineups")
+def match_lineups(match_id):
+    """Optional line-ups. Returns {"available": false} when unsupported."""
+    match = SportsMatch.query.get_or_404(match_id)
+    try:
+        return jsonify(get_match_lineups(match))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("match_lineups failed for %s", match_id)
+        return jsonify({"available": False, "error": str(exc)})
+
+
+@api_bp.route("/competitions/<slug>/topscorers")
+def competition_topscorers(slug):
+    """Season top scorers. Requires the API-Football provider; otherwise
+    returns {"available": false} and the UI shows an honest empty state."""
+    competition = SportsCompetition.query.filter_by(slug=slug, hidden=False).first()
+    if not competition:
+        return jsonify({"available": False, "scorers": [], "error": "competition not found"}), 404
+    try:
+        return jsonify(get_competition_topscorers(competition))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("topscorers failed for %s", slug)
+        return jsonify({"available": False, "scorers": [], "error": str(exc)})
+
+
+@api_bp.route("/players/<int:player_id>")
+def player_profile(player_id):
+    """Player profile + season statistics (provider dependent)."""
+    season = request.args.get("season")
+    try:
+        season_int = int(season) if season else None
+    except (TypeError, ValueError):
+        season_int = None
+    try:
+        return jsonify(get_player_profile(player_id, season_int))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("player profile failed for %s", player_id)
+        return jsonify({"available": False, "error": str(exc)})
+
+
+@api_bp.route("/teams/<slug>/squad")
+def team_squad(slug):
+    """Squad roster (provider dependent)."""
+    team = (
+        SportsTeam.query.filter(
+            or_(SportsTeam.slug == slug, SportsTeam.slug == _slug(slug), SportsTeam.name.ilike(slug.replace("-", " ")))
+        ).first()
+    )
+    if not team:
+        return jsonify({"available": False}), 404
+    try:
+        return jsonify(get_team_squad(team))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("squad failed for %s", slug)
+        return jsonify({"available": False, "error": str(exc)})
+
+
+@api_bp.route("/news")
+def football_news():
+    """Football headlines from free sources (ESPN public JSON + BBC RSS)."""
+    competition = request.args.get("competition")
+    try:
+        return jsonify(get_football_news(competition))
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("news failed")
+        return jsonify({"available": False, "articles": [], "error": str(exc)})
+
+
+@api_bp.route("/transfers")
+def transfers_feed():
+    """Recent transfers for popular teams (requires API-Football provider)."""
+    try:
+        return jsonify(get_recent_transfers())
+    except Exception as exc:  # noqa: BLE001
+        current_app.logger.exception("transfers failed")
+        return jsonify({"available": False, "transfers": [], "error": str(exc)})
+
+
 @api_bp.route("/competitions/<slug>/standings")
 def competition_standings(slug):
     competition = SportsCompetition.query.filter_by(slug=slug, hidden=False).first_or_404()
@@ -422,22 +519,12 @@ def competition_standings(slug):
     )
 
 
-# Curated football highlights - used as fallback and primary for /highlights endpoint
-_CURATED_HIGHLIGHTS = [
-    {"id": "3e5lF71rOcg", "title": "UEFA Champions League - Round of 16 & Quarter-Final Best Goals & Highlights", "competition": "UEFA Champions League", "duration": "11:24", "channel": "UEFA Official", "tags": ["ucl", "champions league", "real madrid", "bayern", "man city", "psg", "arsenal"], "video_url": "https://www.youtube.com/watch?v=3e5lF71rOcg", "thumbnail_url": "https://img.youtube.com/vi/3e5lF71rOcg/hqdefault.jpg"},
-    {"id": "fJ9rUzIMcZQ", "title": "Real Madrid vs Barcelona - El Clásico Full Highlights & All Goals", "competition": "La Liga", "duration": "12:40", "channel": "LaLiga EA Sports", "tags": ["el clasico", "real madrid", "barcelona", "la liga", "vinicius", "bellingham", "yamal"], "video_url": "https://www.youtube.com/watch?v=fJ9rUzIMcZQ", "thumbnail_url": "https://img.youtube.com/vi/fJ9rUzIMcZQ/hqdefault.jpg"},
-    {"id": "L_LUpnjgPso", "title": "Arsenal vs Manchester City - High Stakes Title Race Epic Clash", "competition": "Premier League", "duration": "10:35", "channel": "Sky Sports Football", "tags": ["arsenal", "manchester city", "man city", "premier league", "epl", "haaland", "saka"], "video_url": "https://www.youtube.com/watch?v=L_LUpnjgPso", "thumbnail_url": "https://img.youtube.com/vi/L_LUpnjgPso/hqdefault.jpg"},
-    {"id": "kJQP7kiw5Fk", "title": "Premier League - Top 20 Best Goals of the Season Spectacular", "competition": "Premier League", "duration": "14:15", "channel": "Premier League", "tags": ["premier league", "epl", "goals", "liverpool", "chelsea", "man united", "tottenham"], "video_url": "https://www.youtube.com/watch?v=kJQP7kiw5Fk", "thumbnail_url": "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg"},
-    {"id": "9bZkp7q19f0", "title": "Inter vs Milan - Derby della Madonnina Drama & Highlights", "competition": "Serie A", "duration": "11:50", "channel": "Serie A Official", "tags": ["inter", "milan", "ac milan", "serie a", "derby", "lautaro", "leao"], "video_url": "https://www.youtube.com/watch?v=9bZkp7q19f0", "thumbnail_url": "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg"},
-    {"id": "JGwWNGJdvx8", "title": "Vinicius Jr, Mbappe & Haaland - Best Skills & Goals Show 2025", "competition": "World Football", "duration": "15:02", "channel": "Football TV", "tags": ["vinicius", "mbappe", "haaland", "messi", "ronaldo", "skills", "goals", "superstars"], "video_url": "https://www.youtube.com/watch?v=JGwWNGJdvx8", "thumbnail_url": "https://img.youtube.com/vi/JGwWNGJdvx8/hqdefault.jpg"},
-    {"id": "dQw4w9WgXcQ", "title": "Bayern Munich vs Borussia Dortmund - Der Klassiker Full Highlights", "competition": "Bundesliga", "duration": "10:18", "channel": "Bundesliga Official", "tags": ["bayern", "dortmund", "bundesliga", "kane", "musiala", "sancho"], "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ", "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"},
-    {"id": "2Vv-BfVoq4g", "title": "FIFA World Cup - Greatest Comebacks & Historic Matches", "competition": "International", "duration": "18:22", "channel": "FIFA Official", "tags": ["world cup", "fifa", "argentina", "france", "brazil", "messi", "mbappe"], "video_url": "https://www.youtube.com/watch?v=2Vv-BfVoq4g", "thumbnail_url": "https://img.youtube.com/vi/2Vv-BfVoq4g/hqdefault.jpg"},
-    {"id": "npt81WJbQxU", "title": "Liverpool vs Manchester United - Iconic Northwest Derby Highlights", "competition": "Premier League", "duration": "11:05", "channel": "Premier League", "tags": ["liverpool", "manchester united", "man utd", "salah", "epl"], "video_url": "https://www.youtube.com/watch?v=npt81WJbQxU", "thumbnail_url": "https://img.youtube.com/vi/npt81WJbQxU/hqdefault.jpg"},
-    {"id": "PvbD2m-G5sY", "title": "Chelsea vs Tottenham Hotspur - London Derby Drama & Red Cards", "competition": "Premier League", "duration": "13:20", "channel": "Sky Sports Football", "tags": ["chelsea", "tottenham", "spurs", "epl", "derby", "palmer", "son"], "video_url": "https://www.youtube.com/watch?v=PvbD2m-G5sY", "thumbnail_url": "https://img.youtube.com/vi/PvbD2m-G5sY/hqdefault.jpg"},
-    {"id": "YwQo30F6CjA", "title": "Paris Saint-Germain vs Olympique Marseille - Le Classique Thriller", "competition": "Ligue 1", "duration": "09:45", "channel": "Ligue 1 Uber Eats", "tags": ["psg", "marseille", "ligue 1", "dembele", "barcola"], "video_url": "https://www.youtube.com/watch?v=YwQo30F6CjA", "thumbnail_url": "https://img.youtube.com/vi/YwQo30F6CjA/hqdefault.jpg"},
-    {"id": "5wK1C0f0WQI", "title": "Juventus vs Napoli - High Intensity Serie A Title Battle", "competition": "Serie A", "duration": "10:12", "channel": "Serie A Official", "tags": ["juventus", "napoli", "serie a", "vlahovic", "kvaratskhelia"], "video_url": "https://www.youtube.com/watch?v=5wK1C0f0WQI", "thumbnail_url": "https://img.youtube.com/vi/5wK1C0f0WQI/hqdefault.jpg"},
-]
-
+# Admin-curated highlight fallbacks.
+# NOTE: intentionally empty. Placeholder YouTube IDs that pointed at unrelated
+# videos were removed — the platform must never present content that is not
+# what it claims to be. Populate via the SocialVideo admin (real, verified
+# links) or add genuinely verified entries here.
+_CURATED_HIGHLIGHTS = []
 
 @api_bp.route("/highlights")
 def highlights():
