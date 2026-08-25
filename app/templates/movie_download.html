@@ -722,6 +722,19 @@
     </div>
     {% endif %}
 
+    {# ── CONTROLLED SMARTLINK after related — subtle discovery, fires only on click ——— #}
+    {% if ads and ads.smartlink_url %}
+    <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow" class="smartlink-trigger flex items-center gap-3 p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition">
+      <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white flex-shrink-0"><i class="fa-solid fa-compass"></i></div>
+      <div class="flex-1 min-w-0 text-left">
+        <p class="text-[9px] font-black uppercase tracking-widest text-white/40">Sponsored · Discover</p>
+        <p class="text-white text-sm font-black">More Trending Titles Handpicked For You</p>
+        <p class="text-white/50 text-[11px] font-semibold">Explore more movies in this genre</p>
+      </div>
+      <span class="px-3 py-1 rounded-full bg-[#830506] text-white text-[10px] font-black uppercase">Explore →</span>
+    </a>
+    {% endif %}
+
     {# ── SIDEBAR AD (mobile only) ─────────────────────────────── #}
     {% if ad_slot_enabled('dl_bottom_sidebar', 'sidebar') %}
     <div class="block md:hidden text-center">

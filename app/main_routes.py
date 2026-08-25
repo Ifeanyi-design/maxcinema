@@ -874,7 +874,7 @@ def movie_details(det, name, id):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in movie.genres]
-    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.active == True).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.active == True).distinct().limit(12).all()
 
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
@@ -882,8 +882,8 @@ def movie_details(det, name, id):
                      .scalar() for i in range(1,6)}
 
     more_needed=0
-    if len(suggested) < 6:
-        more_needed = 6 - len(suggested)
+    if len(suggested) < 12:
+        more_needed = 12 - len(suggested)
 
     extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
@@ -973,15 +973,15 @@ def series_details(det, name, season, episode, id):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     genre_ids=[g.id for g in series.genres]
-    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series", AllVideo.active == True).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id, AllVideo.type=="series", AllVideo.active == True).distinct().limit(12).all()
     # Optional: prepare breakdown for template
     breakdown = {i: db.session.query(func.count(Rating.id))
                      .filter(Rating.video_id==series.id, Rating.rating==i)
                      .scalar() for i in range(1,6)}
 
     more_needed=0
-    if len(suggested) < 6:
-        more_needed = 6 - len(suggested)
+    if len(suggested) < 12:
+        more_needed = 12 - len(suggested)
 
     extra = AllVideo.query.filter(AllVideo.id!=id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True).order_by(func.random()).limit(more_needed).all()
     suggested.extend(extra)
@@ -1051,21 +1051,21 @@ def movie_download_page(slug):
     movie_trend      = AllVideo.query.filter_by(trending=True, type="movie",  active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
 
-    # Related content
+    # Related content - Phase 2: 12 items for better pages/session
     genre_ids = [g.id for g in video.genres]
     suggested = (
         AllVideo.query
         .options(defer(AllVideo.video_qualities))
         .join(AllVideo.genres)
         .filter(Genre.id.in_(genre_ids), AllVideo.id != video.id, AllVideo.active == True)
-        .distinct().limit(8).all()
+        .distinct().limit(12).all()
     )
-    if len(suggested) < 8:
+    if len(suggested) < 12:
         extra = AllVideo.query.filter(
             AllVideo.id != video.id,
             ~AllVideo.id.in_([s.id for s in suggested]),
             AllVideo.active == True
-        ).order_by(func.random()).limit(8 - len(suggested)).all()
+        ).order_by(func.random()).limit(12 - len(suggested)).all()
         suggested.extend(extra)
 
     # Social videos linked to this movie/series
@@ -1443,9 +1443,9 @@ def movie_download(type, name, id):
 
     
     genre_ids=[g.id for g in movie.genres]
-    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(6).all()
+    suggested = AllVideo.query.options(defer(AllVideo.video_qualities)).join(AllVideo.genres).filter(Genre.id.in_(genre_ids), AllVideo.id != id).distinct().limit(12).all()
 
-    more_needed = max(0, 6 - len(suggested))
+    more_needed = max(0, 12 - len(suggested))
     if more_needed:
         extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True)\
             .order_by(func.random()).limit(more_needed).all()

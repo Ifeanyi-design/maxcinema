@@ -91,6 +91,8 @@ def create_app(config_class=Config):
                     "main.series_details": "movie_inline_banner",
                     "main.movie_download": "stream_inline_banner",
                     "main.movie_download_page": "dl_inter_server",
+                    "main.index": "homepage_mid_banner",
+                    "main.featured": "homepage_mid_banner",
                 }
                 return slot_name == optimized_banner_by_endpoint.get(endpoint, "top_banner")
             return False

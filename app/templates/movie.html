@@ -447,8 +447,29 @@
                             <p class="text-[8px] md:text-[9px] text-gray-400 font-bold uppercase mt-1">{{ suggest.type }}</p>
                         </div>
                     </a>
+                    {# Controlled smartlink card inside grid at position 7 — only fires on click, same handler as download mirrors #}
+                    {% if loop.index == 6 and ads and ads.smartlink_url %}
+                    <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow" class="smartlink-trigger group block rounded-xl overflow-hidden border-2 border-dashed border-gray-300 bg-white hover:border-[#830506] hover:shadow-md transition flex flex-col items-center justify-center p-4 text-center min-h-[220px]">
+                        <div class="w-10 h-10 rounded-full bg-[#830506]/10 flex items-center justify-center text-[#830506] mb-2"><i class="fa-solid fa-arrow-up-right-from-square"></i></div>
+                        <p class="text-[9px] font-black uppercase tracking-[0.18em] text-gray-400">Sponsored</p>
+                        <p class="text-xs font-black text-gray-900 mt-1">Discover More</p>
+                        <p class="text-[11px] text-gray-500">Trending picks for you</p>
+                    </a>
+                    {% endif %}
                     {% endfor %}
                 </div>
+                {# Sidebar-controlled smartlink after grid - subtle, not intrusive #}
+                {% if ads and ads.smartlink_url %}
+                <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow" class="smartlink-trigger hidden md:flex mt-3 items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white hover:border-[#830506] hover:shadow-sm transition">
+                    <div class="w-11 h-11 rounded-full bg-[#830506]/10 flex items-center justify-center text-[#830506] flex-shrink-0"><i class="fa-solid fa-compass"></i></div>
+                    <div class="flex-1 min-w-0 text-left">
+                        <p class="text-[9px] font-black uppercase tracking-widest text-gray-400">Sponsored · Explore</p>
+                        <p class="text-sm font-black text-gray-900">More Trending Titles You Might Like</p>
+                        <p class="text-xs text-gray-500">Handpicked for this genre</p>
+                    </div>
+                    <span class="px-4 py-2 bg-[#830506] text-white rounded-full text-[10px] font-black uppercase tracking-widest">Explore →</span>
+                </a>
+                {% endif %}
             </div>
 
             {% if ad_slot_enabled('movie_secondary_banner', 'banner', true) %}
