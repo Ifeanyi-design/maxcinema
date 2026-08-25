@@ -155,12 +155,26 @@ def notification_settings():
 def release_notify(video_id):
     video = AllVideo.query.get_or_404(video_id)
 
-    pending_count = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).count()
+    # scope: pending (default) | subscribers (re-notify all who opted for THIS title) | broadcast (entire notify DB)
+    scope = (request.args.get('scope') or 'pending').strip().lower()
+    if scope not in {"pending", "subscribers", "broadcast"}:
+        scope = "pending"
+
+    if scope == "broadcast":
+        pending_count = WatchlistNotify.query.count()
+        label = "the ENTIRE notify database"
+    elif scope == "subscribers":
+        pending_count = WatchlistNotify.query.filter_by(video_id=video.id).count()
+        label = "all subscribers of this title"
+    else:
+        pending_count = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).count()
+        label = "pending"
+
     current_app.logger.warning(
-        f"[release-notify-trigger] video_id={video_id} '{video.name}' pending={pending_count}"
+        f"[release-notify-trigger] video_id={video_id} '{video.name}' scope={scope} targets={pending_count}"
     )
     if pending_count == 0:
-        flash("No pending notifications for this video.", "info")
+        flash(f"No {label} for this video.", "info")
         return redirect(url_for('admin.dashboard'))
 
     # Fire the actual sending on a background thread instead of blocking this
@@ -174,14 +188,13 @@ def release_notify(video_id):
     app = current_app._get_current_object()
     threading.Thread(
         target=_send_release_notifications_async,
-        args=(app, video.id),
+        args=(app, video.id, scope),
         daemon=True,
     ).start()
 
     flash(
-        f"Sending notifications for '{video.name}' in the background "
-        f"({pending_count} pending). This can take a few minutes for a "
-        f"large list -- check back on the watchlist page to see it drop.",
+        f"Sending '{video.name}' notifications to {label} ({pending_count} target(s)) "
+        f"in the background. This can take a few minutes -- check back on the watchlist page.",
         "success"
     )
     return redirect(url_for('admin.dashboard'))

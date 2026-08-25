@@ -44,6 +44,84 @@
         {% block content %}{% endblock %}
     </div>
     {% block scripts %}{% endblock %}
+
+    {# ── Release notify scope modal (shared by all Notify buttons) ── #}
+    <div id="notifyScopeModal" class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/70 p-4">
+        <div class="w-full max-w-md rounded-2xl border border-gray-700 bg-gray-800 shadow-2xl">
+            <div class="border-b border-gray-700 px-5 py-4">
+                <h3 class="text-lg font-black">Send Notifications</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Title: <span id="notifyModalTitle" class="font-bold text-white"></span></p>
+            </div>
+            <div class="px-5 py-4 space-y-2 text-sm">
+                <label class="flex items-start gap-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3 cursor-pointer hover:border-yellow-500 transition">
+                    <input type="radio" name="notify-scope" value="pending" checked class="mt-1 accent-yellow-500">
+                    <span>
+                        <span class="block font-bold text-white">Pending only</span>
+                        <span class="text-xs text-gray-400">Only users of this title who have NOT been notified yet.</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3 cursor-pointer hover:border-yellow-500 transition">
+                    <input type="radio" name="notify-scope" value="subscribers" class="mt-1 accent-yellow-500">
+                    <span>
+                        <span class="block font-bold text-white">All subscribers of this title</span>
+                        <span class="text-xs text-gray-400">Re-notify EVERYONE who opted in for this movie/series (even already notified).</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 rounded-xl border border-gray-700 bg-gray-900/60 p-3 cursor-pointer hover:border-red-500 transition">
+                    <input type="radio" name="notify-scope" value="broadcast" class="mt-1 accent-red-500">
+                    <span>
+                        <span class="block font-bold text-red-300">Entire notify database</span>
+                        <span class="text-xs text-gray-400">Blast every user on the notify list about this title. Use sparingly.</span>
+                    </span>
+                </label>
+            </div>
+            <div class="flex justify-end gap-2 border-t border-gray-700 px-5 py-4">
+                <button type="button" id="notifyModalCancel" class="rounded-lg bg-gray-700 hover:bg-gray-600 px-4 py-2 text-xs font-black uppercase tracking-wide">Cancel</button>
+                <a id="notifyModalGo" href="#" class="rounded-lg bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 text-xs font-black uppercase tracking-wide">Send</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('notifyScopeModal');
+            if (!modal) return;
+            const titleEl = document.getElementById('notifyModalTitle');
+            const goBtn = document.getElementById('notifyModalGo');
+            const cancelBtn = document.getElementById('notifyModalCancel');
+
+            function openModal(videoId, videoTitle) {
+                titleEl.textContent = videoTitle || ('#' + videoId);
+                goBtn.href = '/release-notify/' + videoId + '?scope=' + document.querySelector('input[name="notify-scope"]:checked').value;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            // Any element with data-release-notify opens the modal
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-release-notify]');
+                if (!btn) return;
+                e.preventDefault();
+                openModal(btn.getAttribute('data-release-notify'), btn.getAttribute('data-title'));
+            });
+
+            // Rebuild the Send URL whenever the selected scope changes
+            document.querySelectorAll('input[name="notify-scope"]').forEach((radio) => {
+                radio.addEventListener('change', () => {
+                    const current = goBtn.getAttribute('href') || '';
+                    const m = current.match(/\/release-notify\/(\d+)/);
+                    if (m) goBtn.href = '/release-notify/' + m[1] + '?scope=' + radio.value;
+                });
+            });
+
+            cancelBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            goBtn.addEventListener('click', () => setTimeout(closeModal, 50));
+        });
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar');

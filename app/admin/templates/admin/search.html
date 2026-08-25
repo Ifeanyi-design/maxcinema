@@ -98,12 +98,14 @@
                     >
                     Edit
                     </a>
-                    <a
-                    href="{{ url_for('admin.release_notify', video_id=v.id) }}"
+                    <button
+                    type="button"
+                    data-release-notify="{{ v.id }}"
+                    data-title="{{ v.name }}"
                     class="px-3 py-2 rounded bg-yellow-500 text-black text-sm hover:bg-yellow-400 font-bold"
                     >
                     Notify
-                    </a>
+                    </button>
                     <form action="{{ url_for('admin.delete_video', prev='search', video_id=v.id) }}" method="POST"
                         onsubmit="return confirm('Delete this movie and all related data?');">
                     <button
@@ -169,12 +171,14 @@
                     >
                     Edit
                     </a>
-                    <a
-                    href="{{ url_for('admin.release_notify', video_id=v.id) }}"
+                    <button
+                    type="button"
+                    data-release-notify="{{ v.id }}"
+                    data-title="{{ v.name }}"
                     class="px-3 py-2 rounded bg-yellow-500 text-black text-sm hover:bg-yellow-400 font-bold"
                     >
                     Notify
-                    </a>
+                    </button>
                     <form action="{{ url_for('admin.delete_video', prev='search', video_id=v.id) }}" method="POST"
                         onsubmit="return confirm('Delete this series and all related data?');">
                     <button

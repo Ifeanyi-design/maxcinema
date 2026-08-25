@@ -155,15 +155,24 @@
     // But ensure not inside nav/header
     if (card.closest('#header, #NavMenu, #MobilegenreMenu, #genreMenu')) return;
     if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
-      window.MaxCinemaAds.openSmartlinkFallback(5); // 5 = 1 in 5 (20%) balanced for all content grids
+      window.MaxCinemaAds.openSmartlinkFallback(); // dynamic 1-in-2..5 per click
     }
   }, false);
 
   /* ── Smartlink fallback — opens only when pop is in cooldown, probabilistically ─ */
-  var SMARTLINK_FALLBACK_RATE = 5; // 1 in 5 clicks when pop is in cooldown (20%). 4=25% aggressive, 6=16.7% balanced, 8=12.5% conservative.
+  // Dynamic rate: each click picks a random 1-in-N where N is between MIN and MAX.
+  // 2..5 → per-click chance between 50% and 20% (avg ~32%). Tighten with MIN=3 MAX=5 (~24%) or MIN=4 MAX=6 (~19%).
+  var SMARTLINK_RATE_MIN = 2;
+  var SMARTLINK_RATE_MAX = 5;
+
+  function pickSmartlinkRate() {
+    var lo = Math.max(2, SMARTLINK_RATE_MIN);
+    var hi = Math.max(lo, SMARTLINK_RATE_MAX);
+    return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+  }
 
   function shouldSmartlinkFallback(rate) {
-    var r = rate || SMARTLINK_FALLBACK_RATE;
+    var r = rate || pickSmartlinkRate();
     if (isPopDue()) return false; // pop takes priority - don't double monetize same click
     if (!SMARTLINK_URL) return false;
     return Math.random() < (1 / r);
@@ -200,7 +209,8 @@
     shouldSmartlinkFallback: shouldSmartlinkFallback,
     openSmartlinkFallback: openSmartlinkFallback,
     smartlinkUrl:   SMARTLINK_URL,
-    smartlinkRate:  SMARTLINK_FALLBACK_RATE,
+    smartlinkRate:  SMARTLINK_RATE_MIN + '-' + SMARTLINK_RATE_MAX + ' (dynamic)',
+    pickSmartlinkRate: pickSmartlinkRate,
     country:        COUNTRY,
     isTier1:        TIER1.has(COUNTRY),
     cooldownMs:     COOLDOWN_MS

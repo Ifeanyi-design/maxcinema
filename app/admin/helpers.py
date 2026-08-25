@@ -193,8 +193,22 @@ def _send_telegram_notification(target, text, bot_token=None, default_chat_id=No
     return False, last_error or "Telegram request failed"
 
 
-def _send_release_notifications(video):
-    rows = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).all()
+def _send_release_notifications(video, scope="pending"):
+    """Send release notifications for a video.
+
+    scope controls who receives it:
+      - "pending":     only rows for THIS video with notified=False (original behavior)
+      - "subscribers": EVERYONE who opted in for this video (re-notify, incl. already-notified)
+      - "broadcast":   the ENTIRE watchlist_notify database (every user, any title)
+    """
+    if scope == "broadcast":
+        rows = WatchlistNotify.query.all()
+    elif scope == "subscribers":
+        rows = WatchlistNotify.query.filter_by(video_id=video.id).all()
+    else:
+        scope = "pending"
+        rows = WatchlistNotify.query.filter_by(video_id=video.id, notified=False).all()
+
     if not rows:
         return {"queued": 0, "emailed": 0, "telegram": 0, "marked": 0, "errors": []}
 
@@ -204,10 +218,20 @@ def _send_release_notifications(video):
     else:
         release_url = f"{site_url.rstrip('/')}/download/series/{video.slug or slugify(video.name)}/s1/e1/{video.id}"
 
+    if scope == "broadcast":
+        tail = "You are on the MaxCinema alert list."
+        subject = f"New Drop: {video.name} is out now"
+    elif scope == "subscribers":
+        tail = "You requested this notification."
+        subject = f"Now Available: {video.name}"
+    else:
+        tail = "You requested this notification."
+        subject = f"Now Available: {video.name}"
+
     plain_text = (
         f"Good news! '{video.name}' is now available on MaxCinema.\n\n"
         f"Open: {release_url}\n\n"
-        "You requested this notification."
+        f"{tail}"
     )
 
     email_cfg = _get_email_provider_config()
@@ -246,7 +270,7 @@ def _send_release_notifications(video):
                     )
                     ok, err = _send_email_notification(
                         to_email=row.email,
-                        subject=f"Now Available: {video.name}",
+                        subject=subject,
                         plain_text=plain_text,
                         html_body=html_text
                     )
@@ -293,6 +317,7 @@ def _send_release_notifications(video):
         errors.append(f"fatal:{e}")
 
     return {
+        "scope": scope,
         "queued": len(rows),
         "emailed": emailed,
         "telegram": telegram,
@@ -301,7 +326,7 @@ def _send_release_notifications(video):
     }
 
 
-def _send_release_notifications_async(app, video_id):
+def _send_release_notifications_async(app, video_id, scope="pending"):
     """Run _send_release_notifications outside the request/response cycle.
 
     Runs on a background thread so the admin's click returns instantly
@@ -325,8 +350,8 @@ def _send_release_notifications_async(app, video_id):
             if video is None:
                 app.logger.warning(f"[release-notify] video_id={video_id} not found, skipping")
                 return
-            app.logger.warning(f"[release-notify] START video_id={video_id} '{video.name}'")
-            summary = _send_release_notifications(video)
+            app.logger.warning(f"[release-notify] START video_id={video_id} '{video.name}' scope={scope}")
+            summary = _send_release_notifications(video, scope=scope)
             app.logger.warning(
                 f"[release-notify] video_id={video_id} '{video.name}': "
                 f"queued={summary['queued']} emailed={summary['emailed']} "
