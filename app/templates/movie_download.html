@@ -43,6 +43,14 @@
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
 
   .dl-page * { font-family: 'Inter', system-ui, sans-serif; }
+  /* Fix: don't override Font Awesome glyph font */
+  .dl-page i[class*="fa-"], .dl-page i.fas, .dl-page i.far, .dl-page i.fab, .dl-page i.fa-solid, .dl-page i.fa-regular, .dl-page i.fa-brands {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "Font Awesome 6 Free" !important;
+    font-style: normal;
+  }
+  .dl-page .fa-brands, .dl-page .fab { font-family: "Font Awesome 6 Brands" !important; font-weight: 400; }
+  .dl-page .fa-solid, .dl-page .fas { font-weight: 900; }
+  .dl-page .fa-regular, .dl-page .far { font-weight: 400; }
 
   /* Hero backdrop */
   .hero-backdrop {
