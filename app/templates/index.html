@@ -412,6 +412,14 @@
                     </div>
                 </section>
             {% endfor %}
+            {% if ads and ads.smartlink_url %}
+            <a href="{{ ads.smartlink_url }}" target="_blank" rel="noopener nofollow" class="smartlink-trigger block bg-gradient-to-br from-[#830506] to-black text-white rounded-xl p-5 text-center shadow-lg hover:scale-[1.02] transition">
+                <p class="text-[9px] font-black uppercase tracking-[0.2em] text-white/60">Sponsored</p>
+                <p class="font-black text-base mt-1">Explore Trending</p>
+                <p class="text-white/70 text-xs mt-1">Handpicked for you · Updated daily</p>
+                <span class="inline-block mt-3 px-4 py-2 bg-white text-[#830506] rounded-full text-[10px] font-black uppercase tracking-widest">Discover →</span>
+            </a>
+            {% endif %}
         </div>
     </aside>
 </section>
@@ -658,14 +666,12 @@
 // Pop takes priority: if isPopDue() is true, SDK pop fires and this does nothing.
 (() => {
   document.addEventListener('click', (e) => {
-    const card = e.target.closest('#featurecontain a:not(.smartlink-trigger), #RecentlyAddedbox a:not(.smartlink-trigger)');
+    const card = e.target.closest('#featurecontain a:not(.smartlink-trigger), #RecentlyAddedbox a:not(.smartlink-trigger), #TrendingCol div[onclick]');
     if (!card) return;
-    if (!card.href) return;
-    // Don't interfere with dedicated smartlink card
-    if (card.classList.contains('smartlink-trigger')) return;
+    if (card.classList && card.classList.contains('smartlink-trigger')) return;
     if (window.MaxCinemaAds && window.MaxCinemaAds.openSmartlinkFallback) {
-      // 6 = 1 in 6 (~16.7%) during cooldown - balanced. 4 = 25% more aggressive, 8 = 12.5% conservative.
-      window.MaxCinemaAds.openSmartlinkFallback(6);
+      // 5 = 1 in 5 (20%) during cooldown - 4=25% aggressive, 6=16.7% balanced
+      window.MaxCinemaAds.openSmartlinkFallback(5);
     }
   }, false);
 })();

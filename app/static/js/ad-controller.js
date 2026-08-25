@@ -138,7 +138,7 @@
   }, true);
 
   /* ── Smartlink fallback — opens only when pop is in cooldown, probabilistically ─ */
-  var SMARTLINK_FALLBACK_RATE = 6; // 1 in 6 clicks when pop is in cooldown (~16.7%). 4 = 25% aggressive, 8 = 12.5% conservative.
+  var SMARTLINK_FALLBACK_RATE = 5; // 1 in 5 clicks when pop is in cooldown (20%). 4=25% aggressive, 6=16.7% balanced, 8=12.5% conservative.
 
   function shouldSmartlinkFallback(rate) {
     var r = rate || SMARTLINK_FALLBACK_RATE;
