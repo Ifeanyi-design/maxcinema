@@ -8,7 +8,7 @@
   - It does NOT fire on body clicks or background interactions.
   - It does NOT use {{ ads.pop_url }} (that belongs to the Adsterra SDK).
 
-  WHAT THIS DOES:
+  WHAT THIS DOES (only in optimized mode):
   - Listens for clicks on elements with class "smartlink-trigger"
   - Opens {{ ads.smartlink_url }} in a new tab on those clicks
   - Smartlink = separate monetization channel (different URL/account)
@@ -16,9 +16,12 @@
   DEPENDENCIES:
   - {{ ads.smartlink_url }} must be set via AD_SMARTLINK_URL env var
   - ad-controller.js must be loaded before this partial
+  - {{ smartlink_mode }} must be "optimized" (set via AD_SMARTLINK_MODE)
+    to enable this handler.  In "standard" mode the smartlink is used as a
+    plain <a href> link per Adsterra's standard integration guidance.
 #}
 
-{% if ads and ads.smartlink_url %}
+{% if ads and ads.smartlink_url and smartlink_mode == 'optimized' %}
 <script>
 (function () {
   'use strict';

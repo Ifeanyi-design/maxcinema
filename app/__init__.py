@@ -54,6 +54,15 @@ def create_app(config_class=Config):
         if ad_configuration not in {"legacy", "deduped", "optimized"}:
             ad_configuration = "legacy"
 
+        # Smartlink + popunder-observer mode.  ``standard`` is the Adsterra-
+        # recommended setup: no custom click handlers opening Smartlinks, no
+        # popunder wrappers.  ``optimized`` preserves the previous custom JS
+        # (smartlink-trigger handler, probabilistic fallback, popunder cooldown
+        # observers) for instant rollback if revenue regresses.
+        smartlink_mode = (os.getenv("AD_SMARTLINK_MODE", "standard") or "standard").strip().lower()
+        if smartlink_mode not in {"standard", "optimized"}:
+            smartlink_mode = "standard"
+
         def ad_slot_enabled(slot_name, placement_type, is_duplicate=False):
             """Return whether a placement should render in the active layout mode.
 
@@ -149,8 +158,9 @@ def create_app(config_class=Config):
                 "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
                 "monetag_push_zone": os.getenv("MONETAG_PUSH_ZONE"),
             },
-            ad_configuration=ad_configuration,
+ad_configuration=ad_configuration,
             ad_slot_enabled=ad_slot_enabled,
+            smartlink_mode=smartlink_mode,
         )
 
     def get_country_code() -> str:
