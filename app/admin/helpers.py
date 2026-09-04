@@ -212,7 +212,7 @@ def _send_release_notifications(video, scope="pending"):
     if not rows:
         return {"queued": 0, "emailed": 0, "telegram": 0, "marked": 0, "errors": []}
 
-    site_url = os.getenv("SITE_BASE_URL", "https://www.maxcinema.name.ng")
+    site_url = os.getenv("SITE_BASE_URL", "https://maxcinema.name.ng")
     if video.type == "movie":
         release_url = f"{site_url.rstrip('/')}/download/movie/{video.slug or slugify(video.name)}/{video.id}"
     else:

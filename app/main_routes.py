@@ -848,13 +848,16 @@ def detail(det, name, id, season=1, episode=1):
     if video and video.slug and det != "trailer_watch":
         name = video.slug
     
+    # SEO: permanent (301) redirects so Google consolidates ranking signals on
+    # the final /download/... and /trailers/... URLs. Flask's default 302
+    # (temporary) redirect does NOT pass ranking signals and causes
+    # "Page with redirect" errors in Google Search Console.
     if det == "movie":
-        return redirect(url_for("main.movie_details", det=det, name=name, id=id))
-        print("hello")
+        return redirect(url_for("main.movie_details", det=det, name=name, id=id), code=301)
     elif det == "series":
-        return redirect(url_for("main.series_details", det=det, name=name, season=season, episode=episode, id=id))
+        return redirect(url_for("main.series_details", det=det, name=name, season=season, episode=episode, id=id), code=301)
     elif det == "trailer_watch":
-        return redirect(url_for("main.watch_trailer", det=det, name=name))
+        return redirect(url_for("main.watch_trailer", det=det, name=name), code=301)
 
 @main_bp.route("/download/<det>/<name>/<int:id>")
 def movie_details(det, name, id):
