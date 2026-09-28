@@ -44,7 +44,7 @@ def inject_ads():
     sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
     sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
 
-    pop_domain = os.getenv("AD_POP_DOMAIN", "effectivegatecpm.com")
+    pop_domain = os.getenv("AD_POP_DOMAIN", "illuminationacceptedkeynote.com")
     pop_path = os.getenv("AD_POP_PATH")
     pop_key = os.getenv("AD_POP_KEY")
 

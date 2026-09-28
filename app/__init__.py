@@ -126,6 +126,18 @@ def create_app(config_class=Config):
         sidebar = iframe_ad("AD_SIDEBAR_KEY", 300, 250)
         sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
         sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
+
+        # Native placements use their own provider domain and placement key.
+        # Keep these separate from iframe/banner settings so either format can
+        # be updated through deployment configuration without editing templates.
+        native_domain = (os.getenv("AD_NATIVE_DOMAIN") or "").strip()
+        native_placement_key = (os.getenv("AD_NATIVE_PLACEMENT_KEY") or "").strip()
+        native = None
+        if native_domain and native_placement_key:
+            native = {
+                "domain": native_domain,
+                "placement_key": native_placement_key,
+            }
     
         # POPUNDER URL (built server-side from secrets)
         pop_domain = os.getenv("AD_POP_DOMAIN", "illuminationacceptedkeynote.com")
@@ -152,6 +164,7 @@ def create_app(config_class=Config):
                 "sidebar": sidebar,
                 "sticky_desktop": sticky_desktop,
                 "sticky_mobile": sticky_mobile,
+                "native": native,
                 "pop_url": pop_url,
                 "smartlink_url": smartlink_url,
                 "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
