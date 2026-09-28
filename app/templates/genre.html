@@ -10,13 +10,13 @@
                 <i class="fa-solid fa-layer-group text-8xl text-white transform -rotate-12 translate-x-4 -translate-y-4"></i>
             </div>
 
-            <h2 class="font-black text-white text-xl md:text-3xl flex items-center gap-3 italic uppercase tracking-tighter relative z-10">
+            <h1 class="font-black text-white text-xl md:text-3xl flex items-center gap-3 italic uppercase tracking-tighter relative z-10">
                 {% if genre %}
                     <i class="fa-solid fa-tag text-yellow-400"></i> {{ genre.name }}
                 {% else %}
                     <i class="fa-solid fa-magnifying-glass text-yellow-400"></i> Search Results
                 {% endif %}
-            </h2>
+            </h1>
             
             {% if videos.total %}
             <span class="relative z-10 bg-black/20 text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider hidden md:block">

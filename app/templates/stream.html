@@ -8,12 +8,7 @@
 {% block meta_description %}Watch {{ video.name }} ({{ video.year_produced }}) online in HD. Stream free on MaxCinema.{{ video.description[:100] }}{% endblock %}
 
 {% block social_tags %}
-<meta property="og:title" content="Watch {{ video.name }} - MaxCinema">
-<meta property="og:description" content="{{ video.description[:150] }}...">
-{% if video.image %}<meta property="og:image" content="{{ video.image }}">{% endif %}
-<meta property="og:url" content="{{ request.url }}">
-<meta property="og:type" content="video.movie">
-<meta name="twitter:card" content="summary_large_image">
+{# SEO tags and JSON-LD are generated from the database in app/seo.py. #}
 {% endblock %}
 
 {% block style %}
@@ -206,7 +201,7 @@
         {% endfor %}
       </div>
       <div class="p-2 border-t border-gray-50">
-        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i></a>
+        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending') }}{% endif %}" class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i></a>
       </div>
     </section>
     {% endfor %}

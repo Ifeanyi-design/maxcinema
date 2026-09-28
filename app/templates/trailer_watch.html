@@ -99,7 +99,7 @@
                     {% for trailer in up_next %}
                         <a href='{{ url_for("main.detail", det="trailer_watch", name=trailer.slug, id=trailer.id) }}' 
                            class="group block relative rounded-xl overflow-hidden bg-gray-200 dark:bg-[#222] aspect-[3/4] border border-transparent hover:border-[#830506]/50 transition-all">
-                            <img src="{{ trailer.image }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <img src="{{ trailer.image }}" alt="{{ trailer.name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" decoding="async">
                             <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
                             <div class="absolute bottom-0 p-3 w-full">
                                 <p class="text-white font-bold text-[10px] md:text-xs leading-tight line-clamp-2 uppercase tracking-tight">

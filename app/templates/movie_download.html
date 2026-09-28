@@ -19,22 +19,7 @@
 {% endblock %}
 
 {% block social_tags %}
-  {% if video.type == 'series' %}
-    {% set share_title = "Download " ~ video.name ~ " S" ~ season ~ "E" ~ episode %}
-    {% set share_image = current_season.image if current_season and current_season.image else video.image %}
-  {% else %}
-    {% set share_title = "Download " ~ video.name ~ " (" ~ video.year_produced ~ ")" %}
-    {% set share_image = video.image %}
-  {% endif %}
-  <meta property="og:title"       content="{{ share_title }}">
-  <meta property="og:description" content="Fast, free HD movie download on MaxCinema.">
-  <meta property="og:image"       content="{{ share_image }}">
-  <meta property="og:url"         content="{{ request.url }}">
-  <meta property="og:type"        content="video.movie">
-  <meta property="og:site_name"   content="MaxCinema">
-  <meta name="twitter:card"       content="summary_large_image">
-  <meta name="twitter:title"      content="{{ share_title }}">
-  <meta name="twitter:image"      content="{{ share_image }}">
+  {# SEO tags and JSON-LD are generated from the database in app/seo.py. #}
 {% endblock %}
 
 {% block style %}

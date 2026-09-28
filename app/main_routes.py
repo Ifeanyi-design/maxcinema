@@ -17,6 +17,14 @@ import hashlib
 from . import listeners
 from .extensions import db, login_manager
 from .indexnow import get_indexnow_key_record, get_site_base_url
+from .seo import (
+    build_collection_seo,
+    build_homepage_seo,
+    build_page_seo,
+    build_trailer_seo,
+    build_video_seo,
+    video_slug,
+)
 from .models import (
     AllVideo, Movie, Series, StorageServer, User, Season, Episode,
     Genre, RecentItem, Rating, Comment, Trailer, MovieRequest, SearchTerm, AnalyticsEvent,
@@ -362,7 +370,9 @@ def index(page=1):
                                   .order_by(desc(AllVideo.rating))\
                                   .limit(10).all()
 
-    data = AllVideo.query.filter_by(active=True).order_by(func.random()).limit(24).all()
+    # Keep the public home page stable for visitors and crawlers. A random
+    # title rail made the same URL look materially different on every crawl.
+    latest_titles = AllVideo.query.filter_by(active=True).order_by(AllVideo.date_added.desc()).limit(24).all()
     upcoming_video_rows = (
         AllVideo.query
         .filter(
@@ -495,7 +505,19 @@ def index(page=1):
             if e and e.season.series.all_video.name not in series_name:
                 series_name.append(e.season.series.all_video.name)
                 items.append(e)
-    return render_template('index.html', features=features, data=data,
+    if page > 1:
+        homepage_seo = build_collection_seo(
+            title="Latest Movies, TV Series & Anime",
+            description="Browse recently added movies, TV series, anime, and trailers on MaxCinema.",
+            canonical_path=url_for("main.index", page=page),
+            items=latest_titles,
+            keywords=["latest movies", "TV series", "anime"],
+            page=page,
+        )
+    else:
+        homepage_seo = build_homepage_seo(latest_titles)
+
+    return render_template('index.html', features=features, data=latest_titles,
                             trending_series=series_trend,
                               trending_movie=movie_trend,
                                 items=items, per_page=per_page,
@@ -506,7 +528,8 @@ def index(page=1):
                                   active_poll=active_poll,
                                   poll_total_votes=poll_total_votes,
                                   social_videos=social_videos,
-                                  featured_social=featured_social)
+                                  featured_social=featured_social,
+                                  seo=homepage_seo)
 
 
 @main_bp.route("/release-calendar")
@@ -598,7 +621,13 @@ def release_calendar():
         next_month_label=next_month.strftime("%B %Y"),
         trending_series=series_trend,
         trending_movie=movie_trend,
-        trending_trailers=trending_trailers
+        trending_trailers=trending_trailers,
+        seo=build_page_seo(
+            title="Movie & TV Release Calendar",
+            description="Track upcoming movie, TV series, and episode releases on MaxCinema.",
+            canonical_path=url_for("main.release_calendar"),
+            keywords=["movie release calendar", "TV release dates", "upcoming episodes"],
+        ),
     )
 
 @main_bp.route("/featured/<int:page>")
@@ -610,7 +639,15 @@ def featured(page=1):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     featured_videos = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
-    return render_template("featured.html", trending_series=series_trend, trending_movie=movie_trend, videos=featured_videos, feature=feature, trending_trailers=trending_trailers)
+    seo = build_collection_seo(
+        title="Featured Movies & TV Series",
+        description="Explore editor-selected movies and TV series featured on MaxCinema.",
+        canonical_path=url_for("main.featured", page=page) if page > 1 else url_for("main.featured"),
+        items=featured_videos.items,
+        keywords=["featured movies", "featured series"],
+        page=page,
+    )
+    return render_template("featured.html", trending_series=series_trend, trending_movie=movie_trend, videos=featured_videos, feature=feature, trending_trailers=trending_trailers, seo=seo)
 
 @main_bp.route("/search_result")
 @main_bp.route("/search_result/<int:page>")
@@ -671,28 +708,37 @@ def search_result(page=1):
         fallback = SocialVideo.query.filter(SocialVideo.active == True).order_by(SocialVideo.created_at.desc()).first()
         social_ctas = [fallback] if fallback else []
 
-    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend, social_ctas=social_ctas)
+    seo = build_collection_seo(
+        title=f"Search results for {query}",
+        description=f"Search results for {query} on MaxCinema.",
+        canonical_path=url_for("main.search_result"),
+        items=videos.items,
+        keywords=[query, "movie search", "TV series search"],
+        page=page,
+        robots="noindex,follow",
+    )
+    return render_template("search_results.html", trending_trailers=trending_trailers, videos=videos, query=query, searches=searches, trending_series=series_trend, trending_movie=movie_trend, social_ctas=social_ctas, seo=seo)
 
 @main_bp.route("/contact_us")
 def contact_us():
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template("contact_us.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("contact_us.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, seo=build_page_seo(title="Contact MaxCinema", description="Contact the MaxCinema team for support, feedback, and enquiries.", canonical_path=url_for("main.contact_us"), keywords=["contact", "support"]))
 
 @main_bp.route("/privacy_policy")
 def privacy():
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template("privacy_policy.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("privacy_policy.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, seo=build_page_seo(title="MaxCinema Privacy Policy", description="Read the MaxCinema privacy policy and learn how site information is handled.", canonical_path=url_for("main.privacy"), keywords=["privacy policy"]))
 
 @main_bp.route("/dcma")
 def dcma():
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
-    return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, seo=build_page_seo(title="MaxCinema DMCA Takedown", description="Submit or review copyright takedown information for MaxCinema.", canonical_path=url_for("main.dcma"), keywords=["DMCA", "copyright takedown"]))
 
 @main_bp.route("/genre/<string:contain>/<string:genre_type>")
 @main_bp.route("/genre/<string:contain>/<string:genre_type>/page/<int:page>")
@@ -831,6 +877,17 @@ def genre(genre_type, contain="movie", page=1):
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     
+    seo = build_collection_seo(
+        title=f"{genre.name} {'Movies' if contain == 'movie' else 'Movies & TV Series'}",
+        description=f"Browse the latest {genre.name} {'movies' if contain == 'movie' else 'movies and TV series'} on MaxCinema.",
+        canonical_path=(
+            url_for("main.genre", contain=contain, genre_type=genre_type, page=page)
+            if page > 1 else url_for("main.genre", contain=contain, genre_type=genre_type)
+        ),
+        items=videos.items,
+        keywords=[genre.name, contain, "movies", "TV series"],
+        page=page,
+    )
     return render_template("genre.html", 
                            genre_type=genre_type, 
                            genre=genre, 
@@ -838,7 +895,7 @@ def genre(genre_type, contain="movie", page=1):
                            trending_series=series_trend, 
                            trending_movie=movie_trend, 
                            trending_trailers=trending_trailers, 
-                           is_genre=True, context=contain)
+                           is_genre=True, context=contain, seo=seo)
 
 
 @main_bp.route("/<det>/<name>/<int:id>")
@@ -862,6 +919,15 @@ def detail(det, name, id, season=1, episode=1):
 @main_bp.route("/download/<det>/<name>/<int:id>")
 def movie_details(det, name, id):
     movie = AllVideo.query.filter_by(id=id, active=True).first_or_404()
+    if movie.type != "movie" or det != "movie":
+        abort(404)
+
+    canonical_name = video_slug(movie)
+    if name != canonical_name:
+        return redirect(
+            url_for("main.movie_details", det="movie", name=canonical_name, id=movie.id),
+            code=301,
+        )
     num_comment = Comment.query.filter_by(
         video_id=movie.id,
         parent_id=None
@@ -914,7 +980,7 @@ def movie_details(det, name, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, social_videos=social_videos, follow_links=social_follow_links())
+    return render_template("movie.html", num_comment=num_comment, comments=comments, pinned_admin_comment=pinned_admin_comment, id=id, det=det, breakdown=breakdown, suggested=suggested, video=movie, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, social_videos=social_videos, follow_links=social_follow_links(), seo=build_video_seo(movie))
 
 @main_bp.route("/download/<det>/<name>/s<int:season>/e<int:episode>/<int:id>")
 def series_details(det, name, season, episode, id):
@@ -952,6 +1018,26 @@ def series_details(det, name, season, episode, id):
         episode = current_episode.episode_number
     else:
         episode = current_episode.episode_number
+
+    canonical_name = video_slug(series)
+    canonical_season = current_season.season_number
+    if (
+        det != "series"
+        or name != canonical_name
+        or season != canonical_season
+        or request.view_args.get("episode") != episode
+    ):
+        return redirect(
+            url_for(
+                "main.series_details",
+                det="series",
+                name=canonical_name,
+                id=series.id,
+                season=canonical_season,
+                episode=episode,
+            ),
+            code=301,
+        )
 
     try:
         if current_episode:
@@ -1006,7 +1092,7 @@ def series_details(det, name, season, episode, id):
         db.session.rollback()
         print(f"Error updating view count: {e}")
 
-    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges)
+    return render_template("movie.html", num_comment=num_comment, current_season=current_season, current_episode=current_episode, comments=comments, pinned_admin_comment=pinned_admin_comment, season=int(season), seasons=seasons, breakdown=breakdown, episode=episode, det=det, suggested=suggested, video=series, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, comment_badges=comment_badges, seo=build_video_seo(series, season=current_season, episode=current_episode))
 
 
 @main_bp.route("/download/<string:slug>")
@@ -1077,6 +1163,11 @@ def movie_download_page(slug):
         SocialVideo.all_videos.any(AllVideo.id == video.id)
     ).order_by(SocialVideo.sort_order.asc()).all()
 
+    seo = build_video_seo(video, season=current_season, episode=current_episode)
+    # This convenience URL contains the same title information as the primary
+    # detail URL. Keep it usable, but prevent two URLs competing in search.
+    seo["robots"] = "noindex,follow"
+
     return render_template(
         "movie_download.html",
         video=video,
@@ -1088,6 +1179,7 @@ def movie_download_page(slug):
         suggested=suggested,
         trending_series=series_trend,
         trending_movie=movie_trend,
+        seo=seo,
         trending_trailers=trending_trailers,
         social_videos=social_videos,
         follow_links=social_follow_links(),
@@ -1361,12 +1453,19 @@ def watch_trailer(det="trailer_watch", name=None):
         up_next=up_next,
         num_comment=num_comment,
         trending_trailers=trending_trailers,
-        comment_badges=comment_badges
+        comment_badges=comment_badges,
+        seo=build_trailer_seo(trailer),
     )
 
 
-@main_bp.route("/trending/<type>")
-def trending(type):
+@main_bp.route("/trending", defaults={"type": "all"})
+@main_bp.route("/trending/<string:type>")
+def trending(type="all"):
+    # The old /trending/movie and /trending/series URLs rendered the exact
+    # same page. Consolidate them to one URL so they do not split authority.
+    if type != "all":
+        return redirect(url_for("main.trending"), code=301)
+
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
     trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
@@ -1396,7 +1495,14 @@ def trending(type):
             .limit(10)
             .all()
     )
-    return render_template(f"trending.html", old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi)
+    seo = build_collection_seo(
+        title="Trending Movies & TV Series",
+        description="Explore the movies, TV series, anime, and classics trending on MaxCinema.",
+        canonical_path=url_for("main.trending"),
+        items=[*movie_trend, *series_trend, *trending_action, *trending_animation],
+        keywords=["trending movies", "trending TV series", "anime", "classic movies"],
+    )
+    return render_template(f"trending.html", old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, seo=seo)
 
 @main_bp.route("/trailers")
 @main_bp.route("/trailers/<int:page>")
@@ -1406,7 +1512,14 @@ def trailer(page=1):
     trailers = True
     per_page = 24
     videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
-    return render_template("trailers.html", dark=dark, videos=videos, per_page=per_page, page=page, trailers=trailers, trending_trailers=trending_trailers)
+    seo = build_collection_seo(
+        title="Latest Movie & TV Trailers",
+        description="Watch the latest movie and TV series trailers, teasers, and previews on MaxCinema.",
+        canonical_path=url_for("main.trailer", page=page) if page > 1 else url_for("main.trailer"),
+        keywords=["movie trailers", "TV trailers", "new trailers"],
+        page=page,
+    )
+    return render_template("trailers.html", dark=dark, videos=videos, per_page=per_page, page=page, trailers=trailers, trending_trailers=trending_trailers, seo=seo)
 
 
 @main_bp.route("/watch_download/<type>/<name>/<int:id>")
@@ -1453,7 +1566,9 @@ def movie_download(type, name, id):
         extra = AllVideo.query.filter(AllVideo.id != id, ~AllVideo.id.in_([m.id for m in suggested]), AllVideo.active == True)\
             .order_by(func.random()).limit(more_needed).all()
         suggested.extend(extra)
-    return render_template("stream.html", video=movie, suggested=suggested, id=id, type=type, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers)
+    seo = build_video_seo(movie)
+    seo["robots"] = "noindex,follow"
+    return render_template("stream.html", video=movie, suggested=suggested, id=id, type=type, trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, seo=seo)
 
 
 @main_bp.route("/watch_series/<type>/<name>/<int:id>/s<season>/e<int:episode>")
@@ -1481,6 +1596,16 @@ def series_download(type, name, id, season, episode):
 @main_bp.route("/nav/<nav>")
 @main_bp.route("/nav/<nav>/<int:page>")
 def navbar(nav, page=1):
+    # Normalize historic and duplicate navigation URLs before doing queries.
+    if nav == "all_movies":
+        return redirect(url_for("main.navbar", nav="all_movie", page=page), code=301)
+    if nav in {"trailers", "all_trailers"}:
+        return redirect(url_for("main.trailer", page=page), code=301)
+    if nav == "trending":
+        return redirect(url_for("main.trending"), code=301)
+    if nav not in {"all_movie", "all_series", "request"}:
+        abort(404)
+
     dark = False
     videos = ""
     per_page = 24
@@ -1494,48 +1619,37 @@ def navbar(nav, page=1):
     old_but_gold = ""
     get_started_items = ""
     trailers = False
-    if nav=="trailers" or nav=="all_trailers":
-        nav="trailers"
-        dark = True
-        trailers = True
-        videos = Trailer.query.order_by(Trailer.date_added.desc()).paginate(page=page, per_page=per_page)
-    if nav=="trending":
-        series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).limit(10).all()
-        movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).limit(10).all()
-        trending_action = AllVideo.query.join(AllVideo.genres).filter(AllVideo.type == "movie", AllVideo.trending==True, Genre.name=="Action", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
-        trending_animation = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Animation", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
-        trending_sci_fi = AllVideo.query.join(AllVideo.genres).filter(AllVideo.trending == True, Genre.name=="Science Fiction", AllVideo.active == True).order_by(AllVideo.date_added.desc()).limit(10).all()
-        old_but_gold = AllVideo.query.filter(
-            AllVideo.type == "movie",
-            AllVideo.year_produced <= 2020,
-            AllVideo.rating >= 4,
-            AllVideo.active == True
-        ).order_by(AllVideo.rating.desc()).limit(10).all()
-        
-
-        get_started_items = (
-            AllVideo.query
-                .filter(
-                    or_(
-                        # Movies: short length
-                        (AllVideo.type == "movie") & (AllVideo.length <= "1h 59m"),
-
-                        # Series: few seasons (you could store num_seasons on AllVideo if you want)
-                        (AllVideo.type == "series") & (AllVideo.series.has(Series.num_seasons <= 2))
-                    ),
-                    AllVideo.active == True
-                )
-                .order_by(AllVideo.views.desc())  # popular first
-                .limit(10)
-                .all()
+    if nav == "request":
+        return render_template(
+            "request.html",
+            dark=dark,
+            nav=nav,
+            recent_requests=recent_requests,
+            trending_series=series_trend,
+            trending_movie=movie_trend,
+            trending_trailers=trending_trailers,
+            seo=build_page_seo(
+                title="Request a Movie or TV Series",
+                description="Request a movie or TV series you would like to see on MaxCinema.",
+                canonical_path=url_for("main.navbar", nav="request"),
+                keywords=["movie request", "TV series request"],
+            ),
         )
-
     if nav == "all_movie":
         videos = AllVideo.query.filter_by(type="movie", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
     if nav == "all_series":
         videos = AllVideo.query.filter_by(type="series", active=True).order_by(AllVideo.date_added.desc()).paginate(page=page, per_page=per_page)
 
-    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers,
+    label = "Latest Movies" if nav == "all_movie" else "Latest TV Series"
+    seo = build_collection_seo(
+        title=label,
+        description=f"Browse the latest {label.lower()} added to MaxCinema.",
+        canonical_path=url_for("main.navbar", nav=nav, page=page) if page > 1 else url_for("main.navbar", nav=nav),
+        items=videos.items,
+        keywords=[label, "movies", "TV series"],
+        page=page,
+    )
+    return render_template(f"{nav}.html", trailers=trailers, dark=dark, nav=nav, videos=videos, old_but_gold=old_but_gold, get_started_items=get_started_items, trending_series=series_trend, trending_movie=movie_trend, trending_actions=trending_action, trending_animations=trending_animation, trending_sci_fic=trending_sci_fi, trending_trailers=trending_trailers, seo=seo,
 recent_requests=recent_requests)
 
 
@@ -1859,15 +1973,33 @@ def sitemap():
     # 1. Define Static Pages (Manually add the host)
     static_urls = [
         {'loc': f"{host}/", 'priority': '1.0'},
+        {'loc': f"{host}{url_for('main.navbar', nav='all_movie')}", 'priority': '0.9'},
+        {'loc': f"{host}{url_for('main.navbar', nav='all_series')}", 'priority': '0.9'},
+        {'loc': f"{host}{url_for('main.featured')}", 'priority': '0.8'},
         {'loc': f"{host}/social", 'priority': '0.7'},
-        {'loc': f"{host}/trending/movie", 'priority': '0.9'},
-        {'loc': f"{host}/trending/series", 'priority': '0.9'},
-        {'loc': f"{host}/request/movie", 'priority': '0.5'},
+        {'loc': f"{host}{url_for('main.trending')}", 'priority': '0.8'},
+        {'loc': f"{host}{url_for('main.trailer')}", 'priority': '0.7'},
+        {'loc': f"{host}{url_for('main.release_calendar')}", 'priority': '0.6'},
     ]
 
-    # 2. Fetch Data (Cap at 5000/2000 to ensure full index while staying fast - bump if DB grows)
+    # 2. Fetch Data (caps keep this single sitemap safely below 50,000 URLs).
     movies = AllVideo.query.filter_by(type='movie', active=True).order_by(AllVideo.date_added.desc()).limit(5000).all()
     series_list = AllVideo.query.filter_by(type='series', active=True).order_by(AllVideo.date_added.desc()).limit(2000).all()
+    episodes = (
+        Episode.query
+        .join(Season, Episode.season_id == Season.id)
+        .join(Series, Season.series_id == Series.id)
+        .join(AllVideo, Series.all_video_id == AllVideo.id)
+        .filter(
+            AllVideo.active.is_(True),
+            # The series URL below already covers S1E1; list every other
+            # episode as its own canonical, discoverable URL.
+            or_(Season.season_number != 1, Episode.episode_number != 1),
+        )
+        .order_by(Episode.updated_at.desc(), Episode.date_added.desc())
+        .limit(10000)
+        .all()
+    )
     trailers = Trailer.query.order_by(Trailer.date_added.desc()).limit(500).all()
 
     # 3. Render Template
@@ -1877,6 +2009,7 @@ def sitemap():
         static_urls=static_urls,
         movies=movies,
         series_list=series_list,
+        episodes=episodes,
         trailers=trailers
     )
     
@@ -2193,7 +2326,16 @@ def social_page():
         SocialVideo.active == True
     ).order_by(SocialVideo.featured.desc(), SocialVideo.created_at.desc()).limit(200).all()
     social_videos = rank_social_videos(social_videos)
-    return render_template("social.html", social_videos=social_videos)
+    return render_template(
+        "social.html",
+        social_videos=social_videos,
+        seo=build_page_seo(
+            title="MaxCinema Social Edits",
+            description="Watch MaxCinema movie edits, trailers, and fan cuts from YouTube and TikTok.",
+            canonical_path=url_for("main.social_page"),
+            keywords=["movie edits", "TikTok", "YouTube", "trailers"],
+        ),
+    )
         
 
     # app.run(debug=True, host="0.0.0.0", port=5000)

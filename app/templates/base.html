@@ -1,26 +1,36 @@
 <!DOCTYPE html>
 <html lang="en" class="md:scroll-smooth overflow-x-hidden">
 <head>
+    {% set page_title = seo.title if seo else 'MaxCinema - Movies, Series & Anime' %}
+    {% set page_description = seo.description if seo else 'Discover movies, TV series, anime, and trailers on MaxCinema.' %}
+    {% set page_canonical = seo.canonical if seo else request.base_url %}
+    {% set page_image = seo.image if seo else 'https://i.imgur.com/Ch4SMwG.png' %}
+    {% set page_type = seo.type if seo else 'website' %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="msvalidate.01" content="D61C17DB83983B07193F6C30C37F2668" />
     <meta name="google-site-verification" content="nCBaAg2GCGanadEIgg0wjrMbZC67MjY3HW6U" />
     <meta http-equiv="content-language" content="en">
-    <meta name="description" content="{% block meta_description %}MaxCinema is the best site to download latest Nollywood, Hollywood, and Anime movies in HD. Fast, free, and secure downloads updated daily.{% endblock %}">
-    {% block social_tags %}
-        <meta property="og:title" content="MaxCinema - Download Latest Movies & Series Free">
-        <meta property="og:description" content="The best site to download latest Nollywood, Hollywood, and Anime movies in HD (480p, 720p, 1080p). Fast, free, and secure.">
-        <meta property="og:image" content="https://i.imgur.com/Ch4SMwG.png">
-        <meta property="og:url" content="{{ request.url }}">
-        <meta property="og:type" content="website">
-        <meta property="og:site_name" content="MaxCinema">
-
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="Download Latest Movies - MaxCinema">
-        <meta name="twitter:description" content="Free HD movie downloads. Nollywood, Hollywood, and Anime available now.">
-        <meta name="twitter:image" content="https://i.imgur.com/Ch4SMwG.png">
-
-    {% endblock %}
+    <meta name="description" content="{% if seo %}{{ page_description }}{% else %}{% block meta_description %}Discover movies, TV series, anime, and trailers on MaxCinema.{% endblock %}{% endif %}">
+    {% if seo and seo.keywords %}<meta name="keywords" content="{{ seo.keywords }}">{% endif %}
+    <meta name="robots" content="{{ seo.robots if seo else 'index,follow,max-image-preview:large' }}">
+    <meta property="og:title" content="{{ page_title }}">
+    <meta property="og:description" content="{{ page_description }}">
+    <meta property="og:image" content="{{ page_image }}">
+    <meta property="og:url" content="{{ page_canonical }}">
+    <meta property="og:type" content="{{ page_type }}">
+    <meta property="og:site_name" content="MaxCinema">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ page_title }}">
+    <meta name="twitter:description" content="{{ page_description }}">
+    <meta name="twitter:image" content="{{ page_image }}">
+    {% if seo %}
+        {% for schema in seo.schemas %}
+        <script type="application/ld+json">{{ schema|tojson }}</script>
+        {% endfor %}
+    {% endif %}
+    {# Kept as an extension point for templates that need non-SEO head markup. #}
+    {% block social_tags %}{% endblock %}
     <style>
     /* Default size for Phone */
     .responsive-logo {
@@ -36,8 +46,8 @@
     }
 </style>
 
-    <title>{% block title %}MaxCinema - Download Movies, Series & Anime{% endblock %}</title>
-    <link rel="canonical" href="{% block canonical_url %}{{ request.base_url }}{% endblock %}">
+    <title>{% if seo %}{{ page_title }}{% else %}{% block title %}MaxCinema - Movies, Series & Anime{% endblock %}{% endif %}</title>
+    <link rel="canonical" href="{{ page_canonical }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="icon" sizes="192x192" type="image/png" href="https://res.cloudinary.com/da4thsw5a/image/upload/v1768031437/android-chrome-192x192_juadt7.png">
     <link rel="shortcut icon" sizes="192x192" type="image/png" href="https://res.cloudinary.com/da4thsw5a/image/upload/v1768031437/android-chrome-192x192_juadt7.png">

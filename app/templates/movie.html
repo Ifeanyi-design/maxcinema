@@ -20,51 +20,7 @@
 {% endblock %}
 
 {% block social_tags %}
-    {# --- LOGIC: Determine Image & Title based on Movie vs Series --- #}
-    {% if video.type == 'series' %}
-        {% set share_title = "Download " ~ video.name ~ " - Season " ~ season ~ " Episode " ~ episode %}
-        {% set share_image = current_season.image if current_season and current_season.image else video.image %}
-        {% set share_desc = "Watch " ~ video.name ~ " Ep " ~ episode ~ " in HD/480p. " ~ (current_episode.name if current_episode else '') %}
-    {% else %}
-        {% set share_title = "Download " ~ video.name ~ " (" ~ video.year_produced ~ ") - Free MP4" %}
-        {% set share_image = video.image %}
-        {% set share_desc = "Download full movie. " ~ video.description[:100] ~ "..." %}
-    {% endif %}
-
-    {# --- OPEN GRAPH --- #}
-    <meta property="og:title" content="{{ share_title }}">
-    <meta property="og:description" content="{{ share_desc }}">
-    <meta property="og:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
-    <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:type" content="video.movie">
-    <meta property="og:site_name" content="MaxCinema">
-
-    {# --- TWITTER CARDS --- #}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ share_title }}">
-    <meta name="twitter:description" content="{{ share_desc }}">
-    <meta name="twitter:image" content="{{ share_image if share_image else 'https://i.imgur.com/KLN2bPo.png' }}">
-
-    {# --- FIX 2: Google Video Schema (Fixes 'Video not on watch page') --- #}
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      "name": "{{ video.name }} Full Movie",
-      "description": "Watch {{ video.name }} on MaxCinema. {{ video.description[:150] | replace('"', '') }}...",
-      "thumbnailUrl": [
-        "{{ video.image }}"
-      ],
-      "uploadDate": "{{ video.date_added.strftime('%Y-%m-%dT08:00:00+01:00') if video.date_added else '2026-01-01' }}",
-      "contentUrl": "{{ request.url }}",
-      "embedUrl": "{{ video.trailer_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/') if video.trailer_url else '' }}",
-      "interactionStatistic": {
-        "@type": "InteractionCounter",
-        "interactionType": { "@type": "WatchAction" },
-        "userInteractionCount": {{ video.num_votes * 10 if video.num_votes else 0 }}
-      }
-    }
-    </script>
+    {# SEO tags and JSON-LD are generated from the database in app/seo.py. #}
 {% endblock %}
 
 {% block content %}
@@ -574,7 +530,7 @@
                     </div>
 
                     <div class="p-2 border-t border-gray-50">
-                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
+                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending') }}{% endif %}"
                         class="flex items-center justify-center gap-2 text-[11px] font-extrabold text-[#830506] hover:underline uppercase py-1">
                             View All {{ cat.title }} <i class="fa-solid fa-circle-arrow-right"></i>
                         </a>

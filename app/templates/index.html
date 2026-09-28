@@ -16,7 +16,11 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="sr-only">MaxCinema - Download Latest Nollywood, Hollywood & Anime Movies</h1>
+<header class="mx-auto mt-20 mb-5 max-w-[1600px] px-4 lg:px-8 text-center">
+    <p class="text-[10px] font-black uppercase tracking-[0.25em] text-[#830506]">MaxCinema</p>
+    <h1 class="mt-1 text-2xl font-black tracking-tight text-gray-900 md:text-4xl">Latest Movies, TV Series &amp; Anime</h1>
+    <p class="mx-auto mt-2 max-w-2xl text-sm text-gray-600">Discover recently added movies, series, anime, and trailers in one place.</p>
+</header>
 
 <section id="recentlyViewedSection" class="hidden mx-auto my-6 px-2 lg:px-4 max-w-[1600px]">
     <div class="w-full bg-black flex items-center justify-between px-4 py-2 rounded-t-2xl">
@@ -405,7 +409,7 @@
                     </div>
 
                     <div class="p-2 bg-gray-50 border-t border-gray-100 text-center">
-                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
+                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending') }}{% endif %}"
                         class="text-[10px] font-black text-[#830506] hover:underline uppercase tracking-widest">
                             View All <i class="fa-solid fa-arrow-right ml-1"></i>
                         </a>

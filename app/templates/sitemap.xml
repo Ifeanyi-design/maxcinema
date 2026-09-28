@@ -12,7 +12,7 @@
   {% for movie in movies %}
   <url>
     <loc>{{ host }}{{ url_for('main.movie_details', det='movie', name=movie.slug, id=movie.id, _external=False) }}</loc>
-    <lastmod>{{ movie.date_added.strftime('%Y-%m-%d') if movie.date_added else '2025-01-01' }}</lastmod>
+    <lastmod>{{ (movie.updated_at or movie.date_added).strftime('%Y-%m-%d') if (movie.updated_at or movie.date_added) else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -21,9 +21,19 @@
   {% for item in series_list %}
   <url>
     <loc>{{ host }}{{ url_for('main.series_details', det='series', name=item.slug, id=item.id, season=1, episode=1, _external=False) }}</loc>
-    <lastmod>{{ item.date_added.strftime('%Y-%m-%d') if item.date_added else '2025-01-01' }}</lastmod>
+    <lastmod>{{ (item.updated_at or item.date_added).strftime('%Y-%m-%d') if (item.updated_at or item.date_added) else '2025-01-01' }}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  {% endfor %}
+
+  {% for episode in episodes %}
+  {% set series_video = episode.season.series.all_video %}
+  <url>
+    <loc>{{ host }}{{ url_for('main.series_details', det='series', name=series_video.slug, id=series_video.id, season=episode.season.season_number, episode=episode.episode_number, _external=False) }}</loc>
+    <lastmod>{{ (episode.updated_at or episode.date_added).strftime('%Y-%m-%d') if (episode.updated_at or episode.date_added) else '2025-01-01' }}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
   {% endfor %}
 

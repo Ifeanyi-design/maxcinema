@@ -48,7 +48,7 @@
                     </div>
 
                     <div class="p-2 bg-gray-50 border-t border-gray-100 text-center">
-                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending', type=cat.type) }}{% endif %}" 
+                        <a href="{% if cat.type == 'trailer' %}{{ url_for('main.trailer') }}{% else %}{{ url_for('main.trending') }}{% endif %}"
                         class="text-[10px] font-black text-[#830506] hover:underline uppercase tracking-widest">
                             View All <i class="fa-solid fa-arrow-right ml-1"></i>
                         </a>

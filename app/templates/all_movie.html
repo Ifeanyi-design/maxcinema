@@ -6,9 +6,9 @@
     <section id="MoviesSection" class="flex flex-col lg:w-3/4 mx-auto w-full">
         
         <div class="mx-2 md:mx-0 bg-[#830506] flex items-center justify-between px-4 py-4 rounded-t-lg shadow-md relative overflow-hidden">
-            <h2 class="font-black text-white text-lg md:text-2xl flex items-center gap-2 italic uppercase tracking-tighter z-10">
+            <h1 class="font-black text-white text-lg md:text-2xl flex items-center gap-2 italic uppercase tracking-tighter z-10">
                 <i class="fa-solid fa-film text-yellow-400"></i> Movies
-            </h2>
+            </h1>
             <button id="mobileFilterBtn" class="md:hidden bg-white/20 text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/20">
                 <span>Genres</span> <i id="filterArrow" class="fa-solid fa-chevron-down transition-transform"></i>
             </button>
@@ -64,7 +64,7 @@
                     </div>
 
                     <div class="relative w-full aspect-[2/3] bg-gray-100">
-                        <img src="{{ movie.image }}" alt="{{ movie.name }}" class="w-full h-full object-cover">
+                        <img src="{{ movie.image }}" alt="{{ movie.name }}" class="w-full h-full object-cover" loading="lazy" decoding="async">
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
                             <i class="fa-solid fa-circle-play text-white text-4xl drop-shadow-lg"></i>
                         </div>
