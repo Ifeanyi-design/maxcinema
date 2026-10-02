@@ -68,6 +68,10 @@ class AllVideo(db.Model):
     thumb_720p = db.Column(db.String, nullable=True)
     thumb_1080p = db.Column(db.String, nullable=True)
 
+    # TMDB id of the source record (movie or series). Lets a re-import find the
+    # right row even after the title has been edited by hand.
+    tmdb_id = db.Column(db.Integer, nullable=True, index=True)
+
     storage_server_id = db.Column(db.Integer, db.ForeignKey('storage_servers.id'), nullable=True)
     storage_server = db.relationship("StorageServer", back_populates="videos")
 

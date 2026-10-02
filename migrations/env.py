@@ -97,10 +97,17 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        # "public" is a PostgreSQL schema. Hardcoding it made `flask db upgrade`
+        # fail on SQLite with "unknown database public", so local databases could
+        # never be migrated. Only pin the schema on PostgreSQL.
+        schema_kwargs = {}
+        if connection.dialect.name == "postgresql":
+            schema_kwargs["version_table_schema"] = "public"
+
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
-            version_table_schema="public",
+            **schema_kwargs,
             **conf_args
         )
 

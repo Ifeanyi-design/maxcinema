@@ -62,6 +62,34 @@ def normalize_bulk_links(links_text: str) -> list:
     return [_normalize_bulk_link(line) for line in lines]
 
 
+def _extract_tmdb_id(text: str) -> tuple:
+    """Pull a TMDB id (and media type, when detectable) out of whatever was pasted.
+
+    Admins copy the whole URL as often as the bare number, so accept both:
+      60735
+      https://www.themoviedb.org/tv/60735-the-flash
+      https://www.themoviedb.org/movie/550-fight-club
+    Returns (id_string_or_None, media_type_or_None).
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return None, None
+
+    if raw.isdigit():
+        return raw, None
+
+    match = re.search(r"themoviedb\.org/(tv|movie)/(\d+)", raw)
+    if match:
+        return match.group(2), "series" if match.group(1) == "tv" else "movie"
+
+    # Last resort: the first standalone number in the string.
+    match = re.search(r"(?<!\d)(\d{1,9})(?!\d)", raw)
+    if match:
+        return match.group(1), None
+
+    return None, None
+
+
 @admin_bp.route('/import-tmdb', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -69,13 +97,30 @@ def import_tmdb():
     if request.method == 'POST':
         try:
             importer = ContentImporter()
-            tmdb_id = request.form.get('tmdb_id', '').strip()
+            tmdb_id_raw = request.form.get('tmdb_id', '').strip()
             media_type = request.form.get('type', 'movie').strip()
             season_input = request.form.get('seasons', '').strip() or None
             episode_input = request.form.get('episodes', '').strip() or None
 
-            if not tmdb_id:
+            if not tmdb_id_raw:
                 flash("Please enter a TMDB ID.", "error")
+                return redirect(url_for('admin.import_tmdb'))
+
+            tmdb_id, detected_type = _extract_tmdb_id(tmdb_id_raw)
+            if not tmdb_id:
+                flash(
+                    f"Could not find a TMDB ID in {tmdb_id_raw!r}. "
+                    "Paste the number (e.g. 66732) or the full themoviedb.org link.",
+                    "error",
+                )
+                return redirect(url_for('admin.import_tmdb'))
+
+            if detected_type and detected_type != media_type:
+                flash(
+                    f"That link points at a {detected_type}, but the "
+                    f"{media_type} form was submitted. Use the matching form.",
+                    "error",
+                )
                 return redirect(url_for('admin.import_tmdb'))
 
             if media_type == 'movie':
@@ -83,8 +128,15 @@ def import_tmdb():
             else:
                 result = importer.import_series(int(tmdb_id), season_input, episode_input)
 
-            flash(result, "success" if "Error" not in result else "error")
+            status = getattr(result, "status", None)
+            if status in ("success", "warning", "error"):
+                flash(str(result), status)
+            else:
+                # Fallback for any older return value that is still a plain string.
+                text = str(result)
+                flash(text, "error" if text.startswith("Error") else "success")
         except Exception as e:
+            db.session.rollback()
             flash(f"Import failed: {str(e)}", "error")
 
         return redirect(url_for('admin.import_tmdb'))

@@ -1,272 +1,286 @@
-    <div class="flex h-screen overflow-hidden z-50">
+{#
+    Admin sidebar.
 
-        <!-- 
-            MOBILE BACKDROP 
-            Clicking this closes the sidebar.
-        -->
-        <div id="backdrop" class="fixed inset-0 z-40 bg-black/50 opacity-0 invisible backdrop-transition md:hidden" aria-hidden="true"></div>
+    Included by page templates inside their own flex shell, so the outer wrapper
+    here is load-bearing: it contributes the <aside> plus the mobile header.
+    The ids (#sidebar, #backdrop, #openSidebar, #closeSidebar) are wired up by
+    the script in admin/base.html — do not rename them.
+#}
+<div class="flex h-screen overflow-hidden z-50">
 
-        <!-- 
-            SIDEBAR COMPONENT
-            Responsive Wrapper Classes:
-            1. 'fixed inset-y-0 z-50': Makes it an overlay on mobile.
-            2. '-translate-x-full': Hides it by default on mobile.
-            3. 'md:static md:translate-x-0': Shows it normally on desktop.
-        -->
-        <aside id="sidebar" class="
-            fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-gray-300 
-            transform -translate-x-full transition-transform duration-300 ease-in-out
-            md:translate-x-0 md:static md:inset-auto md:flex md:flex-col md:h-full
-            shadow-2xl md:shadow-none flex flex-col h-full
-        ">
-            <!-- PADDING WRAPPER -->
-            <div class="p-6 flex flex-col h-full w-full">
-                
-                <!-- HEADER AREA -->
-                <!-- Modified to include Mobile Close Button -->
-                <div class="mb-8">
-                    <div class="flex items-center justify-between">
-                        <h1 class="text-2xl font-bold text-white">Admin Panel</h1>
+    <!-- MOBILE BACKDROP — click to close -->
+    <div id="backdrop" class="fixed inset-0 z-40 bg-black/60 opacity-0 invisible backdrop-transition md:hidden" aria-hidden="true"></div>
 
-                        
-                        <!-- Close X Button (Mobile Only) -->
-                        <button id="closeSidebar" class="md:hidden text-gray-400 hover:text-white focus:outline-none">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <form action="{{ url_for('admin.search') }}" method="GET" class="mb-4">
-                        <input
-                            type="text"
-                            name="q"
-                            value="{{ request.args.get('q','') }}"
-                            placeholder="Search movies, series, trailers, users..."
-                            class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                        />
-                    </form>
+    <!--
+        SIDEBAR
+        fixed + -translate-x-full hides it off-canvas on mobile;
+        md:static + md:translate-x-0 pins it beside the content on desktop.
+    -->
+    <aside id="sidebar" class="
+        fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col
+        -translate-x-full transform border-r border-gray-800 bg-gray-900 text-gray-300
+        shadow-2xl transition-transform duration-300 ease-in-out
+        md:static md:inset-auto md:h-full md:translate-x-0 md:shadow-none
+    ">
+        <div class="flex h-full w-full flex-col p-4">
+
+            <!-- BRAND + mobile close -->
+            <div class="mb-4 flex items-center justify-between">
+                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2.5">
+                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-amber-500 text-sm font-black text-gray-950">M</span>
+                    <span class="text-base font-bold tracking-tight text-white">MaxCinema</span>
+                </a>
+                <button id="closeSidebar" class="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white focus:outline-none md:hidden" aria-label="Close navigation">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- SEARCH -->
+            <form action="{{ url_for('admin.search') }}" method="GET" class="mb-1">
+                <div class="relative">
+                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/>
+                    </svg>
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ request.args.get('q','') }}"
+                        placeholder="Search admin..."
+                        class="admin-input pl-9"
+                    />
                 </div>
-            
-                <!-- YOUR NAVIGATION LINKS (Jinja Included) -->
-                <nav class="flex flex-col gap-2 text-gray-300 flex-1 overflow-y-auto no-scrollbar">
+            </form>
 
-                    <!-- Dashboard -->
-                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition {% if request.endpoint == 'admin.dashboard' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
-                        </svg>
-                        Dashboard
-                    </a>
+            <!-- NAVIGATION -->
+            <nav class="admin-nav">
 
-                    <!-- Movies Collapsible -->
-                    <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_movies','admin.add_movie'] else 'false' }} }" class="flex flex-col mt-1">
-                        <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
-                                </svg>
-                                Movies <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_movies }}</span>
-                            </span>
-                            <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link {% if request.endpoint == 'admin.dashboard' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <p class="admin-nav-group-label">Catalog</p>
+
+                <!-- MOVIES -->
+                <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_movies','admin.add_movie'] else 'false' }} }" class="flex flex-col">
+                    <button @click="open = !open" class="admin-nav-link w-full justify-between">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
                             </svg>
-                        </button>
-                        <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1" x-cloak>
-                            <a href="{% if movie %} {{ url_for('admin.add_movie', prev='movie') }} {% elif series%} {{ url_for('admin.add_movie', prev='series') }} {%else%} {{url_for('admin.add_movie', prev='dashboard')}} {% endif %}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.add_movie' %}text-yellow-400 font-semibold{% endif %}">Add Movie</a>
-                            <a href="{{ url_for('admin.view_movies') }}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.view_movies' %}text-yellow-400 font-semibold{% endif %}">View Movies</a>
-                        </div>
+                            Movies
+                            <span class="admin-badge admin-badge-neutral">{{ total_movies }}</span>
+                        </span>
+                        <svg :class="{'rotate-90': open}" class="h-3.5 w-3.5 shrink-0 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak class="mt-0.5 flex flex-col gap-0.5 pl-7">
+                        <a href="{% if movie %} {{ url_for('admin.add_movie', prev='movie') }} {% elif series %} {{ url_for('admin.add_movie', prev='series') }} {% else %} {{ url_for('admin.add_movie', prev='dashboard') }} {% endif %}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.add_movie' %}admin-nav-sublink-active{% endif %}">Add Movie</a>
+                        <a href="{{ url_for('admin.view_movies') }}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.view_movies' %}admin-nav-sublink-active{% endif %}">View Movies</a>
                     </div>
+                </div>
 
-                    <!-- Series Collapsible -->
-                    <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_series','admin.add_series'] else 'false' }} }" class="flex flex-col mt-1">
-                        <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-yellow-400 transition">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                Series <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_series }}</span>
-                            </span>
-                            <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                <!-- SERIES -->
+                <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_series','admin.add_series'] else 'false' }} }" class="flex flex-col">
+                    <button @click="open = !open" class="admin-nav-link w-full justify-between">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                             </svg>
-                        </button>
-                        <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1" x-cloak>
-                            <a href="{% if movie %} {{ url_for('admin.add_series', prev='movie') }} {% elif series%} {{ url_for('admin.add_series', prev='series') }} {%else%} {{url_for('admin.add_series', prev='dashboard')}} {% endif %}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.add_series' %}text-yellow-400 font-semibold{% endif %}">Add Series</a>
-                            <a href="{{ url_for('admin.view_series') }}" class="hover:text-yellow-400 transition text-sm {% if request.endpoint == 'admin.view_series' %}text-yellow-400 font-semibold{% endif %}">View Series</a>
-                        </div>
+                            Series
+                            <span class="admin-badge admin-badge-neutral">{{ total_series }}</span>
+                        </span>
+                        <svg :class="{'rotate-90': open}" class="h-3.5 w-3.5 shrink-0 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                    <div x-show="open" x-cloak class="mt-0.5 flex flex-col gap-0.5 pl-7">
+                        <a href="{% if movie %} {{ url_for('admin.add_series', prev='movie') }} {% elif series %} {{ url_for('admin.add_series', prev='series') }} {% else %} {{ url_for('admin.add_series', prev='dashboard') }} {% endif %}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.add_series' %}admin-nav-sublink-active{% endif %}">Add Series</a>
+                        <a href="{{ url_for('admin.view_series') }}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.view_series' %}admin-nav-sublink-active{% endif %}">View Series</a>
                     </div>
+                </div>
 
-                    <a href="{{ url_for('admin.import_tmdb') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.import_tmdb' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                        </svg>
-                        Import Content
-                    </a>
+                <a href="{{ url_for('admin.import_tmdb') }}" class="admin-nav-link {% if request.endpoint == 'admin.import_tmdb' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Import Content
+                </a>
 
-                    <!-- Trailers -->
-                    <a href="{{ url_for('admin.view_trailers') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_trailers','admin.add_trailer'] %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276a2 2 0 0 1 2.447 1.788v6.976a2 2 0 0 1-2.447 1.788L15 14M4 6h6v12H4z"/>
-                        </svg>
-                        Trailers <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_trailers }}</span>
-                    </a>
+                <a href="{{ url_for('admin.view_trailers') }}" class="admin-nav-link {% if request.endpoint in ['admin.view_trailers','admin.add_trailer'] %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276a2 2 0 0 1 2.447 1.788v6.976a2 2 0 0 1-2.447 1.788L15 14M4 6h6v12H4z"/>
+                    </svg>
+                    Trailers
+                    <span class="admin-badge admin-badge-neutral ml-auto">{{ total_trailers }}</span>
+                </a>
 
-                    <!-- Social Videos -->
-                    <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_social_videos','admin.add_social_video'] else 'false' }} }" class="flex flex-col mt-1">
-                        <button @click="open = !open" class="flex items-center justify-between px-2 py-1 rounded hover:text-pink-400 transition">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                Social Videos
-                            </span>
-                            <svg :class="{'rotate-90': open}" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
-                        </button>
-                        <div x-show="open" class="flex flex-col pl-8 mt-1 gap-1" x-cloak>
-                            <a href="{{ url_for('admin.add_social_video') }}" class="hover:text-pink-400 transition text-sm {% if request.endpoint == 'admin.add_social_video' %}text-pink-400 font-semibold{% endif %}">Add Social Video</a>
-                            <a href="{{ url_for('admin.view_social_videos') }}" class="hover:text-pink-400 transition text-sm {% if request.endpoint == 'admin.view_social_videos' %}text-pink-400 font-semibold{% endif %}">View Social Videos</a>
-                        </div>
-                    </div>
-
-                    <a href="{{ url_for('admin.view_requests') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.view_requests' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        Requests 
-                        {% if total_requests and total_requests > 0 %}
-                            <span class="bg-red-600 text-white text-xs px-2 rounded-full animate-pulse">{{ total_requests }}</span>
-                        {% endif %}
-                    </a>
-
-                    <a href="{{ url_for('admin.view_incomplete_series') }}"
-                    class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2
-                    {% if request.endpoint == 'admin.view_incomplete_series' %}text-yellow-400 font-semibold{% endif %}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 8h10M7 12h10M7 16h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                <a href="{{ url_for('admin.view_incomplete_series') }}" class="admin-nav-link {% if request.endpoint == 'admin.view_incomplete_series' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h10M7 16h10M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
                     </svg>
                     Incomplete Series
                     {% if incomplete_series_count > 0 %}
-                        <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ incomplete_series_count }}</span>
+                        <span class="admin-badge admin-badge-neutral ml-auto">{{ incomplete_series_count }}</span>
                     {% endif %}
-                    </a>
+                </a>
 
+                <p class="admin-nav-group-label">Audience</p>
 
+                <a href="{{ url_for('admin.view_requests') }}" class="admin-nav-link {% if request.endpoint == 'admin.view_requests' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    Requests
+                    {% if total_requests and total_requests > 0 %}
+                        <span class="admin-badge admin-badge-danger ml-auto">{{ total_requests }}</span>
+                    {% endif %}
+                </a>
 
-                    <!-- Users -->
-                    <a href="{{ url_for('admin.view_users') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_users','admin.add_user'] %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8 8 0 1 1 17.804 5.121 8 8 0 0 1 5.121 17.804z"/>
+                <a href="{{ url_for('admin.watchlist_notify_page') }}" class="admin-nav-link {% if request.endpoint == 'admin.watchlist_notify_page' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h11z"/>
+                    </svg>
+                    Notify List
+                </a>
+
+                <a href="{{ url_for('admin.notification_settings') }}" class="admin-nav-link {% if request.endpoint == 'admin.notification_settings' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4m8 0a4 4 0 00-4-4m0 0V4m0 4v4m0 0v4m0-4h4m-4 0H8"/>
+                    </svg>
+                    Notification Settings
+                </a>
+
+                <a href="{{ url_for('admin.email_compose') }}" class="admin-nav-link {% if request.endpoint == 'admin.email_compose' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                    Email Center
+                </a>
+
+                <a href="{{ url_for('admin.manage_polls') }}" class="admin-nav-link {% if request.endpoint == 'admin.manage_polls' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.163-3.488A7.936 7.936 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    Weekly Polls
+                </a>
+
+                <a href="{{ url_for('admin.leads_dashboard') }}" class="admin-nav-link {% if request.endpoint in ['admin.leads_dashboard', 'admin.export_leads'] %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Course Leads
+                    <span class="admin-badge admin-badge-accent ml-auto">New</span>
+                </a>
+
+                <p class="admin-nav-group-label">System</p>
+
+                <div x-data="{ open: {{ 'true' if request.endpoint in ['admin.view_social_videos','admin.add_social_video'] else 'false' }} }" class="flex flex-col">
+                    <button @click="open = !open" class="admin-nav-link w-full justify-between">
+                        <span class="flex items-center gap-2.5">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Social Videos
+                        </span>
+                        <svg :class="{'rotate-90': open}" class="h-3.5 w-3.5 shrink-0 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                         </svg>
-                        Users <span class="bg-yellow-500 text-black text-xs px-2 rounded">{{ total_users }}</span>
-                    </a>
-
-                    <!-- Storage -->
-                    <a href="{{ url_for('admin.view_storage') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint in ['admin.view_storage','admin.add_storage_server'] %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/>
-                        </svg>
-                        Storage
-                    </a>
-
-                    <a href="{{ url_for('admin.view_incomplete_content') }}" 
-                    class="flex items-center gap-2 px-2 py-1 rounded hover:text-red-400 transition mt-4 
-                    {% if request.endpoint == 'admin.view_incomplete_content' %}text-red-500 font-bold{% else %}text-gray-400{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        Broken Content
-                    </a>
-
-                    <a href="{{ url_for('admin.stats_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        Analytics
-                    </a>
-
-                    <a href="{{ url_for('admin.manage_polls') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.manage_polls' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.163-3.488A7.936 7.936 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        Weekly Polls
-                    </a>
-
-                    <a href="{{ url_for('admin.watchlist_notify_page') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.watchlist_notify_page' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h11z"/>
-                        </svg>
-                        Notify List
-                    </a>
-                    <a href="{{ url_for('admin.notification_settings') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.notification_settings' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4m8 0a4 4 0 00-4-4m0 0V4m0 4v4m0 0v4m0-4h4m-4 0H8"/>
-                        </svg>
-                        Notification Settings
-                    </a>
-
-                    <a href="{{ url_for('admin.email_compose') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.email_compose' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        Email Center
-                    </a>
-
-                    <a href="{{ url_for('admin.backup_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-yellow-400 transition mt-2 {% if request.endpoint == 'admin.backup_dashboard' %}text-yellow-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
-                        </svg>
-                        Backup System
-                    </a>
-
-                    <!-- Campaign Leads -->
-                    <a href="{{ url_for('admin.leads_dashboard') }}" class="flex items-center gap-2 px-2 py-1 rounded hover:text-blue-400 transition mt-2 {% if request.endpoint in ['admin.leads_dashboard', 'admin.export_leads'] %}text-blue-400 font-semibold{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Course Leads
-                        <span class="bg-blue-600 text-white text-xs px-2 rounded-full">New</span>
-                    </a>
-                </nav>
-            
-                <!-- User Info / Logout -->
-                <div class="mt-auto pt-6 border-t border-gray-700">
-                    <p class="text-sm">Logged in as: {{ current_user.username }}</p>
-                    <a href="{{ url_for('admin.logout') }}" class="text-red-500 hover:text-red-400 text-sm mt-2 block">Logout</a>
+                    </button>
+                    <div x-show="open" x-cloak class="mt-0.5 flex flex-col gap-0.5 pl-7">
+                        <a href="{{ url_for('admin.add_social_video') }}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.add_social_video' %}admin-nav-sublink-active{% endif %}">Add Social Video</a>
+                        <a href="{{ url_for('admin.view_social_videos') }}"
+                           class="admin-nav-sublink {% if request.endpoint == 'admin.view_social_videos' %}admin-nav-sublink-active{% endif %}">View Social Videos</a>
+                    </div>
                 </div>
+
+                <a href="{{ url_for('admin.view_users') }}" class="admin-nav-link {% if request.endpoint in ['admin.view_users','admin.add_user'] %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A8 8 0 1 1 17.804 5.121 8 8 0 0 1 5.121 17.804z"/>
+                    </svg>
+                    Users
+                    <span class="admin-badge admin-badge-neutral ml-auto">{{ total_users }}</span>
+                </a>
+
+                <a href="{{ url_for('admin.view_storage') }}" class="admin-nav-link {% if request.endpoint in ['admin.view_storage','admin.add_storage_server'] %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
+                    </svg>
+                    Storage
+                </a>
+
+                <a href="{{ url_for('admin.stats_dashboard') }}" class="admin-nav-link {% if request.endpoint == 'admin.stats_dashboard' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Analytics
+                </a>
+
+                <a href="{{ url_for('admin.backup_dashboard') }}" class="admin-nav-link {% if request.endpoint == 'admin.backup_dashboard' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+                    </svg>
+                    Backup System
+                </a>
+
+                <a href="{{ url_for('admin.view_incomplete_content') }}" class="admin-nav-link {% if request.endpoint == 'admin.view_incomplete_content' %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Broken Content
+                </a>
+
+            </nav>
+
+            <!-- USER / LOGOUT -->
+            <div class="mt-4 border-t border-gray-800 pt-3">
+                <p class="truncate px-1 text-xs text-gray-500">
+                    Signed in as <span class="font-semibold text-gray-300">{{ current_user.username }}</span>
+                </p>
+                <a href="{{ url_for('admin.logout') }}" class="mt-1 inline-flex items-center gap-2 rounded-lg px-1 py-1 text-xs font-semibold text-red-400 transition-colors hover:text-red-300">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    Log out
+                </a>
             </div>
-        </aside>
-
-        <!-- MAIN CONTENT WRAPPER -->
-        <div class="flex flex-col flex-1 w-0 overflow-hidden">
-            
-            <!-- MOBILE HEADER (Visible only on mobile/tablet - lg:hidden) -->
-            <!-- Added z-10 to ensure it stays on top of content -->
-            <header class="absolute top-0 left-0 w-full flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200 md:hidden flex-shrink-0 z-10">
-                <button id="openSidebar" class="text-gray-500 hover:text-gray-700 focus:outline-none p-2">
-                    <!-- Hamburger Icon -->
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-                <div class="flex items-center w-screen {% if user or server or requests %} justify-center {% else %} justify-between {% endif %}">
-                    <h1 class="text-xl font-bold text-gray-700 text-center"> {% if trailers %}Trailers{% elif movies %}Movies{% elif series_list %}Series{% elif user %} Users {% elif server %} Storage {% elif requests %} Requests {% endif %}</h1>
-                    {% if trailers %}
-                    <a href="{{ url_for('admin.add_trailer', prev='trailer') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-md">Add Trailer</a>
-                    {% elif movies %}
-                    <a href="{{ url_for('admin.add_movie', prev='movie') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-md">Add Movie</a>
-                    {% elif series_list %}
-                    <a href="{{ url_for('admin.add_series', prev='series') }}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-md">Add Series</a>
-                    {% endif %}
-                </div>
-                <div class="w-8"></div> <!-- Spacer for centering -->
-            </header>
-
-            <!-- MAIN SCREEN CONTENT -->
-            
         </div>
+    </aside>
+
+    <!-- MOBILE HEADER -->
+    <div class="flex flex-col flex-1 w-0 overflow-hidden">
+        <header class="absolute top-0 left-0 z-10 flex h-14 w-full items-center justify-between gap-3 border-b border-gray-800 bg-gray-900 px-4 md:hidden">
+            <button id="openSidebar" class="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white focus:outline-none" aria-label="Open navigation">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <h1 class="truncate text-sm font-bold text-gray-200">
+                {% if trailers %}Trailers{% elif movies %}Movies{% elif series_list %}Series{% elif user %}Users{% elif server %}Storage{% elif requests %}Requests{% endif %}
+            </h1>
+            {% if trailers %}
+                <a href="{{ url_for('admin.add_trailer', prev='trailer') }}" class="admin-btn admin-btn-sm admin-btn-primary">Add Trailer</a>
+            {% elif movies %}
+                <a href="{{ url_for('admin.add_movie', prev='movie') }}" class="admin-btn admin-btn-sm admin-btn-primary">Add Movie</a>
+            {% elif series_list %}
+                <a href="{{ url_for('admin.add_series', prev='series') }}" class="admin-btn admin-btn-sm admin-btn-primary">Add Series</a>
+            {% else %}
+                <span class="w-9"></span>
+            {% endif %}
+        </header>
     </div>
+</div>
 
 <!-- AlpineJS CDN for collapsibles -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

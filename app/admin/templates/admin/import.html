@@ -1,67 +1,123 @@
 {% extends 'admin/base.html' %}
 
 {% block content %}
-<script src="https://cdn.tailwindcss.com"></script>
+<div class="mx-auto max-w-4xl">
 
-<button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px] ml-2 flex items-center" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
-    <svg class="w-5 h-5 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
-    </svg>
-    Dashboard
-</button>
-
-<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md mt-6">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800">🎬 Auto-Import from TMDB</h2>
-
-    <div class="mb-8 border-b border-gray-200 pb-8">
-        <h3 class="text-lg font-semibold mb-2 text-blue-600">Import Movie</h3>
-        <form method="POST" class="flex flex-col md:flex-row gap-4">
-
-            <input type="hidden" name="type" value="movie">
-            <input type="text" name="tmdb_id" placeholder="TMDB ID (e.g. 550)" 
-                   class="border border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 text-blue-600 focus:ring-blue-500" required>
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition">
-                Fetch Movie
-            </button>
-        </form>
+    <div class="admin-page-header">
+        <div>
+            <h1 class="admin-page-title">Auto-Import from TMDB</h1>
+            <p class="admin-page-subtitle">
+                Both forms <strong class="font-semibold text-gray-300">write to the database immediately</strong> — there is no preview step.
+                Re-importing the same title is safe: new episodes are added, existing ones are refreshed,
+                and your download links are never touched.
+            </p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-btn admin-btn-neutral">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4H9v4a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9z"/>
+            </svg>
+            Dashboard
+        </a>
     </div>
 
-    <div>
-        <h3 class="text-lg font-semibold mb-2 text-green-600">Import Series</h3>
-        <form method="POST" class="flex flex-col gap-4 text-green-600 md:grid md:grid-cols-2 md:gap-6">
-            <input type="hidden" name="type" value="series">
+    <!-- MOVIE -->
+    <section class="admin-card mb-6">
+        <div class="admin-card-header">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-blue-400">Import Movie</h2>
+            <span class="text-xs text-gray-500">Saved as an inactive draft</span>
+        </div>
+        <div class="admin-card-body">
+            <form method="POST" class="flex flex-col gap-3 sm:flex-row">
+                <input type="hidden" name="type" value="movie">
+                <input type="text" name="tmdb_id" placeholder="TMDB ID or link (e.g. 550)"
+                       class="admin-input flex-1" required>
+                <button type="submit" class="admin-btn admin-btn-primary shrink-0">Import Movie</button>
+            </form>
+            <p class="admin-help">
+                Imported as an inactive draft — review it and set it live from the movie list when you are ready.
+            </p>
+        </div>
+    </section>
 
-            <div class="col-span-2">
-                <label class="block text-sm font-bold text-gray-700 mb-1">TMDB ID</label>
-                <input type="text" name="tmdb_id" placeholder="e.g. 66732 (Stranger Things)" 
-                       class="border border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-500" required>
-            </div>
+    <!-- SERIES -->
+    <section class="admin-card">
+        <div class="admin-card-header">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400">Import Series</h2>
+            <span class="text-xs text-gray-500">Seasons and episodes are matched by number</span>
+        </div>
+        <div class="admin-card-body">
+            <form method="POST" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <input type="hidden" name="type" value="series">
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Seasons (Optional)</label>
-                <input type="text" name="seasons" placeholder="e.g. 1, 2 or 5" 
-                       class="border border-gray-300 p-3 rounded w-full">
-                <small class="text-xs text-gray-500">Leave blank to import ALL seasons.</small>
-            </div>
+                <div class="md:col-span-2">
+                    <label for="series-tmdb-id" class="admin-label">TMDB ID</label>
+                    <input id="series-tmdb-id" type="text" name="tmdb_id"
+                           placeholder="e.g. 66732 or https://www.themoviedb.org/tv/66732"
+                           class="admin-input" required>
+                    <p class="admin-help">A bare ID or a pasted themoviedb.org link both work.</p>
+                </div>
 
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">Episode Range</label>
-                <input type="text" name="episodes" placeholder="e.g. 1-8 or All" 
-                       class="border border-gray-300 p-3 rounded w-full">
-                <small class="text-xs text-gray-500">Type "1-8" for Part 1, or leave blank for All.</small>
-            </div>
+                <div>
+                    <label for="series-seasons" class="admin-label">Seasons (optional)</label>
+                    <input id="series-seasons" type="text" name="seasons" placeholder="e.g. 3 or 1, 2" class="admin-input">
+                    <p class="admin-help">
+                        Leave blank to import <strong class="font-semibold">all</strong> seasons.
+                        <code class="rounded bg-gray-800 px-1 text-gray-300">3</code>,
+                        <code class="rounded bg-gray-800 px-1 text-gray-300">1, 2</code> and
+                        <code class="rounded bg-gray-800 px-1 text-gray-300">Season 3</code> are all accepted.
+                    </p>
+                </div>
 
-            <div class="col-span-2 mt-4">
-                <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded w-full font-bold hover:bg-green-700 transition shadow-lg">
-                    Fetch Series Data
-                </button>
-            </div>
-        </form>
-    </div>
+                <div>
+                    <label for="series-episodes" class="admin-label">Episode range (optional)</label>
+                    <input id="series-episodes" type="text" name="episodes" placeholder="e.g. 14-17" class="admin-input">
+                    <p class="admin-help">
+                        Applies to <strong class="font-semibold">every season selected above</strong>.
+                        Blank or <code class="rounded bg-gray-800 px-1 text-gray-300">All</code> means every episode.
+                        Anything unclear is rejected instead of guessed.
+                    </p>
+                </div>
 
-    <div class="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm text-gray-600">
-        <strong>💡 Tip:</strong> Get the ID from the URL at <a href="https://www.themoviedb.org/" target="_blank" class="text-blue-500 underline font-bold">TheMovieDB.org</a>. 
-        <br>Example: For <em>Stranger Things</em>, copy the number <strong>66732</strong>.
-    </div>
+                <div class="md:col-span-2">
+                    <button type="submit" class="admin-btn admin-btn-primary w-full">Import Series</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- BEHAVIOUR NOTES -->
+    <section class="admin-card mt-6">
+        <div class="admin-card-header">
+            <h2 class="admin-section-title">How it behaves</h2>
+        </div>
+        <div class="admin-card-body">
+            <ul class="space-y-2 text-sm text-gray-400">
+                <li class="flex gap-2.5">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-600"></span>
+                    Seasons and episodes are matched by number — running the same import twice will not create duplicates.
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-600"></span>
+                    Existing episodes get their title, runtime, air date and artwork refreshed; blank descriptions and thumbnails are filled in.
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-600"></span>
+                    Download links, storage servers, view counts and hand-written copy are never overwritten.
+                </li>
+                <li class="flex gap-2.5">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-600"></span>
+                    If nothing changed, the result is reported as a warning instead of a success — no more silent no-ops.
+                </li>
+            </ul>
+            <p class="mt-4 border-t border-gray-800 pt-4 text-sm text-gray-400">
+                Get the ID from
+                <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" class="font-semibold text-amber-400 underline decoration-amber-400/40 hover:text-amber-300">TheMovieDB.org</a>.
+                For <em>Stranger Things</em> the URL is
+                <code class="rounded bg-gray-800 px-1 text-gray-300">themoviedb.org/tv/66732</code>,
+                so the ID is <strong class="font-semibold text-gray-200">66732</strong>.
+            </p>
+        </div>
+    </section>
+
 </div>
 {% endblock %}
