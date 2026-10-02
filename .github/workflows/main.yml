@@ -13,28 +13,27 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      # Rebuild the stylesheet from the templates before deploying.
+      # Rebuild the ADMIN stylesheet only.
       #
-      # Tailwind only emits the classes it finds in the `content` globs, so
-      # editing a template without rebuilding silently drops that styling. That
-      # is exactly how app/static/css/style.css went stale: it was last built in
-      # August while the templates kept changing, leaving ~250 class usages with
-      # no CSS behind them.
+      # admin.css is built from app/admin/templates/**, so the admin can never
+      # drift from its markup. The public site's style.css is deliberately NOT
+      # rebuilt here — it stays exactly as committed, so nothing in this
+      # pipeline can change how the user-facing site looks.
       #
       # continue-on-error keeps a build hiccup from blocking a deploy — the
-      # committed style.css is still there as the fallback.
+      # committed admin.css is still there as the fallback.
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: Rebuild Tailwind CSS
+      - name: Rebuild admin stylesheet
         continue-on-error: true
         run: |
           npm ci --no-audit --no-fund
-          npx tailwindcss -i ./app/static/src/input.css -o ./app/static/css/style.css --minify
-          echo "style.css rebuilt: $(wc -c < app/static/css/style.css) bytes"
+          npm run tailwind:admin
+          echo "admin.css rebuilt: $(wc -c < app/static/css/admin.css) bytes"
 
       - name: Push to hub
         env:

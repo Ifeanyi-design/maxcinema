@@ -1,0 +1,174 @@
+/* ==========================================================================
+   ADMIN-ONLY STYLESHEET  ->  app/static/css/admin.css
+   --------------------------------------------------------------------------
+   Deliberately separate from app/static/css/style.css (the public site).
+
+   Why split them: both were previously built from one Tailwind pass, so the
+   admin and the public site shared a single stylesheet. That coupling is what
+   let style.css rot for months — it was last built in August while templates
+   kept changing, leaving ~250 class usages with no CSS behind them. Keeping the
+   admin build separate means changes here can never affect the public site, and
+   vice versa.
+
+   Loaded ONLY by app/admin/templates/admin/base.html, after style.css, so the
+   shared Tailwind preflight still comes from style.css.
+
+   Build:  npm run tailwind:admin
+   ========================================================================== */
+
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   ADMIN DESIGN SYSTEM
+   --------------------------------------------------------------------------
+   The admin pages used to style every element by hand, which is why they had
+   drifted apart (mixed accents, light-on-dark headers, ad-hoc spacing). These
+   are the shared building blocks. Page templates should prefer these classes
+   over one-off utility strings so a change here updates every page at once.
+
+   Palette: dark neutral surfaces + a single amber accent.
+   Red is reserved strictly for destructive actions.
+   ========================================================================== */
+
+/* Alpine's collapsible nav sections rely on x-cloak to stay hidden until
+   Alpine boots. Without this rule they flash open on every page load. */
+[x-cloak] {
+  display: none !important;
+}
+
+@layer components {
+  /* ---- layout ---------------------------------------------------------- */
+  .admin-shell {
+    @apply flex min-h-screen w-full bg-gray-950 text-gray-100;
+  }
+  .admin-main {
+    @apply flex-1 min-w-0 overflow-y-auto;
+  }
+  .admin-page {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 md:px-8 md:py-8;
+  }
+  .admin-page-header {
+    @apply mb-6 flex flex-wrap items-center justify-between gap-4;
+  }
+  .admin-page-title {
+    @apply text-2xl font-bold tracking-tight text-white md:text-3xl;
+  }
+  .admin-page-subtitle {
+    @apply mt-1 text-sm text-gray-400;
+  }
+
+  /* ---- surfaces -------------------------------------------------------- */
+  .admin-card {
+    @apply rounded-xl border border-gray-800 bg-gray-900;
+  }
+  .admin-card-body {
+    @apply p-4 md:p-5;
+  }
+  .admin-card-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-gray-800 px-4 py-3 md:px-5;
+  }
+  .admin-section-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-gray-400;
+  }
+  .admin-divider {
+    @apply my-5 border-t border-gray-800;
+  }
+
+  /* ---- buttons --------------------------------------------------------- */
+  .admin-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2
+           text-sm font-semibold transition-colors
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .admin-btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .admin-btn-primary {
+    @apply bg-amber-500 text-gray-950 hover:bg-amber-400;
+  }
+  .admin-btn-neutral {
+    @apply border border-gray-700 bg-gray-800 text-gray-100 hover:bg-gray-700;
+  }
+  .admin-btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-500;
+  }
+  .admin-btn-ghost {
+    @apply text-gray-300 hover:bg-gray-800 hover:text-white;
+  }
+
+  /* ---- forms ----------------------------------------------------------- */
+  .admin-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-400;
+  }
+  .admin-input {
+    @apply w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm
+           text-gray-100 placeholder-gray-500
+           focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500;
+  }
+  .admin-help {
+    @apply mt-1 text-xs text-gray-500;
+  }
+
+  /* ---- navigation ------------------------------------------------------ */
+  .admin-nav {
+    /* NB: `no-scrollbar` is declared outside @layer, so it cannot be @apply-ed
+       here. Add it directly on the element if you want the bar hidden. */
+    @apply flex flex-1 flex-col gap-0.5 overflow-y-auto;
+  }
+  .admin-nav-link {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-gray-400
+           transition-colors hover:bg-gray-800 hover:text-gray-100;
+  }
+  .admin-nav-link-active {
+    @apply bg-amber-500/10 font-semibold text-amber-400 hover:bg-amber-500/10 hover:text-amber-300;
+  }
+  .admin-nav-sublink {
+    @apply rounded-md px-3 py-1.5 text-sm text-gray-400 transition-colors
+           hover:bg-gray-800 hover:text-gray-100;
+  }
+  .admin-nav-sublink-active {
+    @apply font-semibold text-amber-400 hover:text-amber-300;
+  }
+  .admin-nav-group-label {
+    @apply mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500;
+  }
+
+  /* ---- data ------------------------------------------------------------ */
+  .admin-badge {
+    @apply inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold leading-4;
+  }
+  .admin-badge-neutral {
+    @apply bg-gray-700 text-gray-200;
+  }
+  .admin-badge-accent {
+    @apply bg-amber-500 text-gray-950;
+  }
+  .admin-badge-danger {
+    @apply bg-red-600 text-white;
+  }
+  .admin-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+  .admin-table thead th {
+    @apply border-b border-gray-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400;
+  }
+  .admin-table tbody td {
+    @apply border-b border-gray-800/70 px-3 py-2.5 text-gray-200;
+  }
+  .admin-table tbody tr:hover {
+    @apply bg-gray-800/40;
+  }
+
+  /* ---- stat tiles ------------------------------------------------------ */
+  .admin-stat {
+    @apply rounded-lg border border-gray-800 bg-gray-900/60 p-3;
+  }
+  .admin-stat-label {
+    @apply text-[10px] font-bold uppercase tracking-wider text-gray-500;
+  }
+  .admin-stat-value {
+    @apply mt-1 text-xl font-bold text-white;
+  }
+}
