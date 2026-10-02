@@ -1,6 +1,10 @@
 {% extends 'admin/base.html' %}
 
 {% block content %}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
+
 <div class="mx-auto max-w-4xl">
 
     <div class="admin-page-header">
@@ -119,5 +123,7 @@
         </div>
     </section>
 
+</div>
+    </div>
 </div>
 {% endblock %}

@@ -1,6 +1,10 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
+
     <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px] mb-4" onclick="window.location.href='{{ url_for('admin.view_users') }}'">
         Go back
     </button>
@@ -34,4 +38,6 @@
         </div>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">Submit</button>
     </form>
+    </div>
+</div>
 {% endblock %}

@@ -172,3 +172,70 @@
     @apply mt-1 text-xl font-bold text-white;
   }
 }
+
+/* ==========================================================================
+   BARE FORM CONTROLS
+   --------------------------------------------------------------------------
+   Most admin forms are rendered by WTForms, which emits plain <input>,
+   <select> and <textarea> with no classes. Without these rules they fall back
+   to the browser's light default styling, which looks broken on the dark
+   theme. Styling them here fixes every form page at once, with no template
+   changes.
+
+   Deliberately NOT inside a @layer: these are element selectors with no class
+   name for Tailwind to match, so they would be purged. Written as plain CSS
+   they are always emitted. Explicit Tailwind classes still win over them —
+   a class selector outranks an element selector regardless of order, so
+   `.admin-input` and friends keep working.
+
+   Checkboxes/radios/submits are excluded on purpose.
+   ========================================================================== */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="file"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="image"]),
+select,
+textarea {
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #374151; /* gray-700 */
+  background-color: #111827; /* gray-900 */
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #f3f4f6; /* gray-100 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* gray-500 */
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #f59e0b; /* amber-500 */
+  box-shadow: 0 0 0 1px #f59e0b;
+}
+
+/* Native dropdown lists ignore background-color on the control itself. */
+select option {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+/* Date pickers render a dark-on-dark icon otherwise. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #f59e0b;
+}
+
+/* Keep the browser's own error styling visible on invalid fields. */
+input:invalid:not(:placeholder-shown) {
+  border-color: #dc2626; /* red-600 */
+}

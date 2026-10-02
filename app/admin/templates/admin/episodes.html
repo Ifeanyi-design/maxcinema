@@ -1,17 +1,21 @@
 {% extends "admin/base.html" %}
 {% block content %}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
+
     <div class="flex flex-col items-center w-full">
         <div class="w-[100%] px-10 flex flex-row lg:gap-4 gap-2">
             {% if prev == "dashboard" %}
-                <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+                <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
                     Go back
                 </button>
             {% elif prev == "series" %}
-                <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev=prev, name=season.series.all_video.slug, id=season.series.all_video.id) }}'">
+                <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev=prev, name=season.series.all_video.slug, id=season.series.all_video.id) }}'">
                     Go back
                 </button>
             {% elif prev == "movie" %}
-                <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+                <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
                     Go back
                 </button>
             {% endif %}
@@ -59,4 +63,6 @@
             </h2>
         {% endfor %}
     </div>
+    </div>
+</div>
 {% endblock %}

@@ -1,24 +1,28 @@
 {% extends "admin/base.html" %}
 
 {% block content %}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
+
 <div class="max-w-5xl mx-auto py-2">
     {% if prev == "dashboard" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
             Go back
         </button>
     {% elif prev == "series" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_series') }}'">
             Go back
         </button>
     {% elif prev == "movie" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
             Go back
         </button>
     {% endif %}
 
-    <h1 class="text-3xl font-bold text-white mb-6 mt-6">Add New Movie / Series</h1>
+    <h1 class="admin-page-title mb-6 mt-6">Add New Movie / Series</h1>
 
-    <form method="POST" class="bg-gray-800 p-6 rounded-lg text-black shadow-lg space-y-6">
+    <form method="POST" class="admin-card admin-card-body space-y-6">
         {{ form.hidden_tag() }}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -170,5 +174,7 @@
             {{ form.submit(class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-2 rounded cursor-pointer") }}
         </div>
     </form>
+</div>
+    </div>
 </div>
 {% endblock %}

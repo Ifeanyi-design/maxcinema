@@ -1,8 +1,12 @@
 {%extends "admin/base.html"%}
 
 {%block content%}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
 
-    <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_trailers') }}'">
+
+    <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_trailers') }}'">
         Go back
     </button>
 
@@ -60,4 +64,6 @@
     </div>
 
 </form>
+    </div>
+</div>
 {%endblock%}

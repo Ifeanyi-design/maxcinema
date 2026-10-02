@@ -2,15 +2,15 @@
 
 {%block content%}
     {% if prev == "dashboard" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
             Go back
         </button>
     {% elif prev == "series" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_series') }}'">
             Go back
         </button>
     {% elif prev == "movie" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
             Go back
         </button>
     {% endif %}

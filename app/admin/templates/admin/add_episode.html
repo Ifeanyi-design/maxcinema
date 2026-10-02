@@ -1,31 +1,35 @@
 {%extends "admin/base.html"%}
 
 {%block content%}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <div class="flex-1 overflow-y-auto p-4 pt-[70px] md:p-8">
+
     {% if prev == "dashboard" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.dashboard') }}'">
             Go back
         </button>
     {% elif prev == "series" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev='series', name=season.series.all_video.slug, id=season.series.all_video.id) }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_series_specific', prev='series', name=season.series.all_video.slug, id=season.series.all_video.id) }}'">
             Go back
         </button>
     {% elif prev == "serie" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_episodes', prev='series', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id) }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_episodes', prev='series', name=season.series.all_video.slug, ns=season.season_number, season_id=season.id) }}'">
             Go back
         </button>
     {% elif prev == "movie" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_movies') }}'">
             Go back
         </button>
     {% elif prev == "incomplete" %}
-        <button class="bg-blue-800 text-white rounded-lg w-[150px] h-[50px]" onclick="window.location.href='{{ url_for('admin.view_incomplete_content') }}'">
+        <button class="admin-btn admin-btn-neutral" onclick="window.location.href='{{ url_for('admin.view_incomplete_content') }}'">
             Go back
         </button>
     {% endif %}
 
     <form method="POST" class="space-y-8 text-black">
         {{ form.hidden_tag() }}
-        <h1 class="text-2xl text-white font-bold">{{ action }} New Episode for Season <b class="text-blue-800">{{season.season_number}}</b> for "{{ season.series.all_video.name }}"</h1>
+        <h1 class="admin-page-title">{{ action }} New Episode for Season <b class="text-blue-800">{{season.season_number}}</b> for "{{ season.series.all_video.name }}"</h1>
         
         <div class="border border-gray-200 rounded-xl p-6 bg-white shadow-sm">
             <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
@@ -116,4 +120,6 @@
         </div>
 
     </form>
+    </div>
+</div>
 {%endblock%}
