@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from html import unescape
+from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import urljoin
 
@@ -17,6 +18,9 @@ from slugify import slugify
 
 
 DEFAULT_SOCIAL_IMAGE = "https://i.imgur.com/Ch4SMwG.png"
+DEFAULT_BRAND_LOGO = "https://i.imgur.com/slhBAEp.png"
+LOCAL_SOCIAL_IMAGE = "images/maxcinema-social.png"
+LOCAL_BRAND_LOGO = "images/maxcinema-logo.png"
 
 
 def _site_url() -> str:
@@ -31,6 +35,24 @@ def absolute_url(value: str | None, fallback: str | None = None) -> str:
     if value.startswith(("http://", "https://")):
         return value
     return urljoin(f"{_site_url()}/", value.lstrip("/"))
+
+
+def preferred_static_image(filename: str, fallback: str) -> str:
+    """Prefer a committed brand asset, while keeping the current CDN fallback."""
+    static_folder = current_app.static_folder
+    if static_folder and (Path(static_folder) / filename).is_file():
+        return absolute_url(url_for("static", filename=filename))
+    return fallback
+
+
+def default_social_image() -> str:
+    """Return the local social image when deployed, otherwise the existing CDN URL."""
+    return preferred_static_image(LOCAL_SOCIAL_IMAGE, DEFAULT_SOCIAL_IMAGE)
+
+
+def default_brand_logo() -> str:
+    """Return the local header logo when deployed, otherwise the existing CDN URL."""
+    return preferred_static_image(LOCAL_BRAND_LOGO, DEFAULT_BRAND_LOGO)
 
 
 def clean_text(value: Any, limit: int = 160) -> str:
@@ -112,7 +134,7 @@ def _page(
         "title": clean_text(title, 70),
         "description": clean_text(description, 160),
         "canonical": canonical,
-        "image": absolute_url(image, DEFAULT_SOCIAL_IMAGE),
+        "image": absolute_url(image, default_social_image()),
         "type": page_type,
         "keywords": _keywords(keywords),
         "schemas": list(schemas),
@@ -144,7 +166,7 @@ def build_video_seo(video: Any, *, season: Any = None, episode: Any = None) -> d
             "@id": f"{series_url}#series",
             "name": video.name,
             "description": clean_text(video.description, 300),
-            "image": absolute_url(image, DEFAULT_SOCIAL_IMAGE),
+            "image": absolute_url(image, default_social_image()),
             "genre": genres,
         }
         if video.series and video.series.num_seasons:
@@ -182,7 +204,7 @@ def build_video_seo(video: Any, *, season: Any = None, episode: Any = None) -> d
             "@id": f"{canonical}#movie",
             "name": video.name,
             "description": clean_text(video.description, 300),
-            "image": absolute_url(image, DEFAULT_SOCIAL_IMAGE),
+            "image": absolute_url(image, default_social_image()),
             "genre": genres,
         }
         if year:
@@ -304,6 +326,55 @@ def build_page_seo(
     )
 
 
+def build_article_seo(
+    *,
+    title: str,
+    description: str,
+    canonical_path: str,
+    date_published: str,
+    date_modified: str | None = None,
+    keywords: Iterable[Any] = (),
+) -> dict[str, Any]:
+    """Metadata and transparent JSON-LD for a standalone editorial article."""
+    canonical = absolute_url(canonical_path)
+    article_schema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "mainEntityOfPage": {"@type": "WebPage", "@id": canonical},
+        "headline": clean_text(title, 110),
+        "description": clean_text(description, 200),
+        "datePublished": date_published,
+        "dateModified": date_modified or date_published,
+        "inLanguage": "en",
+        "isAccessibleForFree": True,
+        "articleSection": "Gaming",
+        "author": {
+            "@type": "Organization",
+            "name": "MaxCinema Editorial",
+            "url": absolute_url("/"),
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "MaxCinema",
+            "url": absolute_url("/"),
+        },
+    }
+    return _page(
+        title=title,
+        description=description,
+        canonical=canonical,
+        page_type="article",
+        keywords=["MaxCinema", *keywords],
+        schemas=[
+            article_schema,
+            _breadcrumb([
+                ("Home", absolute_url("/")),
+                (title, canonical),
+            ]),
+        ],
+    )
+
+
 def build_trailer_seo(trailer: Any) -> dict[str, Any]:
     """Metadata for a trailer page that contains an embedded playable video."""
     canonical = absolute_url(
@@ -315,7 +386,7 @@ def build_trailer_seo(trailer: Any) -> dict[str, Any]:
         "@type": "VideoObject",
         "name": f"{trailer.name} Trailer",
         "description": clean_text(trailer.description, 300),
-        "thumbnailUrl": absolute_url(trailer.image, DEFAULT_SOCIAL_IMAGE),
+        "thumbnailUrl": absolute_url(trailer.image, default_social_image()),
         "uploadDate": (trailer.date_added.isoformat() if trailer.date_added else None),
         "embedUrl": trailer.trailer_link,
     }

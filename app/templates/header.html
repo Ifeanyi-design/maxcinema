@@ -6,9 +6,10 @@
 
         <a href="{{ url_for('main.index') }}" class="flex items-center">
             <div id="logo" class="left-0">
-                <img src="https://i.imgur.com/slhBAEp.png" 
-             alt="MaxCinema" 
-             class="responsive-logo">
+                <img src="{{ brand_logo_image }}"
+                     alt="MaxCinema"
+                     class="responsive-logo"
+                     onerror="this.onerror=null;this.src='https://i.imgur.com/slhBAEp.png';">
             </div>
         </a>
 
@@ -16,7 +17,7 @@
 
         <nav id="Navbar" class="hidden md:flex right-4 mr-0 relative flex-wrap z-50 items-center">
             {% if follow_links and (follow_links.youtube or follow_links.tiktok) %}
-            <div class="hidden xl:flex items-center gap-1.5 mr-2 pl-3 border-l border-gray-200">
+            <div class="hidden 2xl:flex items-center gap-1.5 mr-2 pl-3 border-l border-gray-200">
                 {% if follow_links.youtube %}
                 <a href="{{ follow_links.youtube }}" target="_blank" rel="noopener noreferrer" data-social-cta title="YouTube" class="w-7 h-7 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-sm hover:shadow-md transition hover:-translate-y-0.5">
                     <i class="fa-brands fa-youtube text-[11px]"></i>

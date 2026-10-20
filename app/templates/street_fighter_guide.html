@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<article class="max-w-6xl mx-auto pt-8 pb-14 md:pt-12">
+  <nav aria-label="Breadcrumb" class="mb-5 text-xs font-bold uppercase tracking-wider text-gray-500">
+    <a href="{{ url_for('main.index') }}" class="hover:text-[#830506]">Home</a>
+    <span class="mx-2 text-gray-300">/</span>
+    <span aria-current="page" class="text-gray-700">Street Fighter Guide</span>
+  </nav>
+
+  <header class="relative overflow-hidden rounded-3xl bg-[#120707] px-6 py-10 text-white shadow-2xl md:px-12 md:py-16">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#830506] via-[#260606] to-black opacity-95"></div>
+    <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full border-[28px] border-white/10"></div>
+    <div class="absolute -bottom-20 left-1/3 h-48 w-48 rounded-full border-[20px] border-[#e5b53a]/20"></div>
+    <div class="relative max-w-4xl">
+      <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white/80">
+        <i class="fa-solid fa-gamepad"></i> Editorial Guide
+      </p>
+      <h1 class="max-w-4xl text-4xl font-black leading-tight tracking-tight md:text-6xl">
+        Street Fighter: Games, Characters, Story, and the Legacy of a Fighting Game Franchise
+      </h1>
+      <p class="mt-5 max-w-3xl text-base leading-7 text-white/85 md:text-lg">
+        A clear starting point for curious newcomers and returning players: where Street Fighter began, what makes its matches work, and how its biggest games differ.
+      </p>
+      <p class="mt-6 text-xs font-semibold uppercase tracking-wider text-white/65">
+        By MaxCinema Editorial <span class="mx-2 text-white/30">•</span> Updated {{ article_published }}
+      </p>
+    </div>
+  </header>
+
+  <div class="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
+    <div class="min-w-0 space-y-10 text-gray-700">
+      <section aria-labelledby="intro-heading" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <h2 id="intro-heading" class="text-2xl font-black tracking-tight text-gray-900">What is Street Fighter?</h2>
+        <p class="mt-4 leading-8">
+          Street Fighter is Capcom’s long-running one-on-one fighting-game series. Two players—or one player and the computer—try to outthink each other through movement, timing, spacing, attacks, blocks, throws, and special moves. The round is short, but the decisions are dense: a step forward can threaten a throw, a jump can start an attack, and one blocked move can change who has the advantage.
+        </p>
+        <p class="mt-4 leading-8">
+          The series began in arcades in 1987 with Ryu and Ken as the playable fighters. Its follow-up, <em>Street Fighter II</em>, broadened the roster and helped make character-specific moves, matchups, and combos central to the language of fighting games. Capcom’s own retrospective traces those early games and the techniques that still define Ryu and Ken’s style today.
+        </p>
+      </section>
+
+      <section aria-labelledby="timeline-heading">
+        <h2 id="timeline-heading" class="text-2xl font-black tracking-tight text-gray-900">The main games and how the series evolved</h2>
+        <div class="mt-5 overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <table class="w-full min-w-[620px] text-left text-sm">
+            <thead class="bg-gray-900 text-white">
+              <tr>
+                <th scope="col" class="px-5 py-4 font-black uppercase tracking-wider">Era</th>
+                <th scope="col" class="px-5 py-4 font-black uppercase tracking-wider">What it introduced or emphasized</th>
+                <th scope="col" class="px-5 py-4 font-black uppercase tracking-wider">Why it matters</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr>
+                <th scope="row" class="px-5 py-4 font-extrabold text-[#830506]">Street Fighter &amp; II</th>
+                <td class="px-5 py-4 leading-6">Distinct fighters, special-move motions, six attack buttons, and the competitive arcade matchup.</td>
+                <td class="px-5 py-4 leading-6">It established the series’ vocabulary: fireballs, anti-airs, throws, charge moves, and rival characters.</td>
+              </tr>
+              <tr class="bg-gray-50/70">
+                <th scope="row" class="px-5 py-4 font-extrabold text-[#830506]">Alpha &amp; III</th>
+                <td class="px-5 py-4 leading-6">Faster styles, expanded meter systems, and more expressive offensive and defensive choices.</td>
+                <td class="px-5 py-4 leading-6">These games are touchstones for players who enjoy precise movement and long-term mastery.</td>
+              </tr>
+              <tr>
+                <th scope="row" class="px-5 py-4 font-extrabold text-[#830506]">IV &amp; V</th>
+                <td class="px-5 py-4 leading-6">A return to a 2D fighting plane with 3D visuals, followed by new character-specific system mechanics.</td>
+                <td class="px-5 py-4 leading-6">They reintroduced Street Fighter to a large online and tournament audience while keeping its footsies-first identity.</td>
+              </tr>
+              <tr class="bg-gray-50/70">
+                <th scope="row" class="px-5 py-4 font-extrabold text-[#830506]">Street Fighter 6</th>
+                <td class="px-5 py-4 leading-6">Fighting Ground, World Tour, and Battle Hub, plus Classic, Modern, and Dynamic control types.</td>
+                <td class="px-5 py-4 leading-6">It gives new players more ways to learn while keeping traditional competitive play at the center.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-4 leading-8">
+          These are not interchangeable sequels. Each entry has its own speed, systems, roster balance, and community history. If you are choosing one to play rather than studying the whole timeline, it is more useful to ask what kind of learning experience you want.
+        </p>
+      </section>
+
+      {% if ads and (ads.banner or ads.banner_mobile) %}
+      <aside aria-label="Sponsored advertisement" class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+        <p class="mb-1 text-[10px] font-black uppercase tracking-[0.25em] text-gray-400">Sponsored</p>
+        {% set banner_ad_slot = 'article_inline_banner' %}
+        {% include 'ads/banner.html' %}
+      </aside>
+      {% endif %}
+
+      <section aria-labelledby="characters-heading" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <h2 id="characters-heading" class="text-2xl font-black tracking-tight text-gray-900">The characters at the heart of Street Fighter</h2>
+        <p class="mt-4 leading-8">
+          The roster is a major reason the franchise lasts. A character is not only a look or backstory; they are also a playstyle. Ryu rewards steady, fundamental play. Ken usually turns a close-range opening into momentum. Chun-Li uses fast normals and careful space control. Guile asks players to manage charge timing and projectiles. Zangief changes the pace by making close range dangerous. Cammy, Juri, Luke, and many others offer different answers to the same question: how do you make the opponent hesitate?
+        </p>
+        <p class="mt-4 leading-8">
+          The most useful way to choose a first character is practical: pick one whose movement and basic attacks feel understandable, then learn a small reliable game plan. A familiar face is a good reason to start, but consistency matters more than copying advanced combo videos.
+        </p>
+      </section>
+
+      <section aria-labelledby="story-heading">
+        <h2 id="story-heading" class="text-2xl font-black tracking-tight text-gray-900">How the story and world fit together</h2>
+        <p class="mt-4 leading-8">
+          Street Fighter’s story is a shared world rather than one uninterrupted novel. Tournaments, training journeys, rivalries, criminal organizations, and city-level conflicts bring fighters together. Ryu’s search for self-mastery and his rivalry with Ken form a recurring emotional center, while Chun-Li, Guile, Cammy, and other fighters connect personal goals to larger threats.
+        </p>
+        <p class="mt-4 leading-8">
+          The exact chronology can feel messy because games revisit periods, introduce side stories, and change emphasis from one entry to another. For a newcomer, the better approach is to learn each character’s motivation in the game you are playing first. The wider lore becomes easier to follow once the matchups and relationships are familiar.
+        </p>
+      </section>
+
+      <section aria-labelledby="screen-heading" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <h2 id="screen-heading" class="text-2xl font-black tracking-tight text-gray-900">The screen adaptations are separate interpretations</h2>
+        <p class="mt-4 leading-8">
+          Street Fighter&rsquo;s films and animation use familiar characters and rivalries, but they are not required chapters in the games&rsquo; story. For example, TMDB lists <em>Street Fighter: The Legend of Chun-Li</em> as a 2009, 97-minute action-adventure film with Kristin Kreuk as Chun-Li, Chris Klein as Charlie Nash, and Neal McDonough as Bison. It is best approached as a self-contained adaptation rather than a substitute for the games&rsquo; lore.
+        </p>
+        <p class="mt-4 leading-8">
+          Capcom&rsquo;s September 2025 production announcement also listed an October 16, 2026 date for a new live-action <em>Street Fighter</em> film and named Andrew Koji as Ryu, Noah Centineo as Ken, and Callina Liang as Chun-Li. For current regional release and viewing availability, check the official distributor or store before making plans.
+        </p>
+      </section>
+
+      <section aria-labelledby="mechanics-heading" class="rounded-2xl bg-[#171717] p-6 text-white shadow-xl md:p-8">
+        <h2 id="mechanics-heading" class="text-2xl font-black tracking-tight">The mechanics that make a Street Fighter match work</h2>
+        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+          <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-black text-[#f2c94c]">Neutral and spacing</h3>
+            <p class="mt-2 text-sm leading-6 text-white/75">Before a big combo, players fight over the space where their attacks can reach and the opponent’s cannot. Walking, crouching, and choosing when not to press a button are skills.</p>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-black text-[#f2c94c]">Anti-airs and jumps</h3>
+            <p class="mt-2 text-sm leading-6 text-white/75">A jump can begin pressure, but it is also a commitment. Learning one dependable anti-air attack is often more valuable than learning a difficult combo immediately.</p>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-black text-[#f2c94c]">Punishes and confirms</h3>
+            <p class="mt-2 text-sm leading-6 text-white/75">When an unsafe move misses or is blocked, a punish takes advantage of that opening. A confirm is recognizing that an attack connected before committing to a follow-up.</p>
+          </div>
+          <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h3 class="font-black text-[#f2c94c]">Meter and momentum</h3>
+            <p class="mt-2 text-sm leading-6 text-white/75">Supers and game-specific resources create bursts of power, but spending them at the right moment matters as much as earning them.</p>
+          </div>
+        </div>
+        <p class="mt-6 text-sm leading-7 text-white/75">
+          Street Fighter 6 also offers control schemes with different levels of input complexity. Modern controls simplify access to special moves, while Classic retains the traditional six-button layout and motion inputs. Neither replaces the need to read the opponent; they simply change how you execute your decisions.
+        </p>
+      </section>
+
+      <section aria-labelledby="start-heading">
+        <h2 id="start-heading" class="text-2xl font-black tracking-tight text-gray-900">What should a newcomer play first?</h2>
+        <p class="mt-4 leading-8">
+          For most people who want a current, guided entry point, Street Fighter 6 is the clearest place to begin. Its tutorials, control options, training tools, World Tour mode, and active online community make it easier to experiment without pretending that the game has no depth. Start with a character you enjoy, try both Classic and Modern controls, and keep the first goal small: block a jump, land an anti-air, and use one simple punish.
+        </p>
+        <p class="mt-4 leading-8">
+          If you want arcade history, a collection that includes the older games is a better fit. Street Fighter II is a useful lesson in foundational design; Alpha games highlight speed and style; Street Fighter III is often chosen by players who want to explore parry-focused play. Availability changes by platform and region, so check the official store page for the version you intend to buy.
+        </p>
+      </section>
+
+      <section aria-labelledby="legacy-heading" class="rounded-2xl border-l-4 border-[#830506] bg-red-50 p-6 md:p-8">
+        <h2 id="legacy-heading" class="text-2xl font-black tracking-tight text-gray-900">Why the franchise still matters</h2>
+        <p class="mt-4 leading-8">
+          Street Fighter endures because it is easy to understand at a glance and difficult to exhaust. Anyone can see a fighter jump, block, throw a fireball, or land a dramatic final hit. Under that surface is a conversation about risk: one player represents a threat, the other answers it, and both adapt. That clarity made arcade rivalries memorable and still makes a close modern match compelling.
+        </p>
+        <p class="mt-4 leading-8">
+          Its legacy is not just a list of famous characters or tournament moments. It is the design idea that a fighting game can give each player clear tools, then create drama from how, when, and why those tools are used.
+        </p>
+      </section>
+
+      <section aria-labelledby="explore-heading" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <h2 id="explore-heading" class="text-2xl font-black tracking-tight text-gray-900">Explore more on MaxCinema</h2>
+        <p class="mt-3 leading-7">Continue browsing the parts of the library that match what you are in the mood for—without leaving this guide through a misleading action.</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="{{ url_for('main.navbar', nav='all_movie', page=1) }}" class="rounded-full bg-[#830506] px-4 py-2 text-xs font-black uppercase tracking-wider text-white transition hover:bg-black">Browse movies</a>
+          <a href="{{ url_for('main.navbar', nav='all_series', page=1) }}" class="rounded-full border border-gray-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-700 transition hover:border-[#830506] hover:text-[#830506]">Browse series</a>
+          <a href="{{ url_for('main.trailer') }}" class="rounded-full border border-gray-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-700 transition hover:border-[#830506] hover:text-[#830506]">Watch trailers</a>
+          <a href="{{ url_for('main.genre', contain='all', genre_type='Action', page=1) }}" class="rounded-full border border-gray-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-700 transition hover:border-[#830506] hover:text-[#830506]">Action titles</a>
+          <a href="{{ url_for('main.trending') }}" class="rounded-full border border-gray-300 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-700 transition hover:border-[#830506] hover:text-[#830506]">Trending now</a>
+        </div>
+      </section>
+
+      <section aria-labelledby="sources-heading" class="border-t border-gray-200 pt-8">
+        <h2 id="sources-heading" class="text-lg font-black tracking-tight text-gray-900">Research notes and official references</h2>
+        <p class="mt-3 text-sm leading-7 text-gray-600">This editorial guide was written independently and checked against official Capcom material. The links below are provided for readers who want to explore the source material.</p>
+        <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-gray-700 marker:text-[#830506]">
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://news.capcomusa.com/strumslinger/blog/2018/05/03/street-fighter-30th-anniversary-collection-retrospective-series-street-fighter-street-fighter-ii" target="_blank" rel="noopener noreferrer">Capcom’s Street Fighter and Street Fighter II retrospective</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://news.capcomusa.com/2022/09/15/details-on-street-fighter-6s-world-tour-battle-hub-four-world-warriors-and-a-closed-beta/" target="_blank" rel="noopener noreferrer">Capcom’s overview of Street Fighter 6’s World Tour and Battle Hub</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.capcom-support.com/hc/en-us/articles/7122030981660-What-are-the-control-types-in-Street-Fighter-6" target="_blank" rel="noopener noreferrer">Capcom Support: Street Fighter 6 control types</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.themoviedb.org/movie/15268-street-fighter-the-legend-of-chun-li" target="_blank" rel="noopener noreferrer">TMDB: Street Fighter: The Legend of Chun-Li (2009)</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.capcom.co.jp/ir/english/news/pdf/e250905.pdf" target="_blank" rel="noopener noreferrer">Capcom&rsquo;s live-action Street Fighter production announcement</a></li>
+        </ul>
+      </section>
+
+      <p class="text-xs leading-6 text-gray-500">
+        Street Fighter and related character names are trademarks of Capcom. This is an independent editorial guide; MaxCinema is not affiliated with or endorsed by Capcom. No game files, gameplay footage, promotional artwork, music, or other copyrighted media are provided on this page.
+      </p>
+    </div>
+
+    <aside class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-28">
+      <h2 class="text-xs font-black uppercase tracking-[0.2em] text-gray-500">In this guide</h2>
+      <ol class="mt-4 space-y-3 text-sm font-bold leading-5">
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#intro-heading">What Street Fighter is</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#timeline-heading">The games and their evolution</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#characters-heading">Key characters</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#story-heading">Story and world</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#screen-heading">Screen adaptations</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#mechanics-heading">How matches work</a></li>
+        <li><a class="text-gray-700 hover:text-[#830506]" href="#start-heading">Where to start</a></li>
+      </ol>
+    </aside>
+  </div>
+</article>
+{% endblock %}

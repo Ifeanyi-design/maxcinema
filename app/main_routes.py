@@ -18,6 +18,7 @@ from . import listeners
 from .extensions import db, login_manager
 from .indexnow import get_indexnow_key_record, get_site_base_url
 from .seo import (
+    build_article_seo,
     build_collection_seo,
     build_homepage_seo,
     build_page_seo,
@@ -739,6 +740,32 @@ def dcma():
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     trending_trailers = Trailer.query.order_by(Trailer.views.desc()).limit(5).all()
     return render_template("dcma.html", trending_series=series_trend, trending_movie=movie_trend, trending_trailers=trending_trailers, seo=build_page_seo(title="MaxCinema DMCA Takedown", description="Submit or review copyright takedown information for MaxCinema.", canonical_path=url_for("main.dcma"), keywords=["DMCA", "copyright takedown"]))
+
+
+@main_bp.route("/guides/street-fighter-games-characters-story-legacy")
+def street_fighter_guide():
+    title = "Street Fighter Guide: Games, Characters, Story & Legacy"
+    description = (
+        "An original guide to Street Fighter's games, characters, story, core "
+        "fighting mechanics, and a practical starting point for newcomers."
+    )
+    return render_template(
+        "street_fighter_guide.html",
+        article_published="October 20, 2026",
+        seo=build_article_seo(
+            title=title,
+            description=description,
+            canonical_path=url_for("main.street_fighter_guide"),
+            date_published="2026-10-20T00:00:00+01:00",
+            keywords=[
+                "Street Fighter guide",
+                "Street Fighter games",
+                "Street Fighter characters",
+                "Street Fighter story",
+                "how to play Street Fighter",
+            ],
+        ),
+    )
 
 @main_bp.route("/genre/<string:contain>/<string:genre_type>")
 @main_bp.route("/genre/<string:contain>/<string:genre_type>/page/<int:page>")
@@ -1980,6 +2007,7 @@ def sitemap():
         {'loc': f"{host}{url_for('main.trending')}", 'priority': '0.8'},
         {'loc': f"{host}{url_for('main.trailer')}", 'priority': '0.7'},
         {'loc': f"{host}{url_for('main.release_calendar')}", 'priority': '0.6'},
+        {'loc': f"{host}{url_for('main.street_fighter_guide')}", 'priority': '0.6'},
     ]
 
     # 2. Fetch Data (caps keep this single sitemap safely below 50,000 URLs).

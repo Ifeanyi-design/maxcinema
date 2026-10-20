@@ -62,6 +62,21 @@ def normalize_bulk_links(links_text: str) -> list:
     return [_normalize_bulk_link(line) for line in lines]
 
 
+def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: int) -> None:
+    """Make an imported primary download link available on one episode.
+
+    A non-empty link means the episode is no longer waiting for a release, so
+    its per-episode ``coming_soon`` flag must be cleared at the same time.
+    """
+    normalized_link = (link or "").strip()
+    if not normalized_link:
+        return
+
+    episode.download_link = normalized_link
+    episode.storage_server_id = storage_server_id
+    episode.coming_soon = False
+
+
 def _extract_tmdb_id(text: str) -> tuple:
     """Pull a TMDB id (and media type, when detectable) out of whatever was pasted.
 
@@ -193,8 +208,7 @@ def bulk_link_season(series_id, season_num):
         updated = 0
         for i, episode in enumerate(target_episodes):
             if i < len(links):
-                episode.download_link = links[i]
-                episode.storage_server_id = storage_server.id
+                apply_bulk_link_to_episode(episode, links[i], storage_server.id)
                 updated += 1
 
         db.session.commit()

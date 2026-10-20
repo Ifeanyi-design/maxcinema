@@ -10,6 +10,7 @@ from flask import Flask, request, has_request_context
 from .config import Config
 from werkzeug.middleware.proxy_fix import ProxyFix
 from .extensions import db, migrate, login_manager
+from .seo import default_brand_logo, default_social_image
 
 # --- THE FIX: Force Flask to use your Domain ---
 class ForceHostMiddleware:
@@ -87,6 +88,7 @@ def create_app(config_class=Config):
                         "main.series_details": "movie_inline_banner",
                         "main.movie_download": "stream_inline_banner",
                         "main.movie_download_page": "dl_inter_server",
+                        "main.street_fighter_guide": "article_inline_banner",
                     }
                     return slot_name == primary_banner_by_endpoint.get(endpoint, "top_banner")
                 return not is_duplicate
@@ -102,6 +104,7 @@ def create_app(config_class=Config):
                     "main.movie_download_page": "dl_inter_server",
                     "main.index": "homepage_mid_banner",
                     "main.featured": "homepage_mid_banner",
+                    "main.street_fighter_guide": "article_inline_banner",
                 }
                 return slot_name == optimized_banner_by_endpoint.get(endpoint, "top_banner")
             return False
@@ -197,6 +200,13 @@ ad_configuration=ad_configuration,
     @app.context_processor
     def inject_country():
         return {"country": get_country_code()}
+
+    @app.context_processor
+    def inject_brand_images():
+        return {
+            "brand_logo_image": default_brand_logo(),
+            "brand_social_image": default_social_image(),
+        }
 
     @app.context_processor
     def inject_social_follow_links():

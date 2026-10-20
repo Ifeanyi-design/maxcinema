@@ -4,7 +4,7 @@
     {% set page_title = seo.title if seo else 'MaxCinema - Movies, Series & Anime' %}
     {% set page_description = seo.description if seo else 'Discover movies, TV series, anime, and trailers on MaxCinema.' %}
     {% set page_canonical = seo.canonical if seo else request.base_url %}
-    {% set page_image = seo.image if seo else 'https://i.imgur.com/Ch4SMwG.png' %}
+    {% set page_image = seo.image if seo else brand_social_image %}
     {% set page_type = seo.type if seo else 'website' %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
