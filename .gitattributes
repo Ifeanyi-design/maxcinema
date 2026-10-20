@@ -3,3 +3,5 @@
 *.png filter=lfs diff=lfs merge=lfs -text
 *.webp filter=lfs diff=lfs merge=lfs -text
 *.sqlite3 filter=lfs diff=lfs merge=lfs -text
+/app/static/images/maxcinema-logo.png -filter -diff -merge
+/app/static/images/maxcinema-social.png -filter -diff -merge

@@ -108,13 +108,62 @@
         </p>
       </section>
 
-      <section aria-labelledby="screen-heading" class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-        <h2 id="screen-heading" class="text-2xl font-black tracking-tight text-gray-900">The screen adaptations are separate interpretations</h2>
-        <p class="mt-4 leading-8">
-          Street Fighter&rsquo;s films and animation use familiar characters and rivalries, but they are not required chapters in the games&rsquo; story. For example, TMDB lists <em>Street Fighter: The Legend of Chun-Li</em> as a 2009, 97-minute action-adventure film with Kristin Kreuk as Chun-Li, Chris Klein as Charlie Nash, and Neal McDonough as Bison. It is best approached as a self-contained adaptation rather than a substitute for the games&rsquo; lore.
-        </p>
-        <p class="mt-4 leading-8">
-          Capcom&rsquo;s September 2025 production announcement also listed an October 16, 2026 date for a new live-action <em>Street Fighter</em> film and named Andrew Koji as Ryu, Noah Centineo as Ken, and Callina Liang as Chun-Li. For current regional release and viewing availability, check the official distributor or store before making plans.
+      <section aria-labelledby="screen-heading">
+        <div class="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.22em] text-[#830506]">Now on the big screen</p>
+            <h2 id="screen-heading" class="mt-2 text-2xl font-black tracking-tight text-gray-900">Street Fighter (2026): the current live-action film</h2>
+          </div>
+          <a href="{{ street_fighter_film.tmdb_url }}" target="_blank" rel="noopener noreferrer" class="text-sm font-bold text-[#830506] underline decoration-[#830506]/30 underline-offset-4 hover:text-black">View TMDB details <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i></a>
+        </div>
+
+        <div class="overflow-hidden rounded-3xl bg-[#120707] text-white shadow-2xl">
+          <div class="grid md:grid-cols-[minmax(11rem,14rem)_1fr]">
+            <figure class="relative min-h-[21rem] bg-black md:min-h-full">
+              <img src="{{ street_fighter_film.poster_url }}" alt="{{ street_fighter_film.title }} poster" width="600" height="900" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover" onerror="this.onerror=null;this.classList.add('hidden');">
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent px-4 pb-4 pt-16 text-[10px] font-bold uppercase tracking-wider text-white/70">Poster via TMDB</div>
+            </figure>
+
+            <div class="relative overflow-hidden p-6 md:p-8">
+              <div class="absolute -right-20 -top-20 h-56 w-56 rounded-full border-[22px] border-white/10"></div>
+              <div class="relative">
+                <div class="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#f2c94c]">
+                  <span class="rounded-full border border-[#f2c94c]/35 px-2.5 py-1">{{ street_fighter_film.release_date }}</span>
+                  <span class="rounded-full border border-white/15 px-2.5 py-1 text-white/75">{{ street_fighter_film.rating }}</span>
+                  <span class="rounded-full border border-white/15 px-2.5 py-1 text-white/75">{{ street_fighter_film.runtime }}</span>
+                </div>
+                <h3 class="mt-5 text-3xl font-black tracking-tight">{{ street_fighter_film.title }}</h3>
+                <p class="mt-4 max-w-2xl text-sm leading-7 text-white/80">
+                  Set in 1993, this film brings Ryu and Ken back into the ring when Chun-Li recruits them for the World Warrior Tournament. The tournament conceals a larger conspiracy, turning familiar rivals into the center of a new, self-contained movie story.
+                </p>
+
+                <dl class="mt-6 grid gap-4 border-y border-white/10 py-5 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt class="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Director</dt>
+                    <dd class="mt-1 font-bold text-white">{{ street_fighter_film.director }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Genre</dt>
+                    <dd class="mt-1 font-bold text-white">{{ street_fighter_film.genres }}</dd>
+                  </div>
+                  <div class="sm:col-span-2">
+                    <dt class="text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Featured cast</dt>
+                    <dd class="mt-1 leading-6 text-white/80">{{ street_fighter_film.cast }}</dd>
+                  </div>
+                </dl>
+
+                <div class="mt-6 flex flex-wrap gap-3">
+                  <a href="{{ street_fighter_film.trailer_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full bg-[#e5b53a] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition hover:bg-white"><i class="fa-solid fa-play"></i> Watch official trailer</a>
+                  <a href="{{ street_fighter_film.tmdb_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-full border border-white/25 px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white transition hover:border-white hover:bg-white/10"><i class="fa-solid fa-film"></i> Movie details</a>
+                </div>
+                <p class="mt-5 text-xs leading-5 text-white/45">Film facts are linked to TMDB and the trailer opens on Paramount Pictures&rsquo; official YouTube channel. Poster artwork remains the property of its respective rights holders.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="mt-5 leading-8">
+          The movie is an adaptation, not a required chapter in the games&rsquo; continuity. Earlier releases&mdash;including <em>Street Fighter: The Legend of Chun-Li</em>&mdash;are also separate interpretations. Start with the game that interests you; treat each screen version as its own take on the characters and world.
         </p>
       </section>
 
@@ -182,13 +231,15 @@
           <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://news.capcomusa.com/strumslinger/blog/2018/05/03/street-fighter-30th-anniversary-collection-retrospective-series-street-fighter-street-fighter-ii" target="_blank" rel="noopener noreferrer">Capcom’s Street Fighter and Street Fighter II retrospective</a></li>
           <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://news.capcomusa.com/2022/09/15/details-on-street-fighter-6s-world-tour-battle-hub-four-world-warriors-and-a-closed-beta/" target="_blank" rel="noopener noreferrer">Capcom’s overview of Street Fighter 6’s World Tour and Battle Hub</a></li>
           <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.capcom-support.com/hc/en-us/articles/7122030981660-What-are-the-control-types-in-Street-Fighter-6" target="_blank" rel="noopener noreferrer">Capcom Support: Street Fighter 6 control types</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="{{ street_fighter_film.tmdb_url }}" target="_blank" rel="noopener noreferrer">TMDB: Street Fighter (2026)</a></li>
+          <li><a class="font-bold text-[#830506] underline hover:text-black" href="{{ street_fighter_film.trailer_url }}" target="_blank" rel="noopener noreferrer">Paramount Pictures: Street Fighter (2026) official trailer</a></li>
           <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.themoviedb.org/movie/15268-street-fighter-the-legend-of-chun-li" target="_blank" rel="noopener noreferrer">TMDB: Street Fighter: The Legend of Chun-Li (2009)</a></li>
           <li><a class="font-bold text-[#830506] underline hover:text-black" href="https://www.capcom.co.jp/ir/english/news/pdf/e250905.pdf" target="_blank" rel="noopener noreferrer">Capcom&rsquo;s live-action Street Fighter production announcement</a></li>
         </ul>
       </section>
 
       <p class="text-xs leading-6 text-gray-500">
-        Street Fighter and related character names are trademarks of Capcom. This is an independent editorial guide; MaxCinema is not affiliated with or endorsed by Capcom. No game files, gameplay footage, promotional artwork, music, or other copyrighted media are provided on this page.
+        Street Fighter and related character names are trademarks of Capcom. This is an independent editorial guide; MaxCinema is not affiliated with or endorsed by Capcom. The credited film poster is used for editorial identification and remains the property of its respective rights holders. No game files, gameplay footage, or music are provided on this page.
       </p>
     </div>
 

@@ -53,8 +53,10 @@ class StreetFighterGuideTests(unittest.TestCase):
         self.assertIn('src="https://maxcinema.name.ng/static/images/maxcinema-logo.png"', html)
         self.assertIn('content="https://maxcinema.name.ng/static/images/maxcinema-social.png"', html)
         self.assertIn("Browse movies", html)
-        self.assertIn("The screen adaptations are separate interpretations", html)
-        self.assertIn("https://www.themoviedb.org/movie/15268-street-fighter-the-legend-of-chun-li", html)
+        self.assertIn("Street Fighter (2026): the current live-action film", html)
+        self.assertIn("https://image.tmdb.org/t/p/w600_and_h900_face/pwUb3gdkSrlyMZWs0MFOQg3N5s7.jpg", html)
+        self.assertIn("https://www.youtube.com/watch?v=Xt4X4FvXk2A", html)
+        self.assertNotIn("https://www.youtube.com/watch?v=R-GU5SymkeM", html)
 
         with self.app.test_request_context():
             contextual_links = (

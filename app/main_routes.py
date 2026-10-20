@@ -749,9 +749,22 @@ def street_fighter_guide():
         "An original guide to Street Fighter's games, characters, story, core "
         "fighting mechanics, and a practical starting point for newcomers."
     )
+    street_fighter_film = {
+        "title": "Street Fighter (2026)",
+        "poster_url": "https://image.tmdb.org/t/p/w600_and_h900_face/pwUb3gdkSrlyMZWs0MFOQg3N5s7.jpg",
+        "tmdb_url": "https://www.themoviedb.org/movie/1153576-street-fighter",
+        "trailer_url": "https://www.youtube.com/watch?v=Xt4X4FvXk2A",
+        "release_date": "October 16, 2026",
+        "rating": "PG-13 (US)",
+        "runtime": "2h",
+        "genres": "Action & Fantasy",
+        "director": "Kitao Sakurai",
+        "cast": "Andrew Koji, Noah Centineo, Callina Liang, David Dastmalchian, Mel Jarnson, Cody Rhodes, Vidyut Jammwal, and Olivier Richters",
+    }
     return render_template(
         "street_fighter_guide.html",
         article_published="October 20, 2026",
+        street_fighter_film=street_fighter_film,
         seo=build_article_seo(
             title=title,
             description=description,
