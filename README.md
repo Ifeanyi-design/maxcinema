@@ -64,9 +64,10 @@ AD_NATIVE_SCRIPT_URL=https://your-adsterra-domain.example/21/your-native-key
 
 Keep using `AD_BANNER_KEY`, `AD_BANNER_MOBILE_KEY`, `AD_SIDEBAR_KEY`,
 `AD_STICKY_DESKTOP_KEY`, `AD_STICKY_MOBILE_KEY`, and
-`AD_NATIVE_PLACEMENT_KEY` for the respective placement keys. If the two new
-variables are absent, the app continues to render the original Adsterra
-`/invoke.js` URL format for compatibility.
+`AD_NATIVE_PLACEMENT_KEY` for the respective placement keys. Both new URL
+variables are required for their related units to render. The old
+`AD_IFRAME_DOMAIN`, `AD_NATIVE_DOMAIN`, `AD_POP_DOMAIN`, `AD_POP_PATH`, and
+`AD_POP_KEY` variables are no longer used by the application.
 
 ## Telegram Relay
 

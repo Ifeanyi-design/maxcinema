@@ -155,6 +155,23 @@ class StreetFighterGuideTests(unittest.TestCase):
             "https://ads.example.test/21/native-key",
         )
 
+    def test_ad_units_do_not_fall_back_to_the_old_adsterra_url_format(self):
+        with patch.dict(
+            os.environ,
+            {
+                "AD_IFRAME_SCRIPT_URL_TEMPLATE": "",
+                "AD_NATIVE_SCRIPT_URL": "",
+                "AD_BANNER_KEY": "desktop-key",
+                "AD_NATIVE_PLACEMENT_KEY": "native-key",
+            },
+        ):
+            with self.app.test_request_context():
+                html = render_template_string(
+                    "{{ ads.banner is none }}|{{ ads.native is none }}"
+                )
+
+        self.assertEqual(html, "True|True")
+
 
 if __name__ == "__main__":
     unittest.main()

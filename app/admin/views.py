@@ -24,15 +24,20 @@ def load_user(user_id):
 
 @admin_bp.context_processor
 def inject_ads():
-    iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "highperformanceformat.com")
+    iframe_script_url_template = (os.getenv("AD_IFRAME_SCRIPT_URL_TEMPLATE") or "").strip()
+    if not (
+        iframe_script_url_template.startswith("https://")
+        and "{key}" in iframe_script_url_template
+    ):
+        iframe_script_url_template = None
 
     def iframe_ad(key_env, width, height, fmt="iframe"):
         key = os.getenv(key_env)
-        if not key:
+        if not key or not iframe_script_url_template:
             return None
         return {
             "key": key,
-            "domain": iframe_domain,
+            "script_url": iframe_script_url_template.replace("{key}", key),
             "format": fmt,
             "width": width,
             "height": height,
@@ -44,14 +49,6 @@ def inject_ads():
     sticky_desktop = iframe_ad("AD_STICKY_DESKTOP_KEY", 728, 90)
     sticky_mobile = iframe_ad("AD_STICKY_MOBILE_KEY", 320, 50)
 
-    pop_domain = os.getenv("AD_POP_DOMAIN", "illuminationacceptedkeynote.com")
-    pop_path = os.getenv("AD_POP_PATH")
-    pop_key = os.getenv("AD_POP_KEY")
-
-    pop_url = None
-    if pop_path and pop_key:
-        pop_url = f"https://www.{pop_domain}/{pop_path}?key={pop_key}"
-
     return dict(
         ads={
             "banner": banner,
@@ -59,7 +56,6 @@ def inject_ads():
             "sidebar": sidebar,
             "sticky_desktop": sticky_desktop,
             "sticky_mobile": sticky_mobile,
-            "pop_url": pop_url,
         }
     )
 
