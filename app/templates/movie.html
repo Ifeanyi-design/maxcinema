@@ -349,7 +349,7 @@
         <div class="w-full max-w-6xl mx-auto my-2 text-red-800">
             <div class="text-xs text-gray-400 font-bold mb-1 uppercase">Sponsored</div>
 
-            <script async="async" data-cfasync="false" src="https://{{ ads.native.domain }}/{{ ads.native.placement_key }}/invoke.js"></script>
+            <script async="async" data-cfasync="false" src="{{ ads.native.script_url }}"></script>
             <div id="container-{{ ads.native.placement_key }}"></div>
         </div>
         {% endif %}

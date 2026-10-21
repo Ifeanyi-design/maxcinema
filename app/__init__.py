@@ -110,14 +110,26 @@ def create_app(config_class=Config):
             return False
 
         iframe_domain = os.getenv("AD_IFRAME_DOMAIN", "illuminationacceptedkeynote.com")
+        iframe_script_url_template = (os.getenv("AD_IFRAME_SCRIPT_URL_TEMPLATE") or "").strip()
+        if not (
+            iframe_script_url_template.startswith("https://")
+            and "{key}" in iframe_script_url_template
+        ):
+            iframe_script_url_template = None
     
         def iframe_ad(key_env, width, height, fmt="iframe"):
             key = os.getenv(key_env)
             if not key:
                 return None
+            if iframe_script_url_template:
+                script_url = iframe_script_url_template.replace("{key}", key)
+            else:
+                # Compatibility with the original Adsterra code format.
+                script_url = f"https://www.{iframe_domain}/{key}/invoke.js"
             return {
                 "key": key,
                 "domain": iframe_domain,
+                "script_url": script_url,
                 "format": fmt,
                 "width": width,
                 "height": height,
@@ -135,14 +147,24 @@ def create_app(config_class=Config):
         # be updated through deployment configuration without editing templates.
         native_domain = (os.getenv("AD_NATIVE_DOMAIN") or "").strip()
         native_placement_key = (os.getenv("AD_NATIVE_PLACEMENT_KEY") or "").strip()
+        native_script_url = (os.getenv("AD_NATIVE_SCRIPT_URL") or "").strip()
+        if not native_script_url.startswith("https://"):
+            native_script_url = None
         native = None
-        if native_domain and native_placement_key:
+        if native_placement_key and (native_domain or native_script_url):
+            if not native_script_url:
+                # Compatibility with the original Adsterra code format.
+                native_script_url = (
+                    f"https://{native_domain}/{native_placement_key}/invoke.js"
+                )
             native = {
                 "domain": native_domain,
                 "placement_key": native_placement_key,
+                "script_url": native_script_url,
             }
     
-        # POPUNDER URL (built server-side from secrets)
+        # Legacy composed pop URL, retained for the existing body data attribute.
+        # It does not control the global Adsterra script units below.
         pop_domain = os.getenv("AD_POP_DOMAIN", "illuminationacceptedkeynote.com")
         pop_path = os.getenv("AD_POP_PATH")
         pop_key = os.getenv("AD_POP_KEY")
@@ -150,6 +172,24 @@ def create_app(config_class=Config):
         pop_url = None
         if pop_path and pop_key:
             pop_url = f"https://www.{pop_domain}/{pop_path}?key={pop_key}"
+
+        def https_script_url(env_name, default_url):
+            """Return a deployment-configured HTTPS script URL, or disable it."""
+            value = (os.getenv(env_name, default_url) or "").strip()
+            return value if value.startswith("https://") else None
+
+        # These are full script URLs copied from Adsterra's active-code page.
+        # Defaults preserve the currently deployed units until the Heroku Config
+        # Vars are added. Values are rendered into quoted, auto-escaped src
+        # attributes in base.html.
+        popunder_script_url = https_script_url(
+            "AD_POPUNDER_SCRIPT_URL",
+            "https://aarems.org/1/597edba21ff8b218fe1a24718d31a80d",
+        )
+        social_bar_script_url = https_script_url(
+            "AD_SOCIAL_BAR_SCRIPT_URL",
+            "https://bancadeltempoidea.org/14/81d2132d6afc8317fc42e3a20b663e83",
+        )
 
         # SMARTLINK — completely separate monetization channel
         # Set AD_SMARTLINK_URL directly in .env, or build from parts
@@ -169,6 +209,8 @@ def create_app(config_class=Config):
                 "sticky_mobile": sticky_mobile,
                 "native": native,
                 "pop_url": pop_url,
+                "popunder_script_url": popunder_script_url,
+                "social_bar_script_url": social_bar_script_url,
                 "smartlink_url": smartlink_url,
                 "monetag_inpage_zone": os.getenv("MONETAG_INPAGE_ZONE"),
                 "monetag_vignette_zone": os.getenv("MONETAG_VIGNETTE_ZONE"),
