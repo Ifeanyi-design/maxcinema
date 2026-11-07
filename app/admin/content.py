@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 from flask import render_template, redirect, url_for, request, flash
@@ -74,7 +75,10 @@ def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: i
 
     episode.download_link = normalized_link
     episode.storage_server_id = storage_server_id
-    episode.coming_soon = False
+    release_date = getattr(episode, "released_date", None)
+    today_lagos = (datetime.utcnow() + timedelta(hours=1)).date()
+    if not release_date or release_date <= today_lagos:
+        episode.coming_soon = False
 
 
 def _extract_tmdb_id(text: str) -> tuple:
