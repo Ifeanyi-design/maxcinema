@@ -3,7 +3,7 @@ import re
 import traceback
 from datetime import datetime, date, timedelta
 
-from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason
+from tmdbv3api import TMDb, Movie, TV, Search, Season as TMDBSeason
 from slugify import slugify
 
 # ---------------------------------------------------------
@@ -138,6 +138,11 @@ class ContentImporter:
     def __init__(self):
         self.movie_api = Movie()
         self.tv_api = TV()
+        # Use the documented Search API for title-based lookups. Movie.search()
+        # and TV.search() are deprecated shortcuts that create another Search
+        # instance internally; this explicit client shares the TMDB v3 key
+        # configured above through tmdbv3api's environment-backed settings.
+        self.search_api = Search()
         self.season_api = TMDBSeason()
         self._tmdb_id_ok = None
 

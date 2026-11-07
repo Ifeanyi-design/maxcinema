@@ -106,6 +106,26 @@ def _json_error(error, message, status=400, **extra):
     return jsonify(payload), status
 
 
+def _safe_tmdb_error_detail(exc, api_key=None):
+    """Return useful TMDB diagnostics without leaking the v3 key in request URLs."""
+    detail = str(exc).strip() or "The TMDB client returned no error detail."
+    if api_key:
+        detail = detail.replace(str(api_key), "[REDACTED]")
+    # tmdbv3api sends v3 credentials as a query parameter. Requests exceptions
+    # can include the full URL, so redact it before logging or returning detail.
+    detail = re.sub(
+        r"(?i)([?&]api_key=)[^&\\s]+",
+        r"\\1[REDACTED]",
+        detail,
+    )
+    detail = re.sub(
+        r"(?i)(authorization\\s*:\\s*bearer\\s+)[^\\s,;]+",
+        r"\\1[REDACTED]",
+        detail,
+    )
+    return detail[:500]
+
+
 @agent_api_bp.post("/pair")
 def pair_agent():
     body = request.get_json(silent=True)
@@ -483,13 +503,21 @@ def tmdb_search():
     if media_type not in {"all", "movie", "series"}:
         return _json_error("invalid_type", "type must be all, movie, or series.")
 
+    importer = ContentImporter()
+    search_api = importer.search_api
+    api_key = (getattr(search_api, "api_key", None) or "").strip()
+    if not api_key:
+        current_app.logger.error("TMDB title search requested but TMDB_API_KEY is not configured")
+        return _json_error(
+            "tmdb_not_configured",
+            "TMDB_API_KEY is not configured on the MaxCinema server.",
+            503,
+        )
+
     try:
-        # Reuse the same TMDB client setup as the existing importer so the
-        # configured TMDB_API_KEY and language settings stay consistent.
-        importer = ContentImporter()
         candidates = []
         if media_type in {"all", "movie"}:
-            for item in (importer.movie_api.search(query) or [])[:10]:
+            for item in (search_api.movies(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "movie",
@@ -500,7 +528,7 @@ def tmdb_search():
                     "rating": _value(item, "vote_average"),
                 })
         if media_type in {"all", "series"}:
-            for item in (importer.tv_api.search(query) or [])[:10]:
+            for item in (search_api.tv_shows(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "series",
@@ -511,9 +539,20 @@ def tmdb_search():
                     "rating": _value(item, "vote_average"),
                 })
         return jsonify({"query": query, "results": candidates})
-    except Exception:
-        current_app.logger.exception("TMDB search failed")
-        return _json_error("tmdb_search_failed", "TMDB search failed. Check the TMDB configuration.", 502)
+    except Exception as exc:
+        detail = _safe_tmdb_error_detail(exc, api_key)
+        error_type = type(exc).__name__
+        # Do not log the raw exception: requests errors may include the full
+        # TMDB URL with api_key in its query string.
+        current_app.logger.error("TMDB title search failed (%s): %s", error_type, detail)
+        return _json_error(
+            "tmdb_search_failed",
+            "TMDB title search failed. See the sanitized diagnostic for details.",
+            502,
+            upstream="tmdb",
+            exception_type=error_type,
+            diagnostic=detail,
+        )
 
 
 @agent_api_bp.get("/library/search")
