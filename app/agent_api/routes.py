@@ -158,6 +158,70 @@ def capabilities():
 @agent_api_bp.get("/openapi.json")
 @agent_required("content:read")
 def openapi_document():
+    """Return an OpenAPI 3.1 contract usable by external tool builders."""
+    bearer = [{"BearerAuth": []}]
+    error_schema = {
+        "type": "object",
+        "properties": {
+            "error": {"type": "string"},
+            "message": {"type": "string"},
+        },
+        "required": ["error", "message"],
+    }
+
+    def responses(success_description, success_code="200"):
+        result = {
+            success_code: {"description": success_description},
+            "400": {"description": "Invalid request.", "content": {
+                "application/json": {"schema": {"$ref": "#/components/schemas/Error"}}
+            }},
+            "401": {"description": "Missing, expired, or revoked bearer token.", "content": {
+                "application/json": {"schema": {"$ref": "#/components/schemas/Error"}}
+            }},
+        }
+        return result
+
+    def path_parameter(name, description):
+        return {
+            "name": name,
+            "in": "path",
+            "required": True,
+            "description": description,
+            "schema": {"type": "integer", "minimum": 1},
+        }
+
+    def json_body(schema, description):
+        return {
+            "required": True,
+            "description": description,
+            "content": {"application/json": {"schema": schema}},
+        }
+
+    patch_library_schema = {
+        "type": "object",
+        "description": "Only send fields the administrator explicitly asked to change.",
+        "properties": {
+            "name": {"type": ["string", "null"], "maxLength": 200},
+            "description": {"type": ["string", "null"]},
+            "image": {"type": ["string", "null"], "maxLength": 300},
+            "released_date": {"type": ["string", "null"], "format": "date"},
+            "year_produced": {"type": ["integer", "null"], "minimum": 1870, "maximum": 2200},
+            "country": {"type": ["string", "null"], "maxLength": 100},
+            "language": {"type": ["string", "null"], "maxLength": 50},
+            "trailer_url": {"type": ["string", "null"], "maxLength": 300},
+            "genres": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 50}},
+            "active": {"type": "boolean"},
+            "coming_soon": {"type": "boolean"},
+            "featured": {"type": "boolean"},
+            "trending": {"type": "boolean"},
+            "editorial_reason": {
+                "type": "string",
+                "description": "Required when featured or trending is changed; must reflect the administrator's explicit instruction.",
+            },
+        },
+        "additionalProperties": False,
+    }
+
     return jsonify({
         "openapi": "3.1.0",
         "info": {
@@ -165,51 +229,246 @@ def openapi_document():
             "version": "1.0.0",
             "description": (
                 "Controlled content operations for an external AI agent. "
-                "The agent performs filename reasoning; the API validates and applies structured assignments."
+                "The agent interprets Telegram filenames and determines episode mappings; "
+                "the API validates and applies explicit structured assignments."
             ),
         },
-        "servers": [{"url": "/api/agent/v1"}],
-        "security": [{"BearerAuth": []}],
-        "components": {
-            "securitySchemes": {
-                "BearerAuth": {"type": "http", "scheme": "bearer"}
-            }
-        },
+        "servers": [{"url": "https://maxcinema.name.ng/api/agent/v1"}],
+        "security": bearer,
         "paths": {
             "/pair": {
                 "post": {
-                    "security": [],
+                    "operationId": "pairAgent",
                     "summary": "Exchange a one-time pairing code for a short-lived bearer token",
-                    "requestBody": {
-                        "required": True,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": ["code"],
-                                    "properties": {
-                                        "code": {"type": "string"},
-                                        "label": {"type": "string"},
-                                    },
-                                }
-                            }
+                    "security": [],
+                    "requestBody": json_body({
+                        "type": "object",
+                        "required": ["code"],
+                        "properties": {
+                            "code": {"type": "string", "maxLength": 128},
+                            "label": {"type": "string", "maxLength": 120},
                         },
+                    }, "One-time code generated in Admin → AI Agent Access."),
+                    "responses": {
+                        "201": {"description": "Bearer token issued. Store it securely; it is shown only once."},
+                        "401": {"description": "Pairing code invalid, expired, or already used."},
                     },
                 }
             },
-            "/capabilities": {"get": {"summary": "Discover available agent operations"}},
-            "/tmdb/search": {"get": {"summary": "Search TMDB movie and TV candidates"}},
-            "/library/search": {"get": {"summary": "Search existing MaxCinema content"}},
-            "/series/{video_id}/status": {"get": {"summary": "Read seasons, released episodes, and link status"}},
-            "/series/{video_id}/sync": {"post": {"summary": "Manually sync a series from TMDB"}},
-            "/movies/import": {"post": {"summary": "Import a movie by TMDB ID"}},
-            "/series/import": {"post": {"summary": "Import a series by TMDB ID"}},
-            "/library/{video_id}": {"patch": {"summary": "Update allowlisted movie/series metadata"}},
-            "/seasons/{season_id}": {"patch": {"summary": "Update season metadata"}},
-            "/episodes/{episode_id}": {"patch": {"summary": "Update episode metadata"}},
-            "/storage-servers": {"get": {"summary": "List active storage servers"}},
-            "/links/preview": {"post": {"summary": "Validate a movie or episode link assignment"}},
-            "/links/apply": {"post": {"summary": "Apply a previously previewed link plan"}},
+            "/capabilities": {
+                "get": {
+                    "operationId": "getCapabilities",
+                    "summary": "Discover the current API's policy and supported operations",
+                    "responses": responses("API capabilities and operating policies."),
+                }
+            },
+            "/tmdb/search": {
+                "get": {
+                    "operationId": "searchTmdb",
+                    "summary": "Search TMDB for movie and TV candidates",
+                    "parameters": [
+                        {"name": "q", "in": "query", "required": True, "schema": {"type": "string", "minLength": 2}},
+                        {"name": "type", "in": "query", "required": False, "schema": {"type": "string", "enum": ["all", "movie", "series"], "default": "all"}},
+                    ],
+                    "responses": responses("Candidate TMDB records, including title, media type, release date, overview, poster path, and rating."),
+                }
+            },
+            "/library/search": {
+                "get": {
+                    "operationId": "searchLibrary",
+                    "summary": "Search MaxCinema by title or TMDB ID",
+                    "parameters": [
+                        {"name": "q", "in": "query", "required": False, "schema": {"type": "string"}},
+                        {"name": "tmdb_id", "in": "query", "required": False, "schema": {"type": "integer", "minimum": 1}},
+                        {"name": "type", "in": "query", "required": False, "schema": {"type": "string", "enum": ["movie", "series"]}},
+                        {"name": "limit", "in": "query", "required": False, "schema": {"type": "integer", "minimum": 1, "maximum": 50, "default": 20}},
+                    ],
+                    "responses": responses("Matching MaxCinema content records."),
+                }
+            },
+            "/storage-servers": {
+                "get": {
+                    "operationId": "listStorageServers",
+                    "summary": "List active storage servers without exposing credentials",
+                    "responses": responses("Active storage server IDs, names, and types."),
+                }
+            },
+            "/series/{video_id}/status": {
+                "get": {
+                    "operationId": "getSeriesStatus",
+                    "summary": "Read seasons, episode release dates, and current link coverage",
+                    "parameters": [path_parameter("video_id", "AllVideo ID of the series.")],
+                    "responses": responses("Series metadata and season/episode status."),
+                }
+            },
+            "/movies/import": {
+                "post": {
+                    "operationId": "importMovie",
+                    "summary": "Import a movie from TMDB; new records are published by default",
+                    "requestBody": json_body({
+                        "type": "object",
+                        "required": ["tmdb_id"],
+                        "properties": {"tmdb_id": {"type": "integer", "minimum": 1}},
+                    }, "Use a TMDB movie ID selected after checking the existing library."),
+                    "responses": responses("Imported or already-existing movie result."),
+                }
+            },
+            "/series/import": {
+                "post": {
+                    "operationId": "importSeries",
+                    "summary": "Import a TV series and currently released episodes",
+                    "requestBody": json_body({
+                        "type": "object",
+                        "required": ["tmdb_id"],
+                        "properties": {
+                            "tmdb_id": {"type": "integer", "minimum": 1},
+                            "seasons": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+                            "episodes": {"type": "string", "description": "Optional episode range supported by the importer."},
+                        },
+                    }, "Future-dated and undated episodes are not created."),
+                    "responses": responses("Imported series, seasons, released episodes, and skipped-item summary."),
+                }
+            },
+            "/series/{video_id}/sync": {
+                "post": {
+                    "operationId": "syncSeries",
+                    "summary": "Refresh an existing series using its saved TMDB ID",
+                    "parameters": [path_parameter("video_id", "AllVideo ID of the existing series.")],
+                    "requestBody": json_body({
+                        "type": "object",
+                        "properties": {
+                            "seasons": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+                            "episodes": {"type": "string", "description": "Optional episode range supported by the importer."},
+                        },
+                    }, "Omit seasons to sync all TMDB seasons."),
+                    "responses": responses("Series sync result and skipped-item summary."),
+                }
+            },
+            "/library/{video_id}": {
+                "patch": {
+                    "operationId": "updateLibraryItem",
+                    "summary": "Edit allowlisted movie or series metadata",
+                    "parameters": [path_parameter("video_id", "AllVideo ID of the movie or series.")],
+                    "requestBody": json_body(patch_library_schema, "Send only explicitly requested metadata changes."),
+                    "responses": responses("Updated content record."),
+                }
+            },
+            "/seasons/{season_id}": {
+                "patch": {
+                    "operationId": "updateSeason",
+                    "summary": "Edit season metadata and completion state",
+                    "parameters": [path_parameter("season_id", "Season database ID.")],
+                    "requestBody": json_body({
+                        "type": "object",
+                        "properties": {
+                            "description": {"type": ["string", "null"]},
+                            "cast": {"type": ["string", "null"]},
+                            "release_date": {"type": ["string", "null"], "format": "date"},
+                            "completed": {"type": "boolean"},
+                            "image": {"type": ["string", "null"]},
+                            "trailer_url": {"type": ["string", "null"]},
+                        },
+                        "additionalProperties": False,
+                    }, "Only provide fields the administrator explicitly asked to change."),
+                    "responses": responses("Updated season record."),
+                }
+            },
+            "/episodes/{episode_id}": {
+                "patch": {
+                    "operationId": "updateEpisode",
+                    "summary": "Edit episode metadata and release state",
+                    "parameters": [path_parameter("episode_id", "Episode database ID.")],
+                    "requestBody": json_body({
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": ["string", "null"], "maxLength": 200},
+                            "description": {"type": ["string", "null"]},
+                            "released_date": {"type": ["string", "null"], "format": "date"},
+                            "coming_soon": {"type": "boolean"},
+                        },
+                        "additionalProperties": False,
+                    }, "Only provide fields the administrator explicitly asked to change."),
+                    "responses": responses("Updated episode record."),
+                }
+            },
+            "/links/preview": {
+                "post": {
+                    "operationId": "previewLinks",
+                    "summary": "Validate a link batch without changing content",
+                    "requestBody": json_body({
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "required": ["movie_id", "storage_server_id", "code"],
+                                "properties": {
+                                    "movie_id": {"type": "integer", "minimum": 1},
+                                    "storage_server_id": {"type": "integer", "minimum": 1},
+                                    "track": {"type": "string", "enum": ["primary", "dub", "backup"], "default": "primary"},
+                                    "mode": {"type": "string", "enum": ["fill_missing", "replace"], "default": "fill_missing"},
+                                    "replace_existing": {"type": "boolean", "default": False},
+                                    "code": {"type": "string"},
+                                },
+                            },
+                            {
+                                "type": "object",
+                                "required": ["series_id", "season_number", "storage_server_id"],
+                                "properties": {
+                                    "series_id": {"type": "integer", "minimum": 1},
+                                    "season_number": {"type": "integer", "minimum": 0},
+                                    "storage_server_id": {"type": "integer", "minimum": 1},
+                                    "track": {"type": "string", "enum": ["primary", "dub", "backup"], "default": "primary"},
+                                    "mode": {"type": "string", "enum": ["fill_missing", "replace"], "default": "fill_missing"},
+                                    "replace_existing": {"type": "boolean", "default": False},
+                                    "assignments": {
+                                        "type": "array",
+                                        "maxItems": 200,
+                                        "items": {
+                                            "type": "object",
+                                            "required": ["episode_number", "code"],
+                                            "properties": {
+                                                "episode_number": {"type": "integer", "minimum": 1},
+                                                "code": {"type": "string"},
+                                                "source_filename": {"type": "string"},
+                                            },
+                                        },
+                                    },
+                                    "ordered_codes": {"type": "array", "items": {"type": "string"}, "maxItems": 200},
+                                },
+                            },
+                        ],
+                    }, "Returns a signed preview token. No link is changed until /links/apply is called."),
+                    "responses": responses("Preview containing proposed targets, skipped rows, masked old/new code hints, and replacement confirmation requirement."),
+                }
+            },
+            "/links/apply": {
+                "post": {
+                    "operationId": "applyLinks",
+                    "summary": "Apply a previously previewed link plan",
+                    "requestBody": json_body({
+                        "type": "object",
+                        "required": ["preview_token"],
+                        "properties": {
+                            "preview_token": {"type": "string"},
+                            "confirm_replacements": {"type": "boolean", "default": False},
+                        },
+                    }, "For plans with replacements, confirm_replacements must be true only after administrator approval."),
+                    "responses": {
+                        "200": {"description": "Link assignment result."},
+                        "400": {"description": "Invalid or missing preview token."},
+                        "401": {"description": "Missing, expired, or revoked bearer token."},
+                        "403": {"description": "Preview was created by another agent session."},
+                        "409": {"description": "Preview expired, changed, or requires replacement confirmation."},
+                    },
+                }
+            },
+        },
+        "components": {
+            "securitySchemes": {
+                "BearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "opaque"},
+            },
+            "schemas": {
+                "Error": error_schema,
+            },
         },
     })
 
