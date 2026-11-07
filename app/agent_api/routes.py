@@ -1,5 +1,5 @@
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from flask import current_app, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -26,6 +26,10 @@ def _value(obj, name, default=None):
 
 def _iso(value):
     return value.isoformat() if value else None
+
+
+def _today_lagos():
+    return (datetime.utcnow() + timedelta(hours=1)).date()
 
 
 def _video_payload(video):
@@ -253,7 +257,7 @@ def series_status(video_id):
         for episode in season.episodes:
             has_primary = bool((episode.download_link or "").strip())
             air_date = episode.released_date
-            released = bool(air_date and air_date <= date.today())
+            released = bool(air_date and air_date <= _today_lagos())
             episodes.append({
                 "id": episode.id,
                 "episode_number": episode.episode_number,
@@ -470,13 +474,16 @@ def preview_links():
     body = request.get_json(silent=True) or {}
     track = (body.get("track") or "primary").strip().lower()
     mode = (body.get("mode") or "fill_missing").strip().lower()
-    replace_existing = body.get("replace_existing") is True
+    requested_replace = body.get("replace_existing") is True
+    replace_existing = mode == "replace" and requested_replace
     if track not in LINK_FIELDS:
         return _json_error("invalid_track", "track must be primary, dub, or backup.")
     if mode not in {"fill_missing", "replace"}:
         return _json_error("invalid_mode", "mode must be fill_missing or replace.")
-    if mode == "replace" and not replace_existing:
+    if mode == "replace" and not requested_replace:
         return _json_error("replacement_flag_required", "mode=replace also requires replace_existing=true.")
+    if mode == "fill_missing" and requested_replace:
+        return _json_error("invalid_replacement_policy", "Use mode=replace to request replacement; fill_missing never replaces.")
 
     server_id = body.get("storage_server_id")
     server = StorageServer.query.filter_by(id=server_id, active=True).first() if server_id else None
@@ -565,6 +572,12 @@ def preview_links():
             episode = by_number.get(episode_number)
             if not episode:
                 skipped.append({"episode_number": episode_number, "reason": "episode_not_in_library"})
+                continue
+            if not episode.released_date or episode.released_date > _today_lagos():
+                skipped.append({
+                    "episode_number": episode_number,
+                    "reason": "episode_not_released_or_release_date_unknown",
+                })
                 continue
             code = _normalize_code(item.get("code"))
             if not code or len(code) > 500:
@@ -684,7 +697,13 @@ def apply_links():
 
         setattr(target, LINK_FIELDS[operation["track"]], operation["code"])
         target.storage_server_id = server.id
-        if operation["track"] == "primary":
+        target_release_date = (
+            target.released_date if operation["target_type"] == "episode"
+            else target.released_date
+        )
+        if operation["track"] == "primary" and (
+            not target_release_date or target_release_date <= _today_lagos()
+        ):
             target.coming_soon = False
         applied.append(operation["target_id"])
 
