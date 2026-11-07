@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+    {% include 'admin/sidebar.html' %}
+    <main class="flex-1 overflow-y-auto p-6 pt-[70px] md:pt-8">
+        <div class="mx-auto max-w-4xl">
+            <h1 class="text-3xl font-bold text-white">AI Agent Access</h1>
+            <p class="mt-2 text-gray-400">Pair your external AI agent with MaxCinema using a short-lived, one-time code.</p>
+
+            <section class="mt-6 rounded-xl border border-gray-700 bg-gray-800 p-6">
+                <h2 class="text-lg font-semibold text-white">Generate pairing code</h2>
+                <p class="mt-1 text-sm text-gray-400">The code expires after 10 minutes and can be exchanged only once. The agent receives a 60-minute bearer session.</p>
+                <form method="POST" class="mt-4">
+                    <button type="submit" class="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-500">
+                        Generate one-time code
+                    </button>
+                </form>
+                {% if pairing_code %}
+                <div class="mt-5 rounded-lg border border-amber-500/50 bg-gray-900 p-4">
+                    <p class="text-sm font-semibold text-amber-300">Copy this code into your agent's secure pairing flow now.</p>
+                    <code class="mt-3 block break-all text-lg text-white">{{ pairing_code }}</code>
+                    <p class="mt-2 text-xs text-gray-400">This code will not be displayed again after you leave or refresh this page.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="mt-6 rounded-xl border border-gray-700 bg-gray-800 p-6">
+                <h2 class="text-lg font-semibold text-white">Agent sessions</h2>
+                <p class="mt-1 text-sm text-gray-400">Bearer tokens are never displayed or stored in plaintext. Revoke a session immediately if you no longer trust the connected agent.</p>
+                <div class="mt-4 space-y-3">
+                    {% for token in tokens %}
+                    <div class="flex flex-col gap-3 rounded-lg border border-gray-700 bg-gray-900 p-4 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p class="font-semibold text-white">{{ token.label }}</p>
+                            <p class="text-xs text-gray-400">Created {{ token.created_at.strftime('%Y-%m-%d %H:%M UTC') }} · Expires {{ token.expires_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                            <p class="mt-1 text-xs text-gray-500">Scopes: {{ (token.scopes or []) | join(', ') }}</p>
+                            {% if token.revoked_at %}
+                            <p class="mt-1 text-xs text-red-400">Revoked {{ token.revoked_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+                            {% elif token.expires_at <= now %}
+                            <p class="mt-1 text-xs text-yellow-400">Expired</p>
+                            {% else %}
+                            <p class="mt-1 text-xs text-green-400">Active</p>
+                            {% endif %}
+                        </div>
+                        {% if not token.revoked_at and token.expires_at > now %}
+                        <form method="POST" action="{{ url_for('admin.revoke_agent_token', token_id=token.id) }}" onsubmit="return confirm('Revoke this agent session?');">
+                            <button type="submit" class="rounded-lg border border-red-700 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-950">Revoke session</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-400">No agent sessions have been created.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="mt-6 rounded-xl border border-gray-700 bg-gray-800 p-6 text-sm text-gray-300">
+                <h2 class="font-semibold text-white">Security notes</h2>
+                <ul class="mt-2 list-disc space-y-1 pl-5">
+                    <li>Never paste the bearer token into a public prompt or repository.</li>
+                    <li>Pairing codes expire in 10 minutes and are single-use.</li>
+                    <li>Agent sessions expire after 60 minutes and can be revoked here.</li>
+                    <li>The API exposes controlled operations, not database credentials or arbitrary SQL.</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+</div>
+{% endblock %}
