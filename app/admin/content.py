@@ -77,8 +77,7 @@ def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: i
     episode.storage_server_id = storage_server_id
     release_date = getattr(episode, "released_date", None)
     today_lagos = (datetime.utcnow() + timedelta(hours=1)).date()
-    if not release_date or release_date <= today_lagos:
-        episode.coming_soon = False
+    episode.coming_soon = bool(release_date and release_date > today_lagos)
 
 
 def _extract_tmdb_id(text: str) -> tuple:
