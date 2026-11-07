@@ -10,7 +10,7 @@ import random
 import os
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 from slugify import slugify
 import hashlib
@@ -1223,6 +1223,7 @@ def movie_download_page(slug):
         trending_trailers=trending_trailers,
         social_videos=social_videos,
         follow_links=social_follow_links(),
+        today=(datetime.utcnow() + timedelta(hours=1)).date(),
         dark=True,
     )
 
