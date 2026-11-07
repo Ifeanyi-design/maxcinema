@@ -1,6 +1,7 @@
 import hashlib
 import os
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, timedelta
 
 os.environ.setdefault("SECRET_KEY", "test-only-secret-for-agent-api")
@@ -96,6 +97,75 @@ class AgentApiTests(unittest.TestCase):
             for operation in path_item.values():
                 if isinstance(operation, dict) and "operationId" in operation:
                     self.assertTrue(operation.get("responses"))
+
+    @patch("app.agent_api.routes.ContentImporter")
+    def test_tmdb_title_search_uses_supported_movie_and_tv_search_methods(self, importer_class):
+        importer = importer_class.return_value
+        importer.search_api.api_key = "test-tmdb-v3-key"
+        importer.search_api.movies.return_value = [{
+            "id": 27205,
+            "title": "Inception",
+            "release_date": "2010-07-15",
+            "overview": "A test overview.",
+            "poster_path": "/inception.jpg",
+            "vote_average": 8.4,
+        }]
+        importer.search_api.tv_shows.return_value = [{
+            "id": 1399,
+            "name": "Game of Thrones",
+            "first_air_date": "2011-04-17",
+            "overview": "A test series overview.",
+            "poster_path": "/got.jpg",
+            "vote_average": 8.3,
+        }]
+
+        response = self.client.get(
+            "/api/agent/v1/tmdb/search?q=Inception&type=all",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        results = response.get_json()["results"]
+        self.assertEqual([item["tmdb_id"] for item in results], [27205, 1399])
+        self.assertEqual([item["type"] for item in results], ["movie", "series"])
+        importer.search_api.movies.assert_called_once_with("Inception")
+        importer.search_api.tv_shows.assert_called_once_with("Inception")
+
+    @patch("app.agent_api.routes.ContentImporter")
+    def test_tmdb_title_search_reports_missing_key_without_calling_tmdb(self, importer_class):
+        importer = importer_class.return_value
+        importer.search_api.api_key = ""
+
+        response = self.client.get(
+            "/api/agent/v1/tmdb/search?q=Inception&type=movie",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.get_json()["error"], "tmdb_not_configured")
+        importer.search_api.movies.assert_not_called()
+
+    @patch("app.agent_api.routes.ContentImporter")
+    def test_tmdb_title_search_returns_sanitized_upstream_diagnostic(self, importer_class):
+        secret = "test-tmdb-v3-secret"
+        importer = importer_class.return_value
+        importer.search_api.api_key = secret
+        importer.search_api.movies.side_effect = RuntimeError(
+            "Request failed for https://api.themoviedb.org/3/search/movie"
+            f"?query=Inception&api_key={secret}&language=en"
+        )
+
+        response = self.client.get(
+            "/api/agent/v1/tmdb/search?q=Inception&type=movie",
+            headers=self.headers,
+        )
+
+        self.assertEqual(response.status_code, 502)
+        payload = response.get_json()
+        self.assertEqual(payload["error"], "tmdb_search_failed")
+        self.assertEqual(payload["exception_type"], "RuntimeError")
+        self.assertIn("[REDACTED]", payload["diagnostic"])
+        self.assertNotIn(secret, response.get_data(as_text=True))
 
     def test_pairing_code_is_single_use_and_token_can_be_revoked(self):
         pairing_code = "single-use-code-for-test"
