@@ -81,6 +81,22 @@ class AgentApiTests(unittest.TestCase):
         db.drop_all()
         self.context.pop()
 
+    def test_openapi_document_contains_tool_schemas_and_public_pairing(self):
+        response = self.client.get(
+            "/api/agent/v1/openapi.json",
+            headers=self.headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        document = response.get_json()
+        self.assertEqual(document["openapi"], "3.1.0")
+        self.assertEqual(document["paths"]["/pair"]["post"]["security"], [])
+        self.assertIn("requestBody", document["paths"]["/links/preview"]["post"])
+        self.assertIn("responses", document["paths"]["/links/apply"]["post"])
+        for path_item in document["paths"].values():
+            for operation in path_item.values():
+                if isinstance(operation, dict) and "operationId" in operation:
+                    self.assertTrue(operation.get("responses"))
+
     def test_pairing_code_is_single_use_and_token_can_be_revoked(self):
         pairing_code = "single-use-code-for-test"
         now = datetime.utcnow()
