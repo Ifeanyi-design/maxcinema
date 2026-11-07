@@ -561,8 +561,7 @@ class ContentImporter:
                             unreleased_episode_count += 1
                             if existing_ep:
                                 existing_ep.released_date = ep_air
-                                has_primary_link = bool((existing_ep.download_link or '').strip())
-                                existing_ep.coming_soon = not has_primary_link
+                                existing_ep.coming_soon = True
                         continue
 
                     if not existing_ep:
