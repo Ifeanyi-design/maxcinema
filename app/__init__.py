@@ -256,6 +256,9 @@ ad_configuration=ad_configuration,
     from .sports.cli import sports_cli
     app.cli.add_command(sports_cli)
 
+    from .agent_api import agent_api_bp
+    app.register_blueprint(agent_api_bp)
+
     # Idempotent repair: add columns the current models have but the live DB
     # is missing (e.g. Heroku Postgres created before a model change). Runs on
     # every boot and must never prevent the app from starting.
