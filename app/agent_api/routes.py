@@ -114,13 +114,13 @@ def _safe_tmdb_error_detail(exc, api_key=None):
     # tmdbv3api sends v3 credentials as a query parameter. Requests exceptions
     # can include the full URL, so redact it before logging or returning detail.
     detail = re.sub(
-        r"(?i)([?&]api_key=)[^&\\s]+",
-        r"\\1[REDACTED]",
+        r"(?i)([?&]api_key=)[^&\s]+",
+        r"\1[REDACTED]",
         detail,
     )
     detail = re.sub(
-        r"(?i)(authorization\\s*:\\s*bearer\\s+)[^\\s,;]+",
-        r"\\1[REDACTED]",
+        r"(?i)(authorization\s*:\s*bearer\s+)[^\s,;]+",
+        r"\1[REDACTED]",
         detail,
     )
     return detail[:500]
