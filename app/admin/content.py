@@ -66,8 +66,8 @@ def normalize_bulk_links(links_text: str) -> list:
 def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: int) -> None:
     """Make an imported primary download link available on one episode.
 
-    A non-empty link means the episode is no longer waiting for a release, so
-    its per-episode ``coming_soon`` flag must be cleared at the same time.
+    A download code does not change the release date. Keep a future episode
+    marked Coming Soon until the release date has arrived.
     """
     normalized_link = (link or "").strip()
     if not normalized_link:
