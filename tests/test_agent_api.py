@@ -113,7 +113,6 @@ class AgentApiTests(unittest.TestCase):
                 if isinstance(operation, dict) and "operationId" in operation:
                     self.assertTrue(operation.get("responses"))
 
-    @patch("app.agent_api.routes.ContentImporter")
     def test_library_search_rejects_invalid_type(self):
         response = self.client.get(
             "/api/agent/v1/library/search?q=Agent&type=documentary",
@@ -134,6 +133,7 @@ class AgentApiTests(unittest.TestCase):
         self.assertEqual([item["id"] for item in results], [self.movie.id])
         self.assertEqual([item["type"] for item in results], ["movie"])
 
+    @patch("app.agent_api.routes.ContentImporter")
     def test_tmdb_title_search_handles_legacy_as_obj_results(self, importer_class):
         importer = importer_class.return_value
         importer.search_api.api_key = "test-tmdb-v3-key"
