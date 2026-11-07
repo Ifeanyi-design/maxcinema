@@ -35,7 +35,9 @@ def create_pairing_code(created_by_id):
 
 def exchange_pairing_code(raw_code, label=None):
     """Consume a pairing code once and return a newly-issued bearer token."""
-    code = (raw_code or "").strip()
+    if not isinstance(raw_code, str):
+        return None, "A valid pairing code is required."
+    code = raw_code.strip()
     if not code or len(code) > 128:
         return None, "A valid pairing code is required."
 
