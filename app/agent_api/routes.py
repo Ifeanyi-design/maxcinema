@@ -5,7 +5,7 @@ from flask import current_app, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from ..extensions import db
-from ..models import AllVideo, Episode, Season, StorageServer
+from ..models import AllVideo, Episode, Genre, Season, StorageServer
 from ..utils import ContentImporter
 from . import agent_api_bp
 from .auth import agent_required, exchange_pairing_code, write_audit
@@ -162,6 +162,7 @@ def openapi_document():
             "/movies/import": {"post": {"summary": "Import a movie by TMDB ID"}},
             "/series/import": {"post": {"summary": "Import a series by TMDB ID"}},
             "/library/{video_id}": {"patch": {"summary": "Update allowlisted movie/series metadata"}},
+            "/seasons/{season_id}": {"patch": {"summary": "Update season metadata"}},
             "/episodes/{episode_id}": {"patch": {"summary": "Update episode metadata"}},
             "/storage-servers": {"get": {"summary": "List active storage servers"}},
             "/links/preview": {"post": {"summary": "Validate a movie or episode link assignment"}},
@@ -398,6 +399,20 @@ def update_library_item(video_id):
                 setattr(video, field, value.strip() if isinstance(value, str) else None)
         if "released_date" in body:
             video.released_date = _parse_date(body["released_date"], "released_date")
+        if "genres" in body:
+            names = body["genres"]
+            if not isinstance(names, list) or any(not isinstance(name, str) or not name.strip() for name in names):
+                return _json_error("invalid_field", "genres must be a list of non-empty genre names.")
+            if len(names) > 20:
+                return _json_error("invalid_field", "A maximum of 20 genres may be assigned.")
+            genre_objects = []
+            for name in dict.fromkeys(name.strip() for name in names):
+                genre = Genre.query.filter_by(name=name).first()
+                if not genre:
+                    genre = Genre(name=name[:50])
+                    db.session.add(genre)
+                genre_objects.append(genre)
+            video.genres = genre_objects
         if "year_produced" in body:
             value = body["year_produced"]
             if value is not None and (not isinstance(value, int) or value < 1870 or value > 2200):
@@ -408,6 +423,9 @@ def update_library_item(video_id):
                 if not isinstance(body[field], bool):
                     return _json_error("invalid_field", f"{field} must be a boolean.")
                 setattr(video, field, body[field])
+        if "released_date" in body:
+            release_date = video.released_date
+            video.coming_soon = bool(release_date and release_date > _today_lagos())
         if "name" in body and video.name:
             from slugify import slugify
             base = slugify(video.name) or f"content-{video.id}"
@@ -426,6 +444,44 @@ def update_library_item(video_id):
     except ValueError as exc:
         db.session.rollback()
         return _json_error("invalid_field", str(exc))
+
+
+@agent_api_bp.patch("/seasons/<int:season_id>")
+@agent_required("content:write")
+def update_season(season_id):
+    season = Season.query.get_or_404(season_id)
+    body = request.get_json(silent=True) or {}
+    allowed = {"description", "cast", "release_date", "completed", "image", "trailer_url"}
+    unknown = set(body) - allowed
+    if unknown:
+        return _json_error("unsupported_fields", "One or more season fields are not editable.", 400,
+                           fields=sorted(unknown))
+    for field in ("description", "cast", "image", "trailer_url"):
+        if field in body:
+            value = body[field]
+            if value is not None and not isinstance(value, str):
+                return _json_error("invalid_field", f"{field} must be a string or null.")
+            setattr(season, field, value.strip() if isinstance(value, str) else None)
+    if "release_date" in body:
+        try:
+            season.release_date = _parse_date(body["release_date"], "release_date")
+        except ValueError as exc:
+            return _json_error("invalid_field", str(exc))
+    if "completed" in body:
+        if not isinstance(body["completed"], bool):
+            return _json_error("invalid_field", "completed must be a boolean.")
+        season.completed = body["completed"]
+    write_audit("season.update", "season", season.id, {"fields": sorted(body)})
+    db.session.commit()
+    return jsonify({
+        "status": "success",
+        "season": {
+            "id": season.id,
+            "season_number": season.season_number,
+            "release_date": _iso(season.release_date),
+            "completed": bool(season.completed),
+        },
+    })
 
 
 @agent_api_bp.patch("/episodes/<int:episode_id>")
@@ -451,6 +507,10 @@ def update_episode(episode_id):
             if not isinstance(body["coming_soon"], bool):
                 return _json_error("invalid_field", "coming_soon must be a boolean.")
             episode.coming_soon = body["coming_soon"]
+        if "released_date" in body:
+            episode.coming_soon = bool(
+                episode.released_date and episode.released_date > _today_lagos()
+            )
         write_audit("episode.update", "episode", episode.id, {"fields": sorted(body)})
         db.session.commit()
         return jsonify({
@@ -546,7 +606,9 @@ def preview_links():
                 )
             targets = [
                 episode for episode in episodes
-                if replace_existing or not _current_link(episode, track)
+                if episode.released_date
+                and episode.released_date <= _today_lagos()
+                and (replace_existing or not _current_link(episode, track))
             ]
             assignments = [
                 {"episode_number": episode.episode_number, "code": code}
@@ -559,6 +621,7 @@ def preview_links():
                 })
 
         seen_numbers = set()
+        seen_codes = set()
         for item in assignments:
             if not isinstance(item, dict):
                 return _json_error("invalid_assignment", "Each assignment must be an object.")
@@ -582,6 +645,9 @@ def preview_links():
             code = _normalize_code(item.get("code"))
             if not code or len(code) > 500:
                 return _json_error("invalid_code", f"Episode {episode_number} has an empty or invalid code.")
+            if code in seen_codes:
+                return _json_error("duplicate_code", "The same download code cannot be assigned to multiple episodes.")
+            seen_codes.add(code)
             existing = _current_link(episode, track)
             if existing == code:
                 skipped.append({"episode_number": episode_number, "reason": "already_has_this_code"})
@@ -603,6 +669,7 @@ def preview_links():
         for operation in operations
     )
     plan = {
+        "agent_token_id": g.agent_token.id,
         "operations": operations,
         "storage_server_id": server.id,
         "replace_existing": replace_existing,
@@ -649,6 +716,8 @@ def apply_links():
     except BadSignature:
         return _json_error("invalid_preview", "The preview token is invalid.", 400)
 
+    if plan.get("agent_token_id") != g.agent_token.id:
+        return _json_error("preview_session_mismatch", "This preview was created by a different agent session.", 403)
     operations = plan.get("operations") or []
     if not operations:
         return _json_error("empty_plan", "The preview contains no changes.")
@@ -697,14 +766,11 @@ def apply_links():
 
         setattr(target, LINK_FIELDS[operation["track"]], operation["code"])
         target.storage_server_id = server.id
-        target_release_date = (
-            target.released_date if operation["target_type"] == "episode"
-            else target.released_date
-        )
-        if operation["track"] == "primary" and (
-            not target_release_date or target_release_date <= _today_lagos()
-        ):
-            target.coming_soon = False
+        target_release_date = target.released_date
+        if operation["track"] == "primary":
+            target.coming_soon = bool(
+                target_release_date and target_release_date > _today_lagos()
+            )
         applied.append(operation["target_id"])
 
     write_audit(
