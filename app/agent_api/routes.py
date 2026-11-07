@@ -1,7 +1,7 @@
 import re
 from datetime import date, datetime, timedelta
 
-from flask import current_app, jsonify, request
+from flask import current_app, g, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from ..extensions import db
@@ -166,6 +166,28 @@ def openapi_document():
             }
         },
         "paths": {
+            "/pair": {
+                "post": {
+                    "security": [],
+                    "summary": "Exchange a one-time pairing code for a short-lived bearer token",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["code"],
+                                    "properties": {
+                                        "code": {"type": "string"},
+                                        "label": {"type": "string"},
+                                    },
+                                }
+                            }
+                        },
+                    },
+                }
+            },
+            "/capabilities": {"get": {"summary": "Discover available agent operations"}},
             "/tmdb/search": {"get": {"summary": "Search TMDB movie and TV candidates"}},
             "/library/search": {"get": {"summary": "Search existing MaxCinema content"}},
             "/series/{video_id}/status": {"get": {"summary": "Read seasons, released episodes, and link status"}},
