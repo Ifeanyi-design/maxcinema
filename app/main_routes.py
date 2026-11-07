@@ -10,7 +10,7 @@ import random
 import os
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functools import wraps
 from slugify import slugify
 import hashlib
@@ -362,7 +362,7 @@ safe_populate = safe_populate_bulk
 @main_bp.route('/<int:page>')
 def index(page=1):
     per_page = 24
-    today = datetime.utcnow().date()
+    today = (datetime.utcnow() + timedelta(hours=1)).date()  # Africa/Lagos
     features = AllVideo.query.filter_by(featured=True, active=True).order_by(AllVideo.date_added.desc()).limit(8).all()
     series_trend = AllVideo.query.filter_by(trending=True, type="series", active=True).order_by(AllVideo.views.desc()).limit(6).all()
     movie_trend = AllVideo.query.filter_by(trending=True, type="movie", active=True).order_by(AllVideo.views.desc()).limit(6).all()
@@ -535,7 +535,7 @@ def index(page=1):
 
 @main_bp.route("/release-calendar")
 def release_calendar():
-    today = datetime.utcnow().date()
+    today = (datetime.utcnow() + timedelta(hours=1)).date()  # Africa/Lagos
     start_month = today.replace(day=1)
     next_month = (start_month + timedelta(days=32)).replace(day=1)
     after_next_month = (next_month + timedelta(days=32)).replace(day=1)
@@ -1223,6 +1223,7 @@ def movie_download_page(slug):
         trending_trailers=trending_trailers,
         social_videos=social_videos,
         follow_links=social_follow_links(),
+        today=(datetime.utcnow() + timedelta(hours=1)).date(),
         dark=True,
     )
 

@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 os.environ.setdefault("SECRET_KEY", "test-only-secret-for-bulk-import")
@@ -19,6 +20,35 @@ class BulkLinkImportTests(unittest.TestCase):
 
         self.assertEqual(episode.download_link, "episode-download-code")
         self.assertEqual(episode.storage_server_id, 12)
+        self.assertFalse(episode.coming_soon)
+
+    def test_linking_a_future_episode_does_not_clear_coming_soon(self):
+        today_lagos = (datetime.utcnow() + timedelta(hours=1)).date()
+        episode = SimpleNamespace(
+            download_link=None,
+            storage_server_id=None,
+            coming_soon=True,
+            released_date=today_lagos + timedelta(days=3),
+        )
+
+        apply_bulk_link_to_episode(episode, "early-episode-code", 12)
+
+        self.assertEqual(episode.download_link, "early-episode-code")
+        self.assertEqual(episode.storage_server_id, 12)
+        self.assertTrue(episode.coming_soon)
+
+    def test_released_episode_link_clears_coming_soon(self):
+        today_lagos = (datetime.utcnow() + timedelta(hours=1)).date()
+        episode = SimpleNamespace(
+            download_link=None,
+            storage_server_id=None,
+            coming_soon=True,
+            released_date=today_lagos,
+        )
+
+        apply_bulk_link_to_episode(episode, "released-episode-code", 12)
+
+        self.assertEqual(episode.download_link, "released-episode-code")
         self.assertFalse(episode.coming_soon)
 
     def test_empty_value_does_not_change_an_episode(self):

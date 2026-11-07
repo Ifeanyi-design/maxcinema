@@ -1,7 +1,7 @@
 import os
 import re
 import traceback
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason
 from slugify import slugify
@@ -130,6 +130,11 @@ def parse_episode_selection(raw):
 
 
 class ContentImporter:
+    @staticmethod
+    def _today_lagos():
+        # Nigeria uses UTC+1 year-round; avoid relying on the host's timezone.
+        return (datetime.utcnow() + timedelta(hours=1)).date()
+
     def __init__(self):
         self.movie_api = Movie()
         self.tv_api = TV()
@@ -299,6 +304,8 @@ class ContentImporter:
                 country_name = self._val(m.production_countries[0], 'name')
 
             final_slug = self._generate_unique_slug(m.title, 'movie')
+            movie_release_date = self._get_date(m.release_date)
+            movie_is_upcoming = bool(movie_release_date and movie_release_date > self._today_lagos())
 
             video = AllVideo(
                 name=m.title,
@@ -307,9 +314,10 @@ class ContentImporter:
                 description=m.overview,
                 image=f"https://image.tmdb.org/t/p/w500{m.poster_path}" if m.poster_path else None,
                 year_produced=self._get_year(m.release_date),
-                released_date=self._get_date(m.release_date),
+                released_date=movie_release_date,
                 rating=m.vote_average,
-                active=False,
+                active=True,
+                coming_soon=movie_is_upcoming,
                 star_cast=self._get_cast(m),
                 length=self._get_runtime(getattr(m, 'runtime', 0)),
                 country=country_name,
@@ -330,8 +338,8 @@ class ContentImporter:
             print(f"✅ SUCCESS: Imported {m.title}")
             return ImportResult(
                 "success",
-                f"Imported movie '{m.title}' (TMDB {tmdb_id}) as an inactive draft — "
-                "review it and set it live when you are ready.",
+                f"Imported movie '{m.title}' (TMDB {tmdb_id}) as published content"
+                + (" marked Coming Soon because its release date is in the future." if movie_is_upcoming else "."),
             )
         except Exception as e:
             db.session.rollback()
@@ -390,6 +398,8 @@ class ContentImporter:
             if not video:
                 print(f"📝 Creating new Series entry for: {s.name}")
                 final_slug = self._generate_unique_slug(s.name, 'series')
+                series_first_air_date = self._get_date(s.first_air_date)
+                series_is_upcoming = bool(series_first_air_date and series_first_air_date > self._today_lagos())
 
                 video = AllVideo(
                     name=s.name,
@@ -398,8 +408,10 @@ class ContentImporter:
                     description=s.overview,
                     image=f"https://image.tmdb.org/t/p/w500{s.poster_path}" if s.poster_path else None,
                     year_produced=self._get_year(s.first_air_date),
+                    released_date=series_first_air_date,
                     rating=s.vote_average,
                     active=True,
+                    coming_soon=series_is_upcoming,
                     star_cast=self._get_cast(s),
                     length=self._get_runtime(run_time),
                     country=country_name,
@@ -418,6 +430,25 @@ class ContentImporter:
             else:
                 print(f"🔄 Series {s.name} exists (matched by {matched_by}), updating...")
                 self._remember_tmdb_id(video, tmdb_id)
+                # Refresh only missing descriptive fields. Human-edited copy and
+                # artwork remain authoritative; release state is date-derived.
+                series_first_air_date = self._get_date(self._val(s, 'first_air_date'))
+                if series_first_air_date and not video.released_date:
+                    video.released_date = series_first_air_date
+                if not video.year_produced:
+                    video.year_produced = self._get_year(self._val(s, 'first_air_date'))
+                if not (video.description or '').strip():
+                    video.description = self._val(s, 'overview')
+                if not (video.image or '').strip() and self._val(s, 'poster_path'):
+                    video.image = f"https://image.tmdb.org/t/p/w500{self._val(s, 'poster_path')}"
+                if not (video.country or '').strip() and country_name:
+                    video.country = country_name
+                if not (video.trailer_url or '').strip() and main_trailer:
+                    video.trailer_url = main_trailer
+                if video.released_date and video.released_date > self._today_lagos():
+                    video.coming_soon = True
+                elif video.released_date and video.released_date <= self._today_lagos():
+                    video.coming_soon = False
                 series_entry = video.series
                 if not series_entry:
                     series_entry = Series(all_video_id=video.id, num_seasons=0, num_episodes=0)
@@ -445,6 +476,9 @@ class ContentImporter:
             episodes_refreshed = 0
             in_range_total = 0
             skipped = []
+            unreleased_episode_count = 0
+            undated_episode_count = 0
+            today = self._today_lagos()
 
             for seas_num in target_seasons:
                 print(f"  👉 Fetching Season {seas_num}...")
@@ -517,6 +551,19 @@ class ContentImporter:
                         season_id=db_season.id, episode_number=ep_num
                     ).first()
 
+                    # TMDB may list future episodes before broadcast. Do not
+                    # create those rows in MaxCinema until their air date has
+                    # arrived. An unknown air date is also not proof of release.
+                    if not ep_air or ep_air > today:
+                        if not ep_air:
+                            undated_episode_count += 1
+                        else:
+                            unreleased_episode_count += 1
+                            if existing_ep:
+                                existing_ep.released_date = ep_air
+                                existing_ep.coming_soon = True
+                        continue
+
                     if not existing_ep:
                         try:
                             new_ep = Episode(
@@ -527,7 +574,8 @@ class ContentImporter:
                                 released_date=ep_air,
                                 thumb_720p=ep_image,
                                 length=ep_runtime,
-                                cast=s_cast
+                                cast=s_cast,
+                                coming_soon=False
                             )
                             db.session.add(new_ep)
                             db.session.commit()
@@ -563,6 +611,9 @@ class ContentImporter:
                         existing_ep.cast = s_cast
                         touched = True
 
+                    if existing_ep.coming_soon:
+                        existing_ep.coming_soon = False
+                        touched = True
                     if touched:
                         episodes_refreshed += 1
 
@@ -571,6 +622,15 @@ class ContentImporter:
                 db.session.commit()
 
             # --- series totals ---
+            if unreleased_episode_count:
+                skipped.append(
+                    f"{unreleased_episode_count} future episode(s) not imported because their air date is after {today.isoformat()}"
+                )
+            if undated_episode_count:
+                skipped.append(
+                    f"{undated_episode_count} episode(s) not imported because TMDB has no confirmed air date"
+                )
+
             series_entry.num_seasons = Season.query.filter_by(series_id=series_entry.id).count()
             series_entry.num_episodes = sum(
                 Episode.query.filter_by(season_id=season.id).count()

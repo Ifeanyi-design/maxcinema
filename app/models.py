@@ -704,3 +704,55 @@ class SocialVideo(db.Model):
 
     def __repr__(self):
         return f"<SocialVideo {self.platform}:{self.platform_id} - {self.title}>"
+
+
+class AgentPairingCode(db.Model):
+    """One-time code used to pair an external content agent."""
+    __tablename__ = "agent_pairing_code"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code_hash = db.Column(db.String(64), nullable=False, unique=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used_at = db.Column(db.DateTime, nullable=True)
+
+    creator = db.relationship("User")
+
+
+class AgentAccessToken(db.Model):
+    """Hashed, expiring, revocable bearer credential for an agent session."""
+    __tablename__ = "agent_access_token"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    label = db.Column(db.String(120), nullable=False, default="Content management agent")
+    scopes = db.Column(db.JSON, nullable=False, default=list)
+    created_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    revoked_at = db.Column(db.DateTime, nullable=True)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+
+    creator = db.relationship("User")
+    audit_events = db.relationship("AgentAuditLog", back_populates="agent_token")
+
+
+class AgentAuditLog(db.Model):
+    """Operational audit trail for controlled AI-agent changes; no raw link codes."""
+    __tablename__ = "agent_audit_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    agent_token_id = db.Column(
+        db.Integer,
+        db.ForeignKey("agent_access_token.id"),
+        nullable=True,
+        index=True,
+    )
+    action = db.Column(db.String(80), nullable=False, index=True)
+    target_type = db.Column(db.String(40), nullable=True)
+    target_id = db.Column(db.String(80), nullable=True)
+    details = db.Column(db.JSON, nullable=False, default=dict)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    agent_token = db.relationship("AgentAccessToken", back_populates="audit_events")

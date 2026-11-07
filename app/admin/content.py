@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
 from flask import render_template, redirect, url_for, request, flash
@@ -65,8 +66,8 @@ def normalize_bulk_links(links_text: str) -> list:
 def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: int) -> None:
     """Make an imported primary download link available on one episode.
 
-    A non-empty link means the episode is no longer waiting for a release, so
-    its per-episode ``coming_soon`` flag must be cleared at the same time.
+    A download code does not change the release date. Keep a future episode
+    marked Coming Soon until the release date has arrived.
     """
     normalized_link = (link or "").strip()
     if not normalized_link:
@@ -74,7 +75,9 @@ def apply_bulk_link_to_episode(episode: Episode, link: str, storage_server_id: i
 
     episode.download_link = normalized_link
     episode.storage_server_id = storage_server_id
-    episode.coming_soon = False
+    release_date = getattr(episode, "released_date", None)
+    today_lagos = (datetime.utcnow() + timedelta(hours=1)).date()
+    episode.coming_soon = bool(release_date and release_date > today_lagos)
 
 
 def _extract_tmdb_id(text: str) -> tuple:
