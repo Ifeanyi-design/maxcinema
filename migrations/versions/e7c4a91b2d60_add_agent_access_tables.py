@@ -1,7 +1,7 @@
 """add agent access tables
 
 Revision ID: e7c4a91b2d60
-Revises: ('9f1a2b3c4d5e', '7b9d2c1e4f20')
+Revises: 9f1a2b3c4d5e
 Create Date: 2026-11-07
 """
 from alembic import op
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 
 revision = "e7c4a91b2d60"
-down_revision = ("9f1a2b3c4d5e", "7b9d2c1e4f20")
+down_revision = "9f1a2b3c4d5e"
 branch_labels = None
 depends_on = None
 
