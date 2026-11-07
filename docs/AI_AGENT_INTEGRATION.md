@@ -30,7 +30,7 @@ All endpoints except POST /pair require a bearer token.
 - GET /capabilities
 - GET /openapi.json
 - GET /tmdb/search?q=...&type=all|movie|series
-- GET /library/search?q=... or ?tmdb_id=...
+- GET /library/search?q=... or ?tmdb_id=... with optional `type=movie|series` and `limit=1..50`; an unsupported non-empty `type` returns HTTP 400.
 - GET /storage-servers
 - GET /series/{all_video_id}/status
 - POST /movies/import with a numeric TMDB movie ID
