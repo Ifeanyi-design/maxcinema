@@ -1,7 +1,7 @@
 import os
 import re
 import traceback
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from tmdbv3api import TMDb, Movie, TV, Season as TMDBSeason
 from slugify import slugify
@@ -130,6 +130,11 @@ def parse_episode_selection(raw):
 
 
 class ContentImporter:
+    @staticmethod
+    def _today_lagos():
+        # Nigeria uses UTC+1 year-round; avoid relying on the host's timezone.
+        return (datetime.utcnow() + timedelta(hours=1)).date()
+
     def __init__(self):
         self.movie_api = Movie()
         self.tv_api = TV()
@@ -300,7 +305,7 @@ class ContentImporter:
 
             final_slug = self._generate_unique_slug(m.title, 'movie')
             movie_release_date = self._get_date(m.release_date)
-            movie_is_upcoming = bool(movie_release_date and movie_release_date > date.today())
+            movie_is_upcoming = bool(movie_release_date and movie_release_date > self._today_lagos())
 
             video = AllVideo(
                 name=m.title,
@@ -394,7 +399,7 @@ class ContentImporter:
                 print(f"📝 Creating new Series entry for: {s.name}")
                 final_slug = self._generate_unique_slug(s.name, 'series')
                 series_first_air_date = self._get_date(s.first_air_date)
-                series_is_upcoming = bool(series_first_air_date and series_first_air_date > date.today())
+                series_is_upcoming = bool(series_first_air_date and series_first_air_date > self._today_lagos())
 
                 video = AllVideo(
                     name=s.name,
@@ -440,9 +445,9 @@ class ContentImporter:
                     video.country = country_name
                 if not (video.trailer_url or '').strip() and main_trailer:
                     video.trailer_url = main_trailer
-                if video.released_date and video.released_date > date.today():
+                if video.released_date and video.released_date > self._today_lagos():
                     video.coming_soon = True
-                elif video.released_date and video.released_date <= date.today():
+                elif video.released_date and video.released_date <= self._today_lagos():
                     video.coming_soon = False
                 series_entry = video.series
                 if not series_entry:
@@ -473,7 +478,7 @@ class ContentImporter:
             skipped = []
             unreleased_episode_count = 0
             undated_episode_count = 0
-            today = date.today()
+            today = self._today_lagos()
 
             for seas_num in target_seasons:
                 print(f"  👉 Fetching Season {seas_num}...")
