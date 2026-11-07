@@ -58,3 +58,14 @@ TMDB can list future episodes before broadcast. The importer must not create tho
 - Country values are preserved as TMDB supplies them; the current Hollywood filter already matches the substring United States, including United States of America.
 - Season.completed describes editorial season completion, not whether episodes have download links.
 - The actual Telegram media-ingestion bot is outside this repository. Direct bot integration is a separate phase; this API accepts codes supplied by the agent.
+
+
+## Database migration and deployment
+
+This repository's Docker startup command does not automatically run Alembic migrations. Before using the new agent-access page or API on a deployed environment, apply the new migration once against the same production database used by MaxCinema:
+
+    flask --app run db upgrade
+
+Run this in the Hugging Face Space/container environment (or another trusted environment configured with the production DATABASE_URL and SECRET_KEY). Take a database backup first. Do not use db.create_all() as a substitute for the production migration. The GitHub deploy workflow only deploys pushes to clean-main; this feature branch does not deploy to the live Space.
+
+The external agent's operating instructions are in docs/AI_AGENT_SYSTEM_PROMPT.md.
