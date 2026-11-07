@@ -74,6 +74,15 @@ def _current_link(target, track):
     return (getattr(target, LINK_FIELDS[track], None) or "").strip()
 
 
+def _mask_code(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    if len(value) <= 6:
+        return "••••"
+    return value[:3] + "••••" + value[-3:]
+
+
 def _plan_serializer():
     return URLSafeTimedSerializer(
         current_app.config["SECRET_KEY"],
@@ -89,7 +98,9 @@ def _json_error(error, message, status=400, **extra):
 
 @agent_api_bp.post("/pair")
 def pair_agent():
-    body = request.get_json(silent=True) or {}
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return _json_error("invalid_body", "Send a JSON object containing the pairing code.")
     result, error = exchange_pairing_code(
         body.get("code"),
         label=body.get("label") or "Content management agent",
@@ -110,7 +121,7 @@ def capabilities():
         "replacement_policy": "preview_then_confirm",
         "episode_import_policy": (
             "Only episodes with a confirmed air_date on or before the current "
-            "UTC date are imported. Future or undated episodes are skipped."
+            "Africa/Lagos calendar date are imported. Future or undated episodes are skipped."
         ),
         "capabilities": [
             "tmdb.search",
@@ -623,9 +634,15 @@ def update_episode(episode_id):
 @agent_api_bp.post("/links/preview")
 @agent_required("links:write")
 def preview_links():
-    body = request.get_json(silent=True) or {}
-    track = (body.get("track") or "primary").strip().lower()
-    mode = (body.get("mode") or "fill_missing").strip().lower()
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return _json_error("invalid_body", "Send a JSON object describing the link assignment.")
+    raw_track = body.get("track", "primary")
+    raw_mode = body.get("mode", "fill_missing")
+    if not isinstance(raw_track, str) or not isinstance(raw_mode, str):
+        return _json_error("invalid_mode", "track and mode must be strings.")
+    track = raw_track.strip().lower()
+    mode = raw_mode.strip().lower()
     requested_replace = body.get("replace_existing") is True
     replace_existing = mode == "replace" and requested_replace
     if track not in LINK_FIELDS:
@@ -651,7 +668,10 @@ def preview_links():
         video = AllVideo.query.filter_by(id=body.get("movie_id"), type="movie").first()
         if not video:
             return _json_error("movie_not_found", "Movie was not found.", 404)
-        code = _normalize_code(body.get("code"))
+        raw_code = body.get("code")
+        if not isinstance(raw_code, str):
+            return _json_error("invalid_code", "The download code must be a string.")
+        code = _normalize_code(raw_code)
         if not code or len(code) > 500:
             return _json_error("invalid_code", "A valid non-empty download code is required.")
         existing = _current_link(video, track)
@@ -666,6 +686,8 @@ def preview_links():
                 "track": track,
                 "code": code,
                 "existing_code": existing,
+                "target_name": video.name,
+                "release_date": _iso(video.released_date),
             })
     else:
         series_id = body.get("series_id")
@@ -696,6 +718,10 @@ def preview_links():
                     "assignments_required",
                     "Supply explicit assignments or ordered_codes. Explicit episode assignments are recommended.",
                 )
+            if len(ordered_codes) > 200:
+                return _json_error("batch_too_large", "A single link batch cannot exceed 200 entries.")
+            if any(not isinstance(code, str) for code in ordered_codes):
+                return _json_error("invalid_code", "Every ordered code must be a string.")
             targets = [
                 episode for episode in episodes
                 if episode.released_date
@@ -712,6 +738,8 @@ def preview_links():
                     "count": len(ordered_codes) - len(targets),
                 })
 
+        if len(assignments) > 200:
+            return _json_error("batch_too_large", "A single link batch cannot exceed 200 assignments.")
         seen_numbers = set()
         seen_codes = set()
         for item in assignments:
@@ -734,7 +762,10 @@ def preview_links():
                     "reason": "episode_not_released_or_release_date_unknown",
                 })
                 continue
-            code = _normalize_code(item.get("code"))
+            raw_code = item.get("code")
+            if not isinstance(raw_code, str):
+                return _json_error("invalid_code", f"Episode {episode_number} code must be a string.")
+            code = _normalize_code(raw_code)
             if not code or len(code) > 500:
                 return _json_error("invalid_code", f"Episode {episode_number} has an empty or invalid code.")
             if code in seen_codes:
@@ -753,7 +784,13 @@ def preview_links():
                     "track": track,
                     "code": code,
                     "existing_code": existing,
-                    "source_filename": item.get("source_filename"),
+                    "source_filename": (
+                        item.get("source_filename")[:500]
+                        if isinstance(item.get("source_filename"), str)
+                        else None
+                    ),
+                    "target_name": episode.name or f"Episode {episode_number}",
+                    "release_date": _iso(episode.released_date),
                 })
 
     requires_confirmation = any(
@@ -783,7 +820,11 @@ def preview_links():
                 "episode_number": operation.get("episode_number"),
                 "track": operation["track"],
                 "will_replace": bool(operation.get("existing_code")),
+                "target_name": operation.get("target_name"),
+                "release_date": operation.get("release_date"),
                 "source_filename": operation.get("source_filename"),
+                "current_code_preview": _mask_code(operation.get("existing_code")),
+                "new_code_preview": _mask_code(operation.get("code")),
             }
             for operation in operations
         ],
