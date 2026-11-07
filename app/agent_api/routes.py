@@ -563,6 +563,9 @@ def library_search():
     tmdb_id = request.args.get("tmdb_id", type=int)
     limit = min(max(request.args.get("limit", 20, type=int), 1), 50)
 
+    if kind and kind not in {"movie", "series"}:
+        return _json_error("invalid_type", "type must be movie or series.")
+
     if not query and not tmdb_id:
         return _json_error("missing_search_term", "Supply q or tmdb_id.")
     statement = AllVideo.query
