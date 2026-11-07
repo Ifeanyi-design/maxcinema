@@ -37,6 +37,7 @@ All endpoints except POST /pair require a bearer token.
 - POST /series/import with a numeric TMDB TV ID and optional seasons
 - POST /series/{all_video_id}/sync with optional seasons and episode range
 - PATCH /library/{all_video_id}
+- PATCH /seasons/{season_id}
 - PATCH /episodes/{episode_id}
 - POST /links/preview
 - POST /links/apply
