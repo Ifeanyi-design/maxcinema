@@ -918,7 +918,7 @@ def apply_links():
         if operation["target_type"] == "movie":
             target = AllVideo.query.filter_by(id=operation["target_id"], type="movie").first()
         else:
-            target = Episode.query.get(operation["target_id"])
+            target = db.session.get(Episode, operation["target_id"])
         if not target:
             db.session.rollback()
             return _json_error("target_changed", "A target disappeared after preview. Create a new preview.", 409)
