@@ -62,10 +62,17 @@ TMDB can list future episodes before broadcast. The importer must not create tho
 
 ## Database migration and deployment
 
-This repository's Docker startup command does not automatically run Alembic migrations. Before using the new agent-access page or API on a deployed environment, apply the new migration once against the same production database used by MaxCinema:
+The repository's root Procfile already defines the Heroku release phase:
 
-    flask --app run db upgrade
+    release: flask db upgrade heads
+    web: gunicorn run:app --timeout 60 --workers 2
 
-Run this in the Hugging Face Space/container environment (or another trusted environment configured with the production DATABASE_URL and SECRET_KEY). Take a database backup first. Do not use db.create_all() as a substitute for the production migration. The GitHub deploy workflow only deploys pushes to clean-main; this feature branch does not deploy to the live Space.
+When Heroku GitHub automatic deploys are configured for `clean-main`, a merge/push to that branch creates a Heroku release. Heroku runs the Procfile `release` command before starting the new web dynos, so the new agent tables are created by the existing release process. Do not separately run the migration against production when this release command is configured and succeeds.
 
-The external agent's operating instructions are in docs/AI_AGENT_SYSTEM_PROMPT.md.
+Before merging, take a current production database backup and confirm the Heroku app is connected to this repository and is set to auto-deploy `clean-main`. After the push, inspect the Heroku release log and verify that `flask db upgrade heads` succeeded. Heroku documents that if the release command exits unsuccessfully, the new release is not deployed and the current release remains running. This protects the running code release, but a backup is still essential for database recovery.
+
+The new migration is additive: it creates only `agent_pairing_code`, `agent_access_token`, and `agent_audit_log`. It does not drop, rename, or alter existing movie, series, season, episode, user, or download-link tables. The migration's parent is the existing Alembic head `9f1a2b3c4d5e`.
+
+The existing `.github/workflows/main.yml` is a separate deployment path: pushes to `clean-main` also trigger the configured Hugging Face Space sync. Keep or disable that workflow according to whether you still use the Space as a staging/backup deployment. It is not the Heroku release command.
+
+The external agent's operating instructions are in `docs/AI_AGENT_SYSTEM_PROMPT.md`.
