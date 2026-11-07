@@ -37,6 +37,12 @@ def _today_lagos():
 
 
 def _video_payload(video):
+    release_date = video.released_date
+    release_is_future = bool(release_date and release_date > _today_lagos())
+    release_has_passed = bool(release_date and release_date <= _today_lagos())
+    effective_coming_soon = release_is_future or (
+        bool(video.coming_soon) and not release_has_passed
+    )
     return {
         "id": video.id,
         "name": video.name,
@@ -45,14 +51,14 @@ def _video_payload(video):
         "tmdb_id": video.tmdb_id,
         "description": video.description,
         "poster": video.image,
-        "release_date": _iso(video.released_date),
+        "release_date": _iso(release_date),
         "year": video.year_produced,
         "country": video.country,
         "language": video.language,
         "rating": video.rating,
         "genres": [genre.name for genre in video.genres],
         "active": bool(video.active),
-        "coming_soon": bool(video.coming_soon),
+        "coming_soon": bool(effective_coming_soon),
         "featured": bool(video.featured),
         "trending": bool(video.trending),
         "has_primary_link": bool((video.download_link or "").strip()),
@@ -304,7 +310,10 @@ def series_status(video_id):
                 "name": episode.name,
                 "release_date": _iso(air_date),
                 "release_state": "released" if released else ("upcoming" if air_date else "unknown"),
-                "coming_soon": bool(episode.coming_soon and not released and not has_primary),
+                "coming_soon": bool(
+                    (air_date and air_date > _today_lagos())
+                    or (episode.coming_soon and not released)
+                ),
                 "has_primary_link": has_primary,
                 "has_dub_link": bool((episode.dub_download_link or "").strip()),
                 "has_backup_link": bool((episode.backup_link or "").strip()),
