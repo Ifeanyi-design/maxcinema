@@ -274,7 +274,10 @@
 {% set check_dl_link  = video.download_link  if det == "movie" else (current_episode.download_link  if current_episode else none) %}
 {% set dub_code       = video.dub_download_link if det == "movie" else (current_episode.dub_download_link if current_episode else none) %}
 {% set is_missing_file = (not check_dl_link or (check_dl_link|string|trim) == '') and (not dub_code or (dub_code|string|trim) == '') %}
-{% set is_coming_soon  = video.coming_soon if det == "movie" else (current_episode.coming_soon if current_episode else false) %}
+{% set release_date = video.released_date if det == "movie" else (current_episode.released_date if current_episode else none) %}
+{% set release_has_passed = release_date and today and release_date <= today %}
+{% set stored_coming_soon = video.coming_soon if det == "movie" else (current_episode.coming_soon if current_episode else false) %}
+{% set is_coming_soon = stored_coming_soon and not release_has_passed %}
 {% set hero_image = (current_season.image if current_season and current_season.image else video.image) or '' %}
 {% set genre_text = (video.genres | map(attribute='name') | join(' ') | lower) %}
 {% set country_text = ((video.country or '') | string | lower) %}
