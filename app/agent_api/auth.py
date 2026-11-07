@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import current_app, g, jsonify, request
+from sqlalchemy import and_, update
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..extensions import db
@@ -40,30 +41,40 @@ def exchange_pairing_code(raw_code, label=None):
 
     now = datetime.utcnow()
     try:
-        pairing = (
-            AgentPairingCode.query
-            .filter_by(code_hash=hash_secret(code))
-            .with_for_update()
-            .first()
+        pairing = AgentPairingCode.query.filter_by(
+            code_hash=hash_secret(code)
+        ).first()
+        if pairing is None:
+            db.session.rollback()
+            return None, "The pairing code is invalid, expired, or already used."
+
+        # Atomic conditional claim prevents two concurrent exchanges (including
+        # on SQLite, where SELECT FOR UPDATE is not a row lock) from both winning.
+        claimed = db.session.execute(
+            update(AgentPairingCode)
+            .where(
+                and_(
+                    AgentPairingCode.id == pairing.id,
+                    AgentPairingCode.used_at.is_(None),
+                    AgentPairingCode.expires_at > now,
+                )
+            )
+            .values(used_at=now)
         )
-        if (
-            pairing is None
-            or pairing.used_at is not None
-            or pairing.expires_at <= now
-        ):
+        if claimed.rowcount != 1:
             db.session.rollback()
             return None, "The pairing code is invalid, expired, or already used."
 
         token_value = "mca_" + secrets.token_urlsafe(36)
+        safe_label = label.strip() if isinstance(label, str) else "Content management agent"
         token_row = AgentAccessToken(
             token_hash=hash_secret(token_value),
-            label=(label or "Content management agent").strip()[:120],
+            label=(safe_label or "Content management agent")[:120],
             scopes=list(DEFAULT_AGENT_SCOPES),
             created_by_id=pairing.created_by_id,
             created_at=now,
             expires_at=now + timedelta(minutes=60),
         )
-        pairing.used_at = now
         db.session.add(token_row)
         db.session.commit()
         return {
