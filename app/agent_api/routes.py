@@ -182,10 +182,12 @@ def tmdb_search():
         return _json_error("invalid_type", "type must be all, movie, or series.")
 
     try:
-        from tmdbv3api import Movie as TMDBMovie, TV as TMDBTV
+        # Reuse the same TMDB client setup as the existing importer so the
+        # configured TMDB_API_KEY and language settings stay consistent.
+        importer = ContentImporter()
         candidates = []
         if media_type in {"all", "movie"}:
-            for item in (TMDBMovie().search(query) or [])[:10]:
+            for item in (importer.movie_api.search(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "movie",
@@ -196,7 +198,7 @@ def tmdb_search():
                     "rating": _value(item, "vote_average"),
                 })
         if media_type in {"all", "series"}:
-            for item in (TMDBTV().search(query) or [])[:10]:
+            for item in (importer.tv_api.search(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "series",
@@ -373,144 +375,233 @@ def _parse_date(value, field_name):
 @agent_required("content:write")
 def update_library_item(video_id):
     video = AllVideo.query.get_or_404(video_id)
-    body = request.get_json(silent=True) or {}
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not body:
+        return _json_error("invalid_body", "Send a non-empty JSON object.")
+
     allowed = {
         "name", "description", "image", "released_date", "year_produced",
-        "country", "language", "trailer_url", "active", "coming_soon",
+        "country", "language", "trailer_url", "active", "coming_soon", "genres",
     }
     editorial = {"featured", "trending"}
     unknown = set(body) - allowed - editorial - {"editorial_reason"}
     if unknown:
-        return _json_error("unsupported_fields", "One or more fields are not editable through this endpoint.", 400,
-                           fields=sorted(unknown))
+        return _json_error(
+            "unsupported_fields",
+            "One or more fields are not editable through this endpoint.",
+            400,
+            fields=sorted(unknown),
+        )
+
     if editorial.intersection(body):
-        reason = (body.get("editorial_reason") or "").strip()
-        if len(reason) < 8:
+        reason = body.get("editorial_reason")
+        if not isinstance(reason, str) or len(reason.strip()) < 8:
             return _json_error(
                 "editorial_reason_required",
                 "Changing featured/trending requires an explicit editorial_reason describing the user's instruction.",
             )
+
+    # Validate the complete payload before mutating any ORM object. A bad field
+    # must not leave earlier assignments pending in the scoped DB session.
+    string_limits = {
+        "name": 200,
+        "image": 300,
+        "country": 100,
+        "language": 50,
+        "trailer_url": 300,
+    }
+    for field, maximum in string_limits.items():
+        if field in body:
+            value = body[field]
+            if value is not None and not isinstance(value, str):
+                return _json_error("invalid_field", f"{field} must be a string or null.")
+            if isinstance(value, str) and len(value.strip()) > maximum:
+                return _json_error("invalid_field", f"{field} cannot exceed {maximum} characters.")
+    if "description" in body and body["description"] is not None and not isinstance(body["description"], str):
+        return _json_error("invalid_field", "description must be a string or null.")
+
+    release_date = None
+    if "released_date" in body:
+        try:
+            release_date = _parse_date(body["released_date"], "released_date")
+        except ValueError as exc:
+            return _json_error("invalid_field", str(exc))
+
+    if "year_produced" in body:
+        value = body["year_produced"]
+        if value is not None and (
+            type(value) is not int or value < 1870 or value > 2200
+        ):
+            return _json_error("invalid_field", "year_produced must be a plausible year or null.")
+
+    for field in ("active", "coming_soon", "featured", "trending"):
+        if field in body and not isinstance(body[field], bool):
+            return _json_error("invalid_field", f"{field} must be a boolean.")
+
+    genre_names = None
+    if "genres" in body:
+        genre_names = body["genres"]
+        if (
+            not isinstance(genre_names, list)
+            or len(genre_names) > 20
+            or any(
+                not isinstance(name, str)
+                or not name.strip()
+                or len(name.strip()) > 50
+                for name in genre_names
+            )
+        ):
+            return _json_error(
+                "invalid_field",
+                "genres must be a list of up to 20 non-empty names (50 characters maximum each).",
+            )
+
     try:
         for field in ("name", "description", "image", "country", "language", "trailer_url"):
             if field in body:
                 value = body[field]
-                if value is not None and not isinstance(value, str):
-                    return _json_error("invalid_field", f"{field} must be a string or null.")
-                setattr(video, field, value.strip() if isinstance(value, str) else None)
+                setattr(video, field, value.strip() if isinstance(value, str) else value)
+
         if "released_date" in body:
-            video.released_date = _parse_date(body["released_date"], "released_date")
-        if "genres" in body:
-            names = body["genres"]
-            if not isinstance(names, list) or any(not isinstance(name, str) or not name.strip() for name in names):
-                return _json_error("invalid_field", "genres must be a list of non-empty genre names.")
-            if len(names) > 20:
-                return _json_error("invalid_field", "A maximum of 20 genres may be assigned.")
+            video.released_date = release_date
+        if "year_produced" in body:
+            video.year_produced = body["year_produced"]
+
+        if genre_names is not None:
             genre_objects = []
-            for name in dict.fromkeys(name.strip() for name in names):
+            for name in dict.fromkeys(name.strip() for name in genre_names):
                 genre = Genre.query.filter_by(name=name).first()
                 if not genre:
-                    genre = Genre(name=name[:50])
+                    genre = Genre(name=name)
                     db.session.add(genre)
                 genre_objects.append(genre)
             video.genres = genre_objects
-        if "year_produced" in body:
-            value = body["year_produced"]
-            if value is not None and (not isinstance(value, int) or value < 1870 or value > 2200):
-                return _json_error("invalid_field", "year_produced must be a plausible year or null.")
-            video.year_produced = value
+
         for field in ("active", "coming_soon", "featured", "trending"):
             if field in body:
-                if not isinstance(body[field], bool):
-                    return _json_error("invalid_field", f"{field} must be a boolean.")
                 setattr(video, field, body[field])
+
+        # Release dates control the effective Coming Soon state. Do not let
+        # a stale manual flag hide a title after its stated release date.
         if "released_date" in body:
-            release_date = video.released_date
-            video.coming_soon = bool(release_date and release_date > _today_lagos())
+            video.coming_soon = bool(
+                video.released_date and video.released_date > _today_lagos()
+            )
+
         if "name" in body and video.name:
             from slugify import slugify
             base = slugify(video.name) or f"content-{video.id}"
             candidate = base
             suffix = 2
-            while AllVideo.query.filter(AllVideo.slug == candidate, AllVideo.id != video.id).first():
+            while AllVideo.query.filter(
+                AllVideo.slug == candidate,
+                AllVideo.id != video.id,
+            ).first():
                 candidate = f"{base}-{suffix}"
                 suffix += 1
             video.slug = candidate
+
         write_audit("library.update", video.type, video.id, {
             "fields": sorted(set(body) - {"editorial_reason"}),
             "editorial_reason": body.get("editorial_reason"),
         })
         db.session.commit()
         return jsonify({"status": "success", "content": _video_payload(video)})
-    except ValueError as exc:
+    except Exception:
         db.session.rollback()
-        return _json_error("invalid_field", str(exc))
+        current_app.logger.exception("Agent library update failed")
+        return _json_error("update_failed", "The content update could not be saved.", 500)
 
 
 @agent_api_bp.patch("/seasons/<int:season_id>")
 @agent_required("content:write")
 def update_season(season_id):
     season = Season.query.get_or_404(season_id)
-    body = request.get_json(silent=True) or {}
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not body:
+        return _json_error("invalid_body", "Send a non-empty JSON object.")
     allowed = {"description", "cast", "release_date", "completed", "image", "trailer_url"}
     unknown = set(body) - allowed
     if unknown:
         return _json_error("unsupported_fields", "One or more season fields are not editable.", 400,
                            fields=sorted(unknown))
+
     for field in ("description", "cast", "image", "trailer_url"):
-        if field in body:
-            value = body[field]
-            if value is not None and not isinstance(value, str):
-                return _json_error("invalid_field", f"{field} must be a string or null.")
-            setattr(season, field, value.strip() if isinstance(value, str) else None)
+        if field in body and body[field] is not None and not isinstance(body[field], str):
+            return _json_error("invalid_field", f"{field} must be a string or null.")
+    if "completed" in body and not isinstance(body["completed"], bool):
+        return _json_error("invalid_field", "completed must be a boolean.")
+    release_date = None
     if "release_date" in body:
         try:
-            season.release_date = _parse_date(body["release_date"], "release_date")
+            release_date = _parse_date(body["release_date"], "release_date")
         except ValueError as exc:
             return _json_error("invalid_field", str(exc))
-    if "completed" in body:
-        if not isinstance(body["completed"], bool):
-            return _json_error("invalid_field", "completed must be a boolean.")
-        season.completed = body["completed"]
-    write_audit("season.update", "season", season.id, {"fields": sorted(body)})
-    db.session.commit()
-    return jsonify({
-        "status": "success",
-        "season": {
-            "id": season.id,
-            "season_number": season.season_number,
-            "release_date": _iso(season.release_date),
-            "completed": bool(season.completed),
-        },
-    })
+
+    try:
+        for field in ("description", "cast", "image", "trailer_url"):
+            if field in body:
+                value = body[field]
+                setattr(season, field, value.strip() if isinstance(value, str) else value)
+        if "release_date" in body:
+            season.release_date = release_date
+        if "completed" in body:
+            season.completed = body["completed"]
+        write_audit("season.update", "season", season.id, {"fields": sorted(body)})
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "season": {
+                "id": season.id,
+                "season_number": season.season_number,
+                "release_date": _iso(season.release_date),
+                "completed": bool(season.completed),
+            },
+        })
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Agent season update failed")
+        return _json_error("update_failed", "The season update could not be saved.", 500)
 
 
 @agent_api_bp.patch("/episodes/<int:episode_id>")
 @agent_required("content:write")
 def update_episode(episode_id):
     episode = Episode.query.get_or_404(episode_id)
-    body = request.get_json(silent=True) or {}
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or not body:
+        return _json_error("invalid_body", "Send a non-empty JSON object.")
     allowed = {"name", "description", "released_date", "coming_soon"}
     unknown = set(body) - allowed
     if unknown:
         return _json_error("unsupported_fields", "One or more fields are not editable.", 400,
                            fields=sorted(unknown))
+    for field in ("name", "description"):
+        if field in body and body[field] is not None and not isinstance(body[field], str):
+            return _json_error("invalid_field", f"{field} must be a string or null.")
+    if "name" in body and isinstance(body["name"], str) and len(body["name"].strip()) > 200:
+        return _json_error("invalid_field", "name cannot exceed 200 characters.")
+    if "coming_soon" in body and not isinstance(body["coming_soon"], bool):
+        return _json_error("invalid_field", "coming_soon must be a boolean.")
+    release_date = None
+    if "released_date" in body:
+        try:
+            release_date = _parse_date(body["released_date"], "released_date")
+        except ValueError as exc:
+            return _json_error("invalid_field", str(exc))
+
     try:
         for field in ("name", "description"):
             if field in body:
                 value = body[field]
-                if value is not None and not isinstance(value, str):
-                    return _json_error("invalid_field", f"{field} must be a string or null.")
-                setattr(episode, field, value.strip() if isinstance(value, str) else None)
+                setattr(episode, field, value.strip() if isinstance(value, str) else value)
         if "released_date" in body:
-            episode.released_date = _parse_date(body["released_date"], "released_date")
-        if "coming_soon" in body:
-            if not isinstance(body["coming_soon"], bool):
-                return _json_error("invalid_field", "coming_soon must be a boolean.")
-            episode.coming_soon = body["coming_soon"]
-        if "released_date" in body:
+            episode.released_date = release_date
             episode.coming_soon = bool(
-                episode.released_date and episode.released_date > _today_lagos()
+                release_date and release_date > _today_lagos()
             )
+        elif "coming_soon" in body:
+            episode.coming_soon = body["coming_soon"]
         write_audit("episode.update", "episode", episode.id, {"fields": sorted(body)})
         db.session.commit()
         return jsonify({
@@ -523,9 +614,10 @@ def update_episode(episode_id):
                 "coming_soon": bool(episode.coming_soon),
             },
         })
-    except ValueError as exc:
+    except Exception:
         db.session.rollback()
-        return _json_error("invalid_field", str(exc))
+        current_app.logger.exception("Agent episode update failed")
+        return _json_error("update_failed", "The episode update could not be saved.", 500)
 
 
 @agent_api_bp.post("/links/preview")
