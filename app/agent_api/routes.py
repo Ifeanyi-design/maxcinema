@@ -28,6 +28,10 @@ def _iso(value):
     return value.isoformat() if value else None
 
 
+def _positive_int(value):
+    return type(value) is int and value > 0
+
+
 def _today_lagos():
     return (datetime.utcnow() + timedelta(hours=1)).date()
 
@@ -677,7 +681,9 @@ def preview_links():
         return _json_error("invalid_replacement_policy", "Use mode=replace to request replacement; fill_missing never replaces.")
 
     server_id = body.get("storage_server_id")
-    server = StorageServer.query.filter_by(id=server_id, active=True).first() if server_id else None
+    if not _positive_int(server_id):
+        return _json_error("invalid_storage_server", "storage_server_id must be a positive integer.")
+    server = StorageServer.query.filter_by(id=server_id, active=True).first()
     if not server:
         return _json_error("invalid_storage_server", "Choose an active storage_server_id.")
 
@@ -687,7 +693,10 @@ def preview_links():
     is_movie = body.get("movie_id") is not None
 
     if is_movie:
-        video = AllVideo.query.filter_by(id=body.get("movie_id"), type="movie").first()
+        movie_id = body.get("movie_id")
+        if not _positive_int(movie_id):
+            return _json_error("invalid_movie_id", "movie_id must be a positive integer.")
+        video = AllVideo.query.filter_by(id=movie_id, type="movie").first()
         if not video:
             return _json_error("movie_not_found", "Movie was not found.", 404)
         raw_code = body.get("code")
@@ -714,6 +723,8 @@ def preview_links():
     else:
         series_id = body.get("series_id")
         season_number = body.get("season_number")
+        if not _positive_int(series_id):
+            return _json_error("invalid_series_id", "series_id must be a positive integer.")
         series_video = AllVideo.query.filter_by(id=series_id, type="series").first()
         if not series_video or not series_video.series:
             return _json_error("series_not_found", "Series was not found.", 404)
@@ -902,6 +913,21 @@ def apply_links():
         if not target:
             db.session.rollback()
             return _json_error("target_changed", "A target disappeared after preview. Create a new preview.", 409)
+
+        if (
+            operation["target_type"] == "episode"
+            and (
+                not target.released_date
+                or target.released_date > _today_lagos()
+            )
+        ):
+            db.session.rollback()
+            return _json_error(
+                "episode_not_released",
+                "An episode's release date changed after preview. Create a fresh preview.",
+                409,
+                target_id=operation["target_id"],
+            )
 
         current = _current_link(target, operation["track"])
         if current == operation["code"]:
