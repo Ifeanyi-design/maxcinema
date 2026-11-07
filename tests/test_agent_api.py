@@ -20,6 +20,21 @@ from app.models import (
 )
 
 
+class LegacyAsObjLike:
+    """Mimic tmdbv3api 1.9.0 AsObj iteration and integer-only indexing."""
+
+    def __init__(self, records):
+        self._obj_list = records
+
+    def __iter__(self):
+        return iter(self._obj_list)
+
+    def __getitem__(self, key):
+        if isinstance(key, int) and self._obj_list:
+            return self._obj_list[key]
+        return getattr(self, key)
+
+
 class AgentApiTestConfig:
     TESTING = True
     SECRET_KEY = "test-only-secret-for-agent-api"
@@ -99,25 +114,38 @@ class AgentApiTests(unittest.TestCase):
                     self.assertTrue(operation.get("responses"))
 
     @patch("app.agent_api.routes.ContentImporter")
-    def test_tmdb_title_search_uses_supported_movie_and_tv_search_methods(self, importer_class):
+    def test_tmdb_title_search_handles_legacy_as_obj_results(self, importer_class):
         importer = importer_class.return_value
         importer.search_api.api_key = "test-tmdb-v3-key"
-        importer.search_api.movies.return_value = [{
-            "id": 27205,
-            "title": "Inception",
-            "release_date": "2010-07-15",
-            "overview": "A test overview.",
-            "poster_path": "/inception.jpg",
-            "vote_average": 8.4,
-        }]
-        importer.search_api.tv_shows.return_value = [{
-            "id": 1399,
-            "name": "Game of Thrones",
-            "first_air_date": "2011-04-17",
-            "overview": "A test series overview.",
-            "poster_path": "/got.jpg",
-            "vote_average": 8.3,
-        }]
+        movie_results = [
+            {
+                "id": 27205 + index,
+                "title": f"Movie {index}",
+                "release_date": "2010-07-15",
+                "overview": "A test overview.",
+                "poster_path": "/movie.jpg",
+                "vote_average": 8.4,
+            }
+            for index in range(12)
+        ]
+        tv_results = [
+            {
+                "id": 1399 + index,
+                "name": f"Series {index}",
+                "first_air_date": "2011-04-17",
+                "overview": "A test series overview.",
+                "poster_path": "/series.jpg",
+                "vote_average": 8.3,
+            }
+            for index in range(12)
+        ]
+        importer.search_api.movies.return_value = LegacyAsObjLike(movie_results)
+        importer.search_api.tv_shows.return_value = LegacyAsObjLike(tv_results)
+
+        # This reproduces older tmdbv3api AsObj behavior: slices are treated
+        # like attribute lookups and raise TypeError, while iteration works.
+        with self.assertRaisesRegex(TypeError, "attribute name must be string"):
+            LegacyAsObjLike(movie_results)[:10]
 
         response = self.client.get(
             "/api/agent/v1/tmdb/search?q=Inception&type=all",
@@ -126,8 +154,15 @@ class AgentApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         results = response.get_json()["results"]
-        self.assertEqual([item["tmdb_id"] for item in results], [27205, 1399])
-        self.assertEqual([item["type"] for item in results], ["movie", "series"])
+        self.assertEqual(len(results), 20)
+        self.assertEqual(
+            [item["tmdb_id"] for item in results],
+            list(range(27205, 27215)) + list(range(1399, 1409)),
+        )
+        self.assertEqual(
+            [item["type"] for item in results],
+            ["movie"] * 10 + ["series"] * 10,
+        )
         importer.search_api.movies.assert_called_once_with("Inception")
         importer.search_api.tv_shows.assert_called_once_with("Inception")
 

@@ -517,7 +517,7 @@ def tmdb_search():
     try:
         candidates = []
         if media_type in {"all", "movie"}:
-            for item in (search_api.movies(query) or [])[:10]:
+            for item in list(search_api.movies(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "movie",
@@ -528,7 +528,7 @@ def tmdb_search():
                     "rating": _value(item, "vote_average"),
                 })
         if media_type in {"all", "series"}:
-            for item in (search_api.tv_shows(query) or [])[:10]:
+            for item in list(search_api.tv_shows(query) or [])[:10]:
                 candidates.append({
                     "tmdb_id": _value(item, "id"),
                     "type": "series",
