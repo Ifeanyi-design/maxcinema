@@ -213,6 +213,11 @@
                     <span class="admin-badge admin-badge-neutral ml-auto">{{ total_users }}</span>
                 </a>
 
+                <a href="{{ url_for('admin.agent_access') }}" class="admin-nav-link {% if request.endpoint in ['admin.agent_access','admin.revoke_agent_token'] %}admin-nav-link-active{% endif %}">
+                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-5a2 2 0 00-2-2H6a2 2 0 00-2 2v5a2 2 0 002 2zM8 12V8a4 4 0 118 0v4"/></svg>
+                    AI Agent Access
+                </a>
+
                 <a href="{{ url_for('admin.view_storage') }}" class="admin-nav-link {% if request.endpoint in ['admin.view_storage','admin.add_storage_server'] %}admin-nav-link-active{% endif %}">
                     <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M3 12h18M3 17h18"/>
